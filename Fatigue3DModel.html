@@ -543,19 +543,39 @@
                 document.getElementById('fileInfo').innerHTML = 
                     '<div class="error">✗ Error: Plotly has not loaded</div>';
             }
+            
+            // Detectar entorno y mostrar controles apropiados
+            if (isLocalEnvironment()) {
+                document.getElementById('fileInfo').innerHTML += 
+                    '<div class="success">Entorno: Local - Usar selector de archivos</div>';
+            } else {
+                document.getElementById('fileInfo').innerHTML += 
+                    '<div class="success">Entorno: GitHub Pages - Cargar archivo del repositorio</div>';
+                // En GitHub, intentar cargar DataFatigue.csv automáticamente
+                setTimeout(() => {
+                    loadFileFromGitHub();
+                }, 1000);
+            }
         });
 
         // Detectar si estamos en local o en GitHub Pages
         function isLocalEnvironment() {
             return window.location.protocol === 'file:' || 
                 window.location.hostname === 'localhost' || 
-                window.location.hostname === '127.0.0.1';
+                window.location.hostname === '127.0.0.1' ||
+                window.location.hostname === '';
         }
 
+        // Reemplaza toda la función loadFile():
         function loadFile() {
-            if (isLocalEnvironment()) {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            
+            if (file) {
+                // Si hay un archivo seleccionado, usarlo
                 loadFileLocal();
             } else {
+                // Si no hay archivo seleccionado, intentar cargar desde GitHub
                 loadFileFromGitHub();
             }
         }
@@ -579,23 +599,42 @@
         }
 
         // Nuevo código (para GitHub)
+        // Reemplaza la función loadFileFromGitHub():
         function loadFileFromGitHub() {
             const fileName = prompt("Introduce el nombre del archivo CSV:", "DataFatigue.csv");
             if (!fileName) return;
             
-            fetch('./' + fileName)
+            // Intentar diferentes rutas posibles
+            const possiblePaths = [
+                './' + fileName,
+                fileName,
+                './data/' + fileName,
+                './Data/' + fileName
+            ];
+            
+            tryLoadFile(possiblePaths, 0);
+        }
+
+        function tryLoadFile(paths, index) {
+            if (index >= paths.length) {
+                alert('Error: No se pudo encontrar el archivo en ninguna de las rutas posibles');
+                return;
+            }
+            
+            fetch(paths[index])
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error('Archivo no encontrado: ' + fileName);
+                        throw new Error('Archivo no encontrado en: ' + paths[index]);
                     }
                     return response.text();
                 })
                 .then(text => {
+                    console.log('Archivo cargado desde:', paths[index]);
                     parseCSV(text);
                 })
                 .catch(error => {
-                    alert('Error: ' + error.message);
-                    console.error('Error loading file from GitHub:', error);
+                    console.log('Intentando siguiente ruta:', error.message);
+                    tryLoadFile(paths, index + 1);
                 });
         }
 
