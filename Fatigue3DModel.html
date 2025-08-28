@@ -546,21 +546,19 @@
         });
 
         // Detectar si estamos en local o en GitHub Pages
-function isLocalEnvironment() {
-    return window.location.protocol === 'file:' || 
-           window.location.hostname === 'localhost' || 
-           window.location.hostname === '127.0.0.1';
-}
+        function isLocalEnvironment() {
+            return window.location.protocol === 'file:' || 
+                window.location.hostname === 'localhost' || 
+                window.location.hostname === '127.0.0.1';
+        }
 
-function loadFile() {
-    if (isLocalEnvironment()) {
-        // Comportamiento LOCAL: abrir diálogo de archivos
-        loadFileLocal();
-    } else {
-        // Comportamiento GITHUB: solicitar nombre de archivo
-        loadFileFromGitHub();
-    }
-}
+        function loadFile() {
+            if (isLocalEnvironment()) {
+                loadFileLocal();
+            } else {
+                loadFileFromGitHub();
+            }
+        }
 
         // Tu código actual (para local) - NO CAMBIAR
         function loadFileLocal() {
@@ -582,22 +580,23 @@ function loadFile() {
 
         // Nuevo código (para GitHub)
         function loadFileFromGitHub() {
-            const fileName = prompt("Introduce el nombre del archivo CSV:", "DataFatigue.csv");            if (fileName) {
-                fetch('./' + fileName)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error('Archivo no encontrado: ' + fileName);
-                        }
-                        return response.text();
-                    })
-                    .then(text => {
-                        parseCSV(text); // usa tu función existente
-                    })
-                    .catch(error => {
-                        alert('Error: ' + error.message);
-                        console.error('Error loading file from GitHub:', error);
-                    });
-            }
+            const fileName = prompt("Introduce el nombre del archivo CSV:", "DataFatigue.csv");
+            if (!fileName) return;
+            
+            fetch('./' + fileName)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Archivo no encontrado: ' + fileName);
+                    }
+                    return response.text();
+                })
+                .then(text => {
+                    parseCSV(text);
+                })
+                .catch(error => {
+                    alert('Error: ' + error.message);
+                    console.error('Error loading file from GitHub:', error);
+                });
         }
 
         function parseCSV(text) {

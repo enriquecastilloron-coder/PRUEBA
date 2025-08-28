@@ -864,25 +864,19 @@
             }
 
             async loadFile(file) {
-                // Si no hay archivo y no estamos en local, solicitar nombre de archivo
                 if (!file && !this.isLocalEnvironment()) {
                     return this.loadFileFromGitHub();
                 }
 
-                // Si no hay archivo y estamos en local, mostrar error
                 if (!file) {
                     alert('Please select a CSV file');
                     return;
                 }
 
-                // Procesar archivo normalmente
                 this.showLoading();
-                
-                // Resetear a estado inicial antes de cargar nuevos datos
                 this.resetToInitialState();
                 
                 try {
-                    // Guardar el nombre del archivo
                     this.currentFileName = file.name;
                     
                     const text = await file.text();
@@ -894,7 +888,6 @@
                     );
                     this.transformedData = JSON.parse(JSON.stringify(this.originalData));
                     
-                    // Mostrar información del archivo
                     document.getElementById('fileName').textContent = this.currentFileName;
                     document.getElementById('fileInfo').classList.add('show');
                     
@@ -915,8 +908,7 @@
                     this.renderLogCheckboxes();
                     this.renderTable();
                     
-                    // Llamar a toggleScale() aquí para iniciar en escala [0,1]
-                    this.toggleScale(); // Esto cambiará isScaled a true y renderizará en escala [0,1]
+                    this.toggleScale();
                     
                     setTimeout(() => {
                         this.resizeCanvas();
@@ -958,7 +950,6 @@
                     );
                     this.transformedData = JSON.parse(JSON.stringify(this.originalData));
                     
-                    // Mostrar información del archivo
                     document.getElementById('fileName').textContent = this.currentFileName;
                     document.getElementById('fileInfo').classList.add('show');
                     
