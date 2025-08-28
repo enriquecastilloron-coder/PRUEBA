@@ -562,28 +562,27 @@ function loadFile() {
     }
 }
 
-// Tu código actual (para local) - NO CAMBIAR
-function loadFileLocal() {
-    const fileInput = document.getElementById('fileInput');
-    const file = fileInput.files[0];
-    
-    if (!file) {
-        alert('Please select a CSV file');
-        return;
-    }
+        // Tu código actual (para local) - NO CAMBIAR
+        function loadFileLocal() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please select a CSV file');
+                return;
+            }
 
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const text = e.target.result;
-        parseCSV(text);
-    };
-    reader.readAsText(file);
-}
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                parseCSV(text);
+            };
+            reader.readAsText(file);
+        }
 
         // Nuevo código (para GitHub)
         function loadFileFromGitHub() {
-            const fileName = prompt("Introduce el nombre del archivo CSV (ej: datos.csv):");
-            if (fileName) {
+            const fileName = prompt("Introduce el nombre del archivo CSV:", "DataFatigue.csv");            if (fileName) {
                 fetch('./' + fileName)
                     .then(response => {
                         if (!response.ok) {
