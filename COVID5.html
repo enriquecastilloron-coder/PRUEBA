@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modified SEIR COVID-19 Model</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .exit-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .exit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(231, 76, 60, 0.3);
+        }
+
+        .exit-btn:active {
+            transform: translateY(0);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .controls {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .controls h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .parameter-group {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            border-left: 4px solid #3498db;
+        }
+
+        .parameter-group h4 {
+            color: #34495e;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .parameter {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .parameter label {
+            font-weight: 500;
+            color: #2c3e50;
+            flex: 1;
+            margin-right: 10px;
+            font-size: 0.9em;
+        }
+
+        .parameter input[type="range"] {
+            width: 120px;
+            height: 6px;
+            border-radius: 3px;
+            background: #ecf0f1;
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .parameter input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #3498db;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .parameter input[type="range"]::-webkit-slider-thumb:hover {
+            background: #2980b9;
+            transform: scale(1.1);
+        }
+
+        .parameter input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #3498db;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .parameter-value {
+            min-width: 60px;
+            text-align: center;
+            font-weight: 600;
+            color: #2c3e50;
+            background: white;
+            padding: 6px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            border: 1px solid #bdc3c7;
+            cursor: text;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .parameter-value:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        #chartCanvas {
+            width: 100%;
+            height: 400px;
+            border-radius: 10px;
+        }
+
+        .simulate-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 20px;
+        }
+
+        .simulate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
+        }
+
+        .simulate-btn:active {
+            transform: translateY(0);
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85em;
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 5px;
+            border-radius: 3px;
+        }
+
+        .stats {
+            margin-top: 20px;
+            padding: 20px;
+            background: #e8f4f8;
+            border-radius: 10px;
+            border-left: 4px solid #3498db;
+        }
+
+        .stats h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .exit-btn {
+                position: static;
+                margin-bottom: 10px;
+                width: auto;
+            }
+
+            .header {
+                text-align: left;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <button class="exit-btn" onclick="exitApplication()">EXIT</button>
+            <h1>Modified SEIR COVID-19 Model</h1>
+            <p>Age-stratified compartment simulation - Cumulative Curves</p>
+        </div>
+
+        <div class="main-content">
+            <div class="controls">
+                <h3>Model Parameters</h3>
+                
+                <div class="parameter-group">
+                    <h4>Initial Population</h4>
+                    <div class="parameter">
+                        <label>Young Susceptibles (Sy):</label>
+                        <input type="range" id="sj_init" min="1000" max="500000" value="50000" step="1000" oninput="updateValue('sj_init'); runSimulation()">
+                        <input type="text" class="parameter-value" id="sj_init_value" value="50,000" onblur="updateSliderFromInput('sj_init')" onkeypress="handleEnterKey(event, 'sj_init')">
+                    </div>
+                    <div class="parameter">
+                        <label>Elder Susceptibles (Se):</label>
+                        <input type="range" id="sm_init" min="1000" max="500000" value="50000" step="1000" oninput="updateValue('sm_init'); runSimulation()">
+                        <input type="text" class="parameter-value" id="sm_init_value" value="50,000" onblur="updateSliderFromInput('sm_init')" onkeypress="handleEnterKey(event, 'sm_init')">
+                    </div>
+                    <div class="parameter">
+                        <label>Initial Young Infected:</label>
+                        <input type="range" id="j_init" min="1" max="100" value="5" step="1" oninput="updateValue('j_init'); runSimulation()">
+                        <input type="text" class="parameter-value" id="j_init_value" value="5" onblur="updateSliderFromInput('j_init')" onkeypress="handleEnterKey(event, 'j_init')">
+                    </div>
+                    <div class="parameter">
+                        <label>Initial Elder Infected:</label>
+                        <input type="range" id="m_init" min="1" max="100" value="5" step="1" oninput="updateValue('m_init'); runSimulation()">
+                        <input type="text" class="parameter-value" id="m_init_value" value="5" onblur="updateSliderFromInput('m_init')" onkeypress="handleEnterKey(event, 'm_init')">
+                    </div>
+                </div>
+
+                <div class="parameter-group">
+                    <h4>Young Transition Rates</h4>
+                    <div class="parameter">
+                        <label>Susceptible→Exposed (tsey):</label>
+                        <input type="range" id="tsej" min="0" max="0.001" value="0.0001" step="0.00001" oninput="updateValue('tsej'); runSimulation()">
+                        <input type="text" class="parameter-value" id="tsej_value" value="0.0001" onblur="updateSliderFromInput('tsej')" onkeypress="handleEnterKey(event, 'tsej')">
+                    </div>
+                    <div class="parameter">
+                        <label>Exposed→Infected (tey):</label>
+                        <input type="range" id="tej" min="0.01" max="0.5" value="0.2" step="0.01" oninput="updateValue('tej'); runSimulation()">
+                        <input type="text" class="parameter-value" id="tej_value" value="0.2" onblur="updateSliderFromInput('tej')" onkeypress="handleEnterKey(event, 'tej')">
+                    </div>
+                    <div class="parameter">
+                        <label>Infected→Hospitalized (tyh):</label>
+                        <input type="range" id="tjh" min="0" max="0.2" value="0.05" step="0.01" oninput="updateValue('tjh'); runSimulation()">
+                        <input type="text" class="parameter-value" id="tjh_value" value="0.05" onblur="updateSliderFromInput('tjh')" onkeypress="handleEnterKey(event, 'tjh')">
+                    </div>
+                    <div class="parameter">
+                        <label>Infected→Recovered (tyr):</label>
+                        <input type="range" id="tjr" min="0.01" max="0.3" value="0.09" step="0.01" oninput="updateValue('tjr'); runSimulation()">
+                        <input type="text" class="parameter-value" id="tjr_value" value="0.09" onblur="updateSliderFromInput('tjr')" onkeypress="handleEnterKey(event, 'tjr')">
+                    </div>
+                    <div class="parameter">
+                        <label>Infected→Deceased (tyf):</label>
+                        <input type="range" id="tjf" min="0" max="0.02" value="0.001" step="0.001" oninput="updateValue('tjf'); runSimulation()">
+                        <input type="text" class="parameter-value" id="tjf_value" value="0.001" onblur="updateSliderFromInput('tjf')" onkeypress="handleEnterKey(event, 'tjf')">
+                    </div>
+                </div>
+
+                <div class="parameter-group">
+                    <h4>Elder Transition Rates</h4>
+                    <div class="parameter">
+                        <label>Susceptible→Exposed (tsee):</label>
+                        <input type="range" id="tsem" min="0" max="0.001" value="0.0001" step="0.00001" oninput="updateValue('tsem'); runSimulation()">
+                        <input type="text" class="parameter-value" id="tsem_value" value="0.0001" onblur="updateSliderFromInput('tsem')" onkeypress="handleEnterKey(event, 'tsem')">
+                    </div>
+                    <div class="parameter">
+                        <label>Exposed→Infected (tee):</label>
+                        <input type="range" id="tem" min="0.01" max="0.5" value="0.2" step="0.01" oninput="updateValue('tem'); runSimulation()">
+                        <input type="text" class="parameter-value" id="tem_value" value="0.2" onblur="updateSliderFromInput('tem')" onkeypress="handleEnterKey(event, 'tem')">
+                    </div>
+                    <div class="parameter">
+                        <label>Infected→Hospitalized (teh):</label>
+                        <input type="range" id="tmh" min="0" max="0.3" value="0.15" step="0.01" oninput="updateValue('tmh'); runSimulation()">
+                        <input type="text" class="parameter-value" id="tmh_value" value="0.15" onblur="updateSliderFromInput('tmh')" onkeypress="handleEnterKey(event, 'tmh')">
+                    </div>
+                    <div class="parameter">
+                        <label>Infected→Recovered (ter):</label>
+                        <input type="range" id="tmr" min="0.01" max="0.3" value="0.08" step="0.01" oninput="updateValue('tmr'); runSimulation()">
+                        <input type="text" class="parameter-value" id="tmr_value" value="0.08" onblur="updateSliderFromInput('tmr')" onkeypress="handleEnterKey(event, 'tmr')">
+                    </div>
+                    <div class="parameter">
+                        <label>Infected→Deceased (tef):</label>
+                        <input type="range" id="tmf" min="0" max="0.05" value="0.02" step="0.001" oninput="updateValue('tmf'); runSimulation()">
+                        <input type="text" class="parameter-value" id="tmf_value" value="0.02" onblur="updateSliderFromInput('tmf')" onkeypress="handleEnterKey(event, 'tmf')">
+                    </div>
+                </div>
+
+                <div class="parameter-group">
+                    <h4>Hospital Rates</h4>
+                    <div class="parameter">
+                        <label>Hospital→ICU (thu):</label>
+                        <input type="range" id="thu" min="0" max="0.3" value="0.1" step="0.01" oninput="updateValue('thu'); runSimulation()">
+                        <input type="text" class="parameter-value" id="thu_value" value="0.1" onblur="updateSliderFromInput('thu')" onkeypress="handleEnterKey(event, 'thu')">
+                    </div>
+                    <div class="parameter">
+                        <label>Hospital→Recovered (thr):</label>
+                        <input type="range" id="thr" min="0.01" max="0.3" value="0.08" step="0.01" oninput="updateValue('thr'); runSimulation()">
+                        <input type="text" class="parameter-value" id="thr_value" value="0.08" onblur="updateSliderFromInput('thr')" onkeypress="handleEnterKey(event, 'thr')">
+                    </div>
+                    <div class="parameter">
+                        <label>Hospital→Deceased (thf):</label>
+                        <input type="range" id="thf" min="0" max="0.1" value="0.02" step="0.001" oninput="updateValue('thf'); runSimulation()">
+                        <input type="text" class="parameter-value" id="thf_value" value="0.02" onblur="updateSliderFromInput('thf')" onkeypress="handleEnterKey(event, 'thf')">
+                    </div>
+                    <div class="parameter">
+                        <label>ICU→Recovered (tur):</label>
+                        <input type="range" id="tur" min="0.01" max="0.2" value="0.05" step="0.01" oninput="updateValue('tur'); runSimulation()">
+                        <input type="text" class="parameter-value" id="tur_value" value="0.05" onblur="updateSliderFromInput('tur')" onkeypress="handleEnterKey(event, 'tur')">
+                    </div>
+                    <div class="parameter">
+                        <label>ICU→Deceased (tuf):</label>
+                        <input type="range" id="tuf" min="0" max="0.2" value="0.05" step="0.001" oninput="updateValue('tuf'); runSimulation()">
+                        <input type="text" class="parameter-value" id="tuf_value" value="0.05" onblur="updateSliderFromInput('tuf')" onkeypress="handleEnterKey(event, 'tuf')">
+                    </div>
+                </div>
+
+                <div class="parameter-group">
+                    <h4>Simulation</h4>
+                    <div class="parameter">
+                        <label>Days to Simulate:</label>
+                        <input type="range" id="days" min="30" max="1000" value="365" step="5" oninput="updateValue('days'); runSimulation()">
+                        <input type="text" class="parameter-value" id="days_value" value="365" onblur="updateSliderFromInput('days')" onkeypress="handleEnterKey(event, 'days')">
+                    </div>
+                </div>
+
+                <button class="simulate-btn" onclick="runSimulation()" style="display: none;">
+                    🔄 Run Simulation
+                </button>
+
+                <div class="stats" id="stats" style="display: none;">
+                    <h4>Final Statistics</h4>
+                    <div id="final-stats"></div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="chartCanvas"></canvas>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #3498db;"></div>
+                        <span>Non-Susceptible</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #f39c12;"></div>
+                        <span>Cumulative Exposed (E₀)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #e74c3c;"></div>
+                        <span>Cumulative Young Infected (Y₀)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #e67e22;"></div>
+                        <span>Cumulative Elder Infected (E₀)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #9b59b6;"></div>
+                        <span>Cumulative Hospitalized (H₀)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #8e44ad;"></div>
+                        <span>Cumulative ICU (U₀)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #27ae60;"></div>
+                        <span>Recovered (R)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #34495e;"></div>
+                        <span>Deceased (F)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class ModifiedSEIRModel {
+            constructor(params) {
+                // Model parameters
+                this.params = params;
+                
+                // Initial states
+                this.Sj = [params.sj_init];
+                this.Sm = [params.sm_init];
+                this.Ej = [0];
+                this.Em = [0];
+                this.J = [params.j_init];
+                this.M = [params.m_init];
+                this.H = [0];
+                this.U = [0];
+                this.R = [0];
+                this.F = [0];
+                
+                // Cumulative states
+                this.Ej0 = [0];
+                this.Em0 = [0];
+                this.J0 = [params.j_init];
+                this.M0 = [params.m_init];
+                this.H0 = [0];
+                this.U0 = [0];
+                
+                this.time = [0];
+                this.totalPop = params.sj_init + params.sm_init;
+            }
+
+            simulate() {
+                for (let t = 0; t < this.params.days - 1; t++) {
+                    // Current states
+                    const Sj_t = this.Sj[t];
+                    const Sm_t = this.Sm[t];
+                    const Ej_t = this.Ej[t];
+                    const Em_t = this.Em[t];
+                    const J_t = this.J[t];
+                    const M_t = this.M[t];
+                    const H_t = this.H[t];
+                    const U_t = this.U[t];
+                    const R_t = this.R[t];
+                    const F_t = this.F[t];
+                    
+                    // Current cumulative states
+                    const Ej0_t = this.Ej0[t];
+                    const Em0_t = this.Em0[t];
+                    const J0_t = this.J0[t];
+                    const M0_t = this.M0[t];
+                    const H0_t = this.H0[t];
+                    const U0_t = this.U0[t];
+
+                    // Force of infection
+                    const infection_force = J_t + M_t;
+
+                    // New transition terms
+                    const new_exposed_j = this.params.tsej * Sj_t * infection_force;
+                    const new_exposed_m = this.params.tsem * Sm_t * infection_force;
+                    const progression_j = this.params.tej * Ej_t;
+                    const progression_m = this.params.tem * Em_t;
+                    
+                    const j_to_h = this.params.tjh * J_t;
+                    const j_to_r = this.params.tjr * J_t;
+                    const j_to_f = this.params.tjf * J_t;
+                    
+                    const m_to_h = this.params.tmh * M_t;
+                    const m_to_r = this.params.tmr * M_t;
+                    const m_to_f = this.params.tmf * M_t;
+                    
+                    const h_to_u = this.params.thu * H_t;
+                    const h_to_r = this.params.thr * H_t;
+                    const h_to_f = this.params.thf * H_t;
+                    
+                    const u_to_r = this.params.tur * U_t;
+                    const u_to_f = this.params.tuf * U_t;
+
+                    // Model equations
+                    const Sj_next = Sj_t * (1 - this.params.tsej * infection_force);
+                    const Sm_next = Sm_t * (1 - this.params.tsem * infection_force);
+                    
+                    const Ej_next = Ej_t + new_exposed_j - progression_j;
+                    const Em_next = Em_t + new_exposed_m - progression_m;
+                    
+                    const J_next = J_t + progression_j - (j_to_h + j_to_r + j_to_f);
+                    const M_next = M_t + progression_m - (m_to_h + m_to_r + m_to_f);
+                    
+                    const H_next = H_t + j_to_h + m_to_h - (h_to_u + h_to_r + h_to_f);
+                    const U_next = U_t + h_to_u - (u_to_r + u_to_f);
+                    
+                    const R_next = R_t + u_to_r + h_to_r + j_to_r + m_to_r;
+                    const F_next = F_t + m_to_f + j_to_f + h_to_f + u_to_f;
+                    
+                    // Cumulative states
+                    const Ej0_next = Ej0_t + new_exposed_j;
+                    const Em0_next = Em0_t + new_exposed_m;
+                    const J0_next = J0_t + progression_j;
+                    const M0_next = M0_t + progression_m;
+                    const H0_next = H0_t + j_to_h + m_to_h;
+                    const U0_next = U0_t + h_to_u;
+
+                    // Ensure values are not negative
+                    this.Sj.push(Math.max(0, Sj_next));
+                    this.Sm.push(Math.max(0, Sm_next));
+                    this.Ej.push(Math.max(0, Ej_next));
+                    this.Em.push(Math.max(0, Em_next));
+                    this.J.push(Math.max(0, J_next));
+                    this.M.push(Math.max(0, M_next));
+                    this.H.push(Math.max(0, H_next));
+                    this.U.push(Math.max(0, U_next));
+                    this.R.push(Math.max(0, R_next));
+                    this.F.push(Math.max(0, F_next));
+                    
+                    // Cumulative states
+                    this.Ej0.push(Math.max(0, Ej0_next));
+                    this.Em0.push(Math.max(0, Em0_next));
+                    this.J0.push(Math.max(0, J0_next));
+                    this.M0.push(Math.max(0, M0_next));
+                    this.H0.push(Math.max(0, H0_next));
+                    this.U0.push(Math.max(0, U0_next));
+                    
+                    this.time.push(t + 1);
+                }
+            }
+
+            getResults() {
+                // Calculate non-susceptible (increasing curve)
+                const nonSusceptible = this.Sj.map((sj, i) => 
+                    this.totalPop - sj - this.Sm[i]
+                );
+                
+                // Calculate total cumulative exposed
+                const totalE0 = this.Ej0.map((ej0, i) => ej0 + this.Em0[i]);
+                
+                return {
+                    time: this.time,
+                    nonSusceptible: nonSusceptible,
+                    E0: totalE0,
+                    J0: this.J0,
+                    M0: this.M0,
+                    H0: this.H0,
+                    U0: this.U0,
+                    R: this.R,
+                    F: this.F
+                };
+            }
+
+            getFinalStats() {
+                const lastIndex = this.time.length - 1;
+                const totalNonSusceptible = this.totalPop - this.Sj[lastIndex] - this.Sm[lastIndex];
+                const totalE0 = this.Ej0[lastIndex] + this.Em0[lastIndex];
+                const attackRate = ((this.R[lastIndex] + this.F[lastIndex]) / this.totalPop * 100).toFixed(1);
+                
+                return {
+                    totalNonSusceptible: Math.round(totalNonSusceptible),
+                    totalExposed: Math.round(totalE0),
+                    totalInfectedJ: Math.round(this.J0[lastIndex]),
+                    totalInfectedM: Math.round(this.M0[lastIndex]),
+                    totalHospitalized: Math.round(this.H0[lastIndex]),
+                    totalICU: Math.round(this.U0[lastIndex]),
+                    totalRecovered: Math.round(this.R[lastIndex]),
+                    totalDeaths: Math.round(this.F[lastIndex]),
+                    attackRate: attackRate
+                };
+            }
+        }
+
+        function exitApplication() {
+            if (confirm('¿Estás seguro de que quieres salir de la aplicación?')) {
+                // Ocultar el contenido de la aplicación
+                document.querySelector('.container').style.display = 'none';
+                
+                // Crear y mostrar mensaje de salida
+                const exitMessage = document.createElement('div');
+                exitMessage.id = 'exitMessage';
+                exitMessage.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100vh;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    color: white;
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    z-index: 9999;
+                `;
+                
+                exitMessage.innerHTML = `
+                    <div style="text-align: center; padding: 40px; background: rgba(255,255,255,0.1); border-radius: 20px; backdrop-filter: blur(10px);">
+                        <h1 style="font-size: 3em; margin-bottom: 20px; font-weight: 300;">👋</h1>
+                        <h2 style="font-size: 2em; margin-bottom: 15px; font-weight: 300;">¡Hasta luego!</h2>
+                        <p style="font-size: 1.2em; margin-bottom: 30px; opacity: 0.9;">Gracias por usar el simulador SEIR COVID-19</p>
+                        <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                            <button id="backButton" style="
+                                padding: 12px 24px;
+                                background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+                                color: white;
+                                border: none;
+                                border-radius: 8px;
+                                font-size: 1em;
+                                font-weight: 600;
+                                cursor: pointer;
+                                transition: transform 0.2s;
+                            ">
+                                🔄 Volver a la aplicación
+                            </button>
+                            <button id="closeButton" style="
+                                padding: 12px 24px;
+                                background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+                                color: white;
+                                border: none;
+                                border-radius: 8px;
+                                font-size: 1em;
+                                font-weight: 600;
+                                cursor: pointer;
+                                transition: transform 0.2s;
+                            ">
+                                🚪 Cerrar pestaña
+                            </button>
+                        </div>
+                        <p style="font-size: 0.9em; margin-top: 20px; opacity: 0.7;">
+                            Si no se puede cerrar automáticamente, cierra manualmente la pestaña del navegador
+                        </p>
+                    </div>
+                `;
+                
+                document.body.appendChild(exitMessage);
+                
+                // Agregar event listeners después de crear los elementos
+                document.getElementById('backButton').addEventListener('click', function() {
+                    document.getElementById('exitMessage').remove();
+                    document.querySelector('.container').style.display = 'block';
+                });
+                
+                document.getElementById('closeButton').addEventListener('click', function() {
+                    try {
+                        window.close();
+                    } catch (e) {
+                        console.log('No se puede cerrar la ventana automáticamente');
+                    }
+                    
+                    // Si no se pudo cerrar, mostrar mensaje adicional
+                    setTimeout(() => {
+                        if (!window.closed) {
+                            alert('No se puede cerrar la ventana automáticamente. Por favor, cierra manualmente la pestaña del navegador.');
+                        }
+                    }, 500);
+                });
+                
+                // Agregar efectos hover
+                const buttons = [document.getElementById('backButton'), document.getElementById('closeButton')];
+                buttons.forEach(button => {
+                    button.addEventListener('mouseenter', function() {
+                        this.style.transform = 'translateY(-2px)';
+                    });
+                    button.addEventListener('mouseleave', function() {
+                        this.style.transform = 'translateY(0)';
+                    });
+                });
+                
+                // Intentar cerrar la ventana después de un pequeño delay
+                setTimeout(() => {
+                    try {
+                        window.close();
+                    } catch (e) {
+                        console.log('No se puede cerrar la ventana automáticamente');
+                    }
+                }, 100);
+            }
+        }
+
+        function updateValue(paramId) {
+            const slider = document.getElementById(paramId);
+            const valueInput = document.getElementById(paramId + '_value');
+            let value = parseFloat(slider.value);
+            
+            // Format value according to type
+            if (paramId.includes('init') && paramId !== 'j_init' && paramId !== 'm_init') {
+                valueInput.value = value.toLocaleString();
+            } else if (value < 0.01) {
+                valueInput.value = value.toFixed(5);
+            } else if (value < 0.1) {
+                valueInput.value = value.toFixed(3);
+            } else if (value < 1) {
+                valueInput.value = value.toFixed(2);
+            } else {
+                valueInput.value = Math.round(value).toString();
+            }
+        }
+
+        function updateSliderFromInput(paramId) {
+            const slider = document.getElementById(paramId);
+            const valueInput = document.getElementById(paramId + '_value');
+            
+            // Remove commas and convert to number
+            let inputValue = valueInput.value.replace(/,/g, '');
+            let numValue = parseFloat(inputValue);
+            
+            // Validate that it's a valid number
+            if (isNaN(numValue)) {
+                // If not valid, restore slider value
+                updateValue(paramId);
+                return;
+            }
+            
+            // Apply slider limits
+            const min = parseFloat(slider.min);
+            const max = parseFloat(slider.max);
+            numValue = Math.max(min, Math.min(max, numValue));
+            
+            // Update slider and reformat input
+            slider.value = numValue;
+            updateValue(paramId);
+            
+            // Run simulation
+            runSimulation();
+        }
+
+        function handleEnterKey(event, paramId) {
+            if (event.key === 'Enter') {
+                updateSliderFromInput(paramId);
+                event.target.blur(); // Remove focus from input
+            }
+        }
+
+        function getParameters() {
+            return {
+                sj_init: parseInt(document.getElementById('sj_init').value),
+                sm_init: parseInt(document.getElementById('sm_init').value),
+                j_init: parseInt(document.getElementById('j_init').value),
+                m_init: parseInt(document.getElementById('m_init').value),
+                tsej: parseFloat(document.getElementById('tsej').value),
+                tsem: parseFloat(document.getElementById('tsem').value),
+                tej: parseFloat(document.getElementById('tej').value),
+                tem: parseFloat(document.getElementById('tem').value),
+                tjh: parseFloat(document.getElementById('tjh').value),
+                tjr: parseFloat(document.getElementById('tjr').value),
+                tjf: parseFloat(document.getElementById('tjf').value),
+                tmh: parseFloat(document.getElementById('tmh').value),
+                tmr: parseFloat(document.getElementById('tmr').value),
+                tmf: parseFloat(document.getElementById('tmf').value),
+                thu: parseFloat(document.getElementById('thu').value),
+                thr: parseFloat(document.getElementById('thr').value),
+                thf: parseFloat(document.getElementById('thf').value),
+                tur: parseFloat(document.getElementById('tur').value),
+                tuf: parseFloat(document.getElementById('tuf').value),
+                days: parseInt(document.getElementById('days').value)
+            };
+        }
+
+        function drawChart(results) {
+            const canvas = document.getElementById('chartCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Configure canvas
+            canvas.width = canvas.offsetWidth * 2;
+            canvas.height = canvas.offsetHeight * 2;
+            ctx.scale(2, 2);
+            
+            const width = canvas.width / 2;
+            const height = canvas.height / 2;
+            const margin = { top: 20, right: 20, bottom: 50, left: 80 };
+            const chartWidth = width - margin.left - margin.right;
+            const chartHeight = height - margin.top - margin.bottom;
+
+            // Clear canvas
+            ctx.clearRect(0, 0, width, height);
+
+            // Find maximum values for scaling
+            const maxValue = Math.max(
+                Math.max(...results.nonSusceptible),
+                Math.max(...results.E0),
+                Math.max(...results.J0),
+                Math.max(...results.M0),
+                Math.max(...results.H0),
+                Math.max(...results.U0),
+                Math.max(...results.R),
+                Math.max(...results.F)
+            );
+
+            const maxTime = Math.max(...results.time);
+
+            // Function to scale coordinates
+            const scaleX = (x) => margin.left + (x / maxTime) * chartWidth;
+            const scaleY = (y) => margin.top + chartHeight - (y / maxValue) * chartHeight;
+
+            // Colors for each compartment
+            const colors = {
+                nonSusceptible: '#3498db',
+                E0: '#f39c12',
+                J0: '#e74c3c',
+                M0: '#e67e22',
+                H0: '#9b59b6',
+                U0: '#8e44ad',
+                R: '#27ae60',
+                F: '#34495e'
+            };
+
+            // Draw axes
+            ctx.strokeStyle = '#bdc3c7';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(margin.left, margin.top);
+            ctx.lineTo(margin.left, margin.top + chartHeight);
+            ctx.lineTo(margin.left + chartWidth, margin.top + chartHeight);
+            ctx.stroke();
+
+            // Draw grid lines
+            ctx.strokeStyle = '#ecf0f1';
+            ctx.lineWidth = 0.5;
+            for (let i = 0; i <= 10; i++) {
+                const y = margin.top + (chartHeight / 10) * i;
+                ctx.beginPath();
+                ctx.moveTo(margin.left, y);
+                ctx.lineTo(margin.left + chartWidth, y);
+                ctx.stroke();
+            }
+
+            // Function to draw a curve
+            function drawCurve(data, color, lineWidth = 2) {
+                ctx.strokeStyle = color;
+                ctx.lineWidth = lineWidth;
+                ctx.beginPath();
+                
+                for (let i = 0; i < data.length; i++) {
+                    const x = scaleX(results.time[i]);
+                    const y = scaleY(data[i]);
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                
+                ctx.stroke();
+            }
+
+            // Draw all curves with thicker lines
+            drawCurve(results.nonSusceptible, colors.nonSusceptible, 4);
+            drawCurve(results.E0, colors.E0, 4);
+            drawCurve(results.J0, colors.J0, 5); // Extra thick line for young infected
+            drawCurve(results.M0, colors.M0, 5); // Extra thick line for elder infected
+            drawCurve(results.H0, colors.H0, 4);
+            drawCurve(results.U0, colors.U0, 4);
+            drawCurve(results.R, colors.R, 4);
+            drawCurve(results.F, colors.F, 4);
+
+            // Axis labels
+            ctx.fillStyle = '#2c3e50';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Days', margin.left + chartWidth / 2, height - 10);
+            
+            ctx.save();
+            ctx.translate(15, margin.top + chartHeight / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText('Cumulative Population', 0, 0);
+            ctx.restore();
+
+            // Y-axis numeric labels
+            ctx.textAlign = 'right';
+            for (let i = 0; i <= 5; i++) {
+                const value = (maxValue / 5) * i;
+                const y = scaleY(value);
+                ctx.fillText(Math.round(value).toLocaleString(), margin.left - 10, y + 5);
+            }
+
+            // X-axis numeric labels
+            ctx.textAlign = 'center';
+            for (let i = 0; i <= 5; i++) {
+                const value = (maxTime / 5) * i;
+                const x = scaleX(value);
+                ctx.fillText(Math.round(value), x, margin.top + chartHeight + 20);
+            }
+        }
+
+        function displayStats(stats) {
+            const statsDiv = document.getElementById('stats');
+            const finalStatsDiv = document.getElementById('final-stats');
+            
+            finalStatsDiv.innerHTML = `
+                <div class="stat-item"><span>Total Non-Susceptible:</span><span>${stats.totalNonSusceptible.toLocaleString()}</span></div>
+                <div class="stat-item"><span>Total Exposed:</span><span>${stats.totalExposed.toLocaleString()}</span></div>
+                <div class="stat-item"><span>Total Young Infected:</span><span>${stats.totalInfectedJ.toLocaleString()}</span></div>
+                <div class="stat-item"><span>Total Elder Infected:</span><span>${stats.totalInfectedM.toLocaleString()}</span></div>
+                <div class="stat-item"><span>Total Hospitalized:</span><span>${stats.totalHospitalized.toLocaleString()}</span></div>
+                <div class="stat-item"><span>Total ICU:</span><span>${stats.totalICU.toLocaleString()}</span></div>
+                <div class="stat-item"><span>Total Recovered:</span><span>${stats.totalRecovered.toLocaleString()}</span></div>
+                <div class="stat-item"><span>Total Deaths:</span><span>${stats.totalDeaths.toLocaleString()}</span></div>
+                <div class="stat-item"><span>Attack Rate:</span><span>${stats.attackRate}%</span></div>
+            `;
+            
+            statsDiv.style.display = 'block';
+        }
+
+        function runSimulation() {
+            const params = getParameters();
+            
+            // Basic validation
+            if (params.sj_init <= 0 || params.sm_init <= 0) {
+                alert('Population values must be positive');
+                return;
+            }
+            
+            if (params.j_init < 0 || params.m_init < 0) {
+                alert('Initial infected cannot be negative');
+                return;
+            }
+
+            const model = new ModifiedSEIRModel(params);
+            model.simulate();
+            
+            const results = model.getResults();
+            const stats = model.getFinalStats();
+            
+            drawChart(results);
+            displayStats(stats);
+        }
+
+        // Run initial simulation when page loads
+        window.onload = function() {
+            // Initialize all displayed values
+            const paramIds = ['sj_init', 'sm_init', 'j_init', 'm_init', 'tsej', 'tsem', 'tej', 'tem', 
+                             'tjh', 'tjr', 'tjf', 'tmh', 'tmr', 'tmf', 'thu', 'thr', 'thf', 'tur', 'tuf', 'days'];
+            paramIds.forEach(updateValue);
+            
+            runSimulation();
+        };
+
+        // Resize chart when window size changes
+        window.onresize = function() {
+            const canvas = document.getElementById('chartCanvas');
+            if (canvas.getContext) {
+                runSimulation();
+            }
+        };
+    </script>
+</body>
+</html>
