@@ -856,7 +856,26 @@
                     this.renderTimeout = null;
                 }
             }
+            // Detectar si estamos en local o en GitHub Pages
+            isLocalEnvironment() {
+                return window.location.protocol === 'file:' || 
+                    window.location.hostname === 'localhost' || 
+                    window.location.hostname === '127.0.0.1';
+            }
+
             async loadFile(file) {
+                // Si no hay archivo y no estamos en local, solicitar nombre de archivo
+                if (!file && !this.isLocalEnvironment()) {
+                    return this.loadFileFromGitHub();
+                }
+
+                // Si no hay archivo y estamos en local, mostrar error
+                if (!file) {
+                    alert('Please select a CSV file');
+                    return;
+                }
+
+                // Procesar archivo normalmente
                 this.showLoading();
                 
                 // Resetear a estado inicial antes de cargar nuevos datos
@@ -909,6 +928,70 @@
                 } catch (error) {
                     console.error('Error loading file:', error);
                     alert('Error loading file. Please check the file format.');
+                } finally {
+                    this.hideLoading();
+                }
+            }
+
+            // Nuevo método para cargar desde GitHub
+            async loadFileFromGitHub() {
+                const fileName = prompt("Introduce el nombre del archivo CSV (ej: datos.csv):");
+                if (!fileName) return;
+                
+                this.showLoading();
+                this.resetToInitialState();
+                
+                try {
+                    const response = await fetch('./' + fileName);
+                    if (!response.ok) {
+                        throw new Error('Archivo no encontrado: ' + fileName);
+                    }
+                    
+                    const text = await response.text();
+                    this.currentFileName = fileName;
+                    
+                    const lines = text.trim().split('\n');
+                    this.columnNames = lines[0].split(',').map(name => name.trim());
+                    this.columnOrder = [...this.columnNames];
+                    this.originalData = lines.slice(1).map(line => 
+                        line.split(',').map(val => parseFloat(val.trim()))
+                    );
+                    this.transformedData = JSON.parse(JSON.stringify(this.originalData));
+                    
+                    // Mostrar información del archivo
+                    document.getElementById('fileName').textContent = this.currentFileName;
+                    document.getElementById('fileInfo').classList.add('show');
+                    
+                    this.clearPercentageInputs();
+                    
+                    this.detectLogRecommendations();
+                    this.logTransformed = Object.fromEntries(this.columnNames.map(name => [name, false]));
+                    
+                    this.columnNames.forEach(name => {
+                        if (this.logRecommended[name] && !this.hasNegativeValues[name]) {
+                            this.logTransformed[name] = true;
+                        }
+                    });
+                    
+                    this.applyTransformations();
+                    this.colors = this.originalData.map((_, i) => this.colorSelection(i, this.originalData.length));
+                    this.renderColumnList();
+                    this.renderLogCheckboxes();
+                    this.renderTable();
+                    
+                    this.toggleScale();
+                    
+                    setTimeout(() => {
+                        this.resizeCanvas();
+                        this.renderParallelPlot();
+                    }, 100);
+                    
+                    this.updateStats();
+                    this.showSections();
+                    
+                } catch (error) {
+                    console.error('Error loading file from GitHub:', error);
+                    alert('Error: ' + error.message);
                 } finally {
                     this.hideLoading();
                 }
@@ -2583,6 +2666,21 @@
             const file = event.target.files[0];
             if (file) {
                 dataClass.loadFile(file);
+            }
+        });
+
+        // Detectar automáticamente si cargar archivo desde GitHub cuando no hay archivo local
+        document.addEventListener('DOMContentLoaded', () => {
+            // Si estamos en GitHub Pages y no hay archivo seleccionado, 
+            // podemos activar la carga automática cuando el usuario haga clic en "Choose CSV File"
+            const fileLabel = document.querySelector('label[for="fileInput"]');
+            if (fileLabel && !dataClass.isLocalEnvironment()) {
+                fileLabel.addEventListener('click', (e) => {
+                    if (!document.getElementById('fileInput').files.length) {
+                        e.preventDefault();
+                        dataClass.loadFileFromGitHub();
+                    }
+                });
             }
         });
 
