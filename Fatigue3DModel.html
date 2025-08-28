@@ -552,30 +552,19 @@
                 document.getElementById('fileInfo').innerHTML += 
                     '<div class="success">Entorno: GitHub Pages - Cargar archivo del repositorio</div>';
                 // En GitHub, intentar cargar DataFatigue.csv automáticamente
-                setTimeout(() => {
-                    loadFileFromGitHub();
-                }, 1000);
             }
         });
 
         // Detectar si estamos en local o en GitHub Pages
         function isLocalEnvironment() {
-            return window.location.protocol === 'file:' || 
-                window.location.hostname === 'localhost' || 
-                window.location.hostname === '127.0.0.1' ||
-                window.location.hostname === '';
+            return window.location.protocol === 'file:';
         }
 
         // Reemplaza toda la función loadFile():
         function loadFile() {
-            const fileInput = document.getElementById('fileInput');
-            const file = fileInput.files[0];
-            
-            if (file) {
-                // Si hay un archivo seleccionado, usarlo
+            if (isLocalEnvironment()) {
                 loadFileLocal();
             } else {
-                // Si no hay archivo seleccionado, intentar cargar desde GitHub
                 loadFileFromGitHub();
             }
         }
