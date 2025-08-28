@@ -1,0 +1,1841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistical Analysis with Plotly</title>
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .section {
+            margin-bottom: 30px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        select, button, input[type="file"], input[type="number"] {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        .toggle-btn {
+            background-color: #28a745;
+        }
+        .toggle-btn:hover {
+            background-color: #1e7e34;
+        }
+        .download-btn {
+            background-color: #dc3545;
+            margin: 10px 0;
+        }
+        .download-btn:hover {
+            background-color: #c82333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .table-container {
+            max-height: 400px;
+            overflow: auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .plot-container {
+            margin: 20px 0;
+        }
+        .parameters {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .quantiles {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 10px 0;
+        }
+        .quantile-item {
+            background-color: #e9ecef;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .error {
+            color: #dc3545;
+            background-color: #f8d7da;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .success {
+            color: #155724;
+            background-color: #d4edda;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+        }
+        h2 {
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 5px;
+        }
+        h3 {
+            color: #555;
+        }
+        .plot-row {
+            display: flex;
+            width: 100%;
+        }
+        .percentile-plot {
+            width: 30%;
+            display: inline-block;
+        }
+        .cdf-plot {
+            width: 70%;
+            display: inline-block;
+        }
+        .quantiles-table {
+            margin: 20px;
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .quantiles-table th, .quantiles-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        .quantiles-table th {
+            background-color: #f2f2f2;
+        }
+        .quantiles-line {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .parameters h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .parameters code {
+            background-color: #e9ecef;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Statistical Analysis with Plotly</h1>
+        
+        <!-- PART I: DATA READING -->
+        <div class="section">
+            <h2>PART I: Data Reading and Variable Definition</h2>
+            <div class="controls">
+                <input type="file" id="fileInput" accept=".csv" />
+                <button onclick="loadFile()">Load File</button>
+                <label>var3bandwidth (0-1): </label>
+                <input type="number" id="var3bandwidthInput" min="0" max="1" step="0.01" value="0.10" />
+                <button onclick="applyvar3bandwidth()">Apply var3bandwidth</button>
+            </div>
+            <div id="fileInfo"></div>
+            <div id="var3bandwidthInfo"></div>
+            
+            <div class="controls" id="variableSelectors" style="display: none;">
+                <label>Vertical Variable (Y): </label>
+                <select id="varverSelect"></select>
+                
+                <label>Horizontal Variable (X): </label>
+                <select id="varhorSelect"></select>
+                
+                <button onclick="selectVariables()">Apply Selection</button>
+            </div>
+            
+            <div id="scatterPlot" class="plot-container"></div>
+        </div>
+
+        <!-- PART II: DATA TABLE -->
+        <div class="section">
+            <h2>PART II: Data Table</h2>
+            <div class="controls">
+                <button id="toggleScaleBtn" onclick="toggleDataScale()" disabled class="toggle-btn">
+                    Show Data in [0,1] Scale
+                </button>
+            </div>
+            <div class="table-container">
+                <table id="dataTable">
+                    <thead id="tableHead"></thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- PART III: MODEL FITTING -->
+        <div class="section">
+            <h2>PART III: Three-dimensional Model Fitting</h2>
+            <button onclick="runAnalysis()" id="fitModelBtn" disabled>Fit Model and Analyze</button>
+            
+            <div id="modelResults"></div>
+            
+            <!-- Container for CDF plot -->
+            <div class="plot-container">
+                <button class="download-btn" onclick="downloadPlotAsPDF('residualsPlot', 'Residuals_CDF.pdf')" style="display: none;" id="downloadResidualsPlotBtn">Download Plot as PDF</button>
+                <div id="residualsPlot"></div>
+            </div>
+        </div>
+
+        <!-- PART V: QUANTILES -->
+        <div class="section">
+            <h2>PART V: Percentile Calculation</h2>
+            <div id="quantilesResults"></div>
+        </div>
+
+        <!-- PART VI: HYPERBOLAS -->
+        <div class="section">
+            <h2>PART VI: Hyperbolas for Different var3 Values</h2>
+            <div id="hyperbolaPlots" class="plot-container"></div>
+            <button onclick="generateScaled01Plots()" id="scaledPlotsBtn" disabled>
+                Generate Plots in [0,1] Scale
+            </button>
+            <div id="hyperbolaPlots01" class="plot-container"></div>
+        </div>
+    </div>
+
+    <script>
+        function calculateECDF(values) {
+            const validValues = values.filter(v => v !== null && isFinite(v)).sort((a, b) => a - b);
+            if (validValues.length === 0) return [];
+            const n = validValues.length;
+            return validValues.map((val, i) => ({
+                value: val,
+                prob: (i + 1) / n
+            }));
+        }
+
+        function calculateScale01() {
+            datosescala01 = [];
+            
+            if (!headers.length || !datosescalaoriginal.length) {
+                console.warn("No columns or valid data to transform to [0,1] scale");
+                document.getElementById('dataTable').innerHTML = 
+                    '<div class="error">No valid data to transform to [0,1] scale</div>';
+                return;
+            }
+
+            for (let col = 0; col < headers.length; col++) {
+                const columnValues = datosescalaoriginal.map(r => r[col]);
+                const scaledValues = convertToScale01(columnValues, col);
+                if (scaledValues.some(v => v !== null && isFinite(v))) {
+                    datosescala01.push(scaledValues);
+                }
+            }
+            
+            if (datosescala01.length === 0) {
+                console.warn("No valid columns generated in [0,1] scale");
+                document.getElementById('dataTable').innerHTML = 
+                    '<div class="error">No valid data generated in [0,1] scale</div>';
+                return;
+            }
+            
+            datosescala01 = datosescala01[0].map((_, rowIndex) => 
+                datosescala01.map(col => col[rowIndex])
+            );
+        }
+
+        function convertToScale01(values, colIndex) {
+            const validValues = values.filter(v => v !== null && isFinite(v)).sort((a, b) => a - b);
+            if (validValues.length === 0) return values.map(() => null);
+
+            const n = validValues.length;
+            const ecdf = validValues.map((val, i) => ({
+                value: val,
+                prob: (i + 1) / n
+            }));
+
+            return values.map(value => {
+                if (value === null || !isFinite(value)) return null;
+                if (value <= ecdf[0].value) return 0;
+                if (value >= ecdf[ecdf.length - 1].value) return 1;
+                for (let i = 0; i < ecdf.length - 1; i++) {
+                    if (value >= ecdf[i].value && value <= ecdf[i + 1].value) {
+                        const frac = (value - ecdf[i].value) / (ecdf[i + 1].value - ecdf[i].value);
+                        return ecdf[i].prob + frac * (ecdf[i + 1].prob - ecdf[i].prob);
+                    }
+                }
+                return 1;
+            });
+        }
+
+        function transformToScale01(value, ecdf) {
+            if (value === null || !isFinite(value) || ecdf.length === 0) return null;
+            if (value <= ecdf[0].value) return 0;
+            if (value >= ecdf[ecdf.length - 1].value) return 1;
+            for (let i = 0; i < ecdf.length - 1; i++) {
+                if (value >= ecdf[i].value && value <= ecdf[i + 1].value) {
+                    const frac = (value - ecdf[i].value) / (ecdf[i + 1].value - ecdf[i].value);
+                    return ecdf[i].prob + frac * (ecdf[i + 1].prob - ecdf[i].prob);
+                }
+            }
+            return 1;
+        }
+
+        function inverseTransformFromScale01(scaledValue, ecdf) {
+            if (scaledValue === 0) return ecdf[0].value;
+            if (scaledValue === 1) return ecdf[ecdf.length - 1].value;
+            
+            for (let i = 0; i < ecdf.length - 1; i++) {
+                if (scaledValue >= ecdf[i].prob && scaledValue <= ecdf[i + 1].prob) {
+                    const frac = (scaledValue - ecdf[i].prob) / (ecdf[i + 1].prob - ecdf[i].prob);
+                    return ecdf[i].value + frac * (ecdf[i + 1].value - ecdf[i].value);
+                }
+            }
+            
+            return ecdf[ecdf.length - 1].value;
+        }
+
+        class Hyperbola {
+            constructor(params) {
+                this.params = {
+                    C0: params.C0 || 0,
+                    C1: params.C1 || 0,
+                    C2: params.C2 || 0,
+                    C3: params.C3 || 0,
+                    C12: params.C12 || 0,
+                    C13: params.C13 || 0,
+                    C23: params.C23 || 0,
+                    var3: params.var3 || 0,
+                    varhorMin: params.varhorMin || -2,
+                    varhorMax: params.varhorMax || 2,
+                    cuantiles: params.cuantiles || [0],
+                    step: params.step || 0.01
+                };
+                this.validateParams();
+            }
+
+            validateParams() {
+                if (!Array.isArray(this.params.cuantiles) || this.params.cuantiles.length === 0) {
+                    throw new Error('cuantiles must be a non-empty array');
+                }
+                if (this.params.varhorMin >= this.params.varhorMax) {
+                    throw new Error('varhorMin must be less than varhorMax');
+                }
+                if (this.params.step <= 0) {
+                    throw new Error('step must be positive');
+                }
+            }
+
+            calculateVarver(varhor, quantile) {
+                const { C0, C1, C2, C3, C12, C13, C23, var3 } = this.params;
+
+                if (!isFinite(varhor) || !isFinite(quantile) || !isFinite(var3) ||
+                    !isFinite(C0) || !isFinite(C1) || !isFinite(C2) || !isFinite(C3) ||
+                    !isFinite(C12) || !isFinite(C13) || !isFinite(C23)) {
+                    console.warn('Invalid inputs in calculateVarver:', { varhor, quantile, var3, C0, C1, C2, C3, C12, C13, C23 });
+                    return null;
+                }
+
+                const numerator = quantile - C0 - C1 * varhor - C3 * var3 - C13 * varhor * var3;
+                const denominator = C2 + C12 * varhor + C23 * var3 + varhor * var3;
+
+                if (Math.abs(denominator) < 1e-10) {
+                    console.warn('Denominator close to zero in calculateVarver:', denominator);
+                    return null;
+                }
+
+                const result = numerator / denominator;
+                return isFinite(result) ? result : null;
+            }
+
+            getVerticalAsymptote() {
+                const { C2, C23, C12, var3 } = this.params;
+                const denominator = C12 + var3;
+                if (Math.abs(denominator) < 1e-10) {
+                    return Infinity;
+                }
+                return -(C2 + C23 * var3) / denominator;
+            }
+
+            getHorizontalAsymptote() {
+                const { C1, C13, C12, var3 } = this.params;
+                const denominator = C12 + var3;
+                if (Math.abs(denominator) < 1e-10) {
+                    return Infinity;
+                }
+                return -(C1 + C13 * var3) / denominator;
+            }
+
+            generatePointsForQuantile(quantile) {
+                const { varhorMin, varhorMax, step } = this.params;
+                const xAsymptote = this.getVerticalAsymptote();
+                let points = { x: [], y: [] };
+                
+                for (let varhor = varhorMin; varhor <= varhorMax; varhor += step) {
+                    if (Math.abs(varhor - xAsymptote) > 0.05) {
+                        let varver = this.calculateVarver(varhor, quantile);
+                        if (varver !== null && isFinite(varver)) {
+                            points.x.push(varhor);
+                            points.y.push(varver);
+                        }
+                    }
+                }
+                return points;
+            }
+        }
+
+        function displayAsymptotesInfo(hyperbola, var3Value, containerId, varhorMin, varverMin) {
+            const verticalAsymptote = hyperbola.getVerticalAsymptote();
+            const horizontalAsymptote = hyperbola.getHorizontalAsymptote();
+            let restrictionsMessage = '';
+
+            const verticalConditionMet = isFinite(verticalAsymptote) && verticalAsymptote < varhorMin;
+            const horizontalConditionMet = isFinite(horizontalAsymptote) && horizontalAsymptote < varverMin;
+
+            if (verticalConditionMet && horizontalConditionMet) {
+                restrictionsMessage = '<p><strong>Asymptotic restrictions are met.</strong></p>';
+            } else {
+                restrictionsMessage = '<p><strong>Restrictions not met:</strong></p><ul>';
+                if (!verticalConditionMet && isFinite(verticalAsymptote)) {
+                    restrictionsMessage += `<li>Restriction not met: verticalAsymptote (${verticalAsymptote.toFixed(6)}) < varhorMin (${varhorMin.toFixed(6)})</li>`;
+                }
+                if (!horizontalConditionMet && isFinite(horizontalAsymptote)) {
+                    restrictionsMessage += `<li>Restriction not met: horizontalAsymptote (${horizontalAsymptote.toFixed(6)}) < varverMin (${varverMin.toFixed(6)})</li>`;
+                }
+                restrictionsMessage += '</ul>';
+            }
+
+            const asymptotesInfo = `
+                <div class="parameters">
+                    <h3>Asymptotes and ranges for ${headers[2]} = ${var3Value.toFixed(3)}:</h3>
+                    <p><strong>Data range:</strong></p>
+                    <ul>
+                        <li><code>varhorMin = ${varhorMin.toFixed(6)}</code></li>
+                        <li><code>varverMin = ${varverMin.toFixed(6)}</code></li>
+                    </ul>
+                    <p><strong>Calculated asymptotes:</strong></p>
+                    <ul>
+                        <li>Vertical asymptote: <code>${isFinite(verticalAsymptote) ? verticalAsymptote.toFixed(6) : 'Undefined'}</code></li>
+                        <li>Horizontal asymptote: <code>${isFinite(horizontalAsymptote) ? horizontalAsymptote.toFixed(6) : 'Undefined'}</code></li>
+                    </ul>
+                    ${restrictionsMessage}
+                </div>
+            `;
+
+            const container = document.getElementById(containerId);
+            if (container) {
+                container.innerHTML += asymptotesInfo;
+            }
+        }
+
+        function isReversedPercentiles(cuantiles, varhor, var3Val, params) {
+            const hyperbola = new Hyperbola({
+                ...params,
+                var3: var3Val,
+                cuantiles: cuantiles
+            });
+            
+            const validVarhor = varhor.filter(v => v !== null && isFinite(v));
+            const varhorMean = validVarhor.length > 0 ? 
+                validVarhor.reduce((a, b) => a + b, 0) / validVarhor.length : 0;
+
+            if (cuantiles.length < 2) return false;
+            
+            const varverLow = hyperbola.calculateVarver(varhorMean, cuantiles[0]);
+            const varverHigh = hyperbola.calculateVarver(varhorMean, cuantiles[cuantiles.length - 1]);
+            
+            return varverHigh !== null && varverLow !== null && varverHigh < varverLow;
+        }
+
+        // Global variables
+        let var3bandwidth = 0.10;
+        let rawData = [];
+        let headers = [];
+        let processedData = [];
+        let datosescalaoriginal = [];
+        let datosescala01 = [];
+        let currentDataScale = 'original';
+        let logColumns = [];
+        let varhor, varver, var3;
+        let varhorIndex, varverIndex, var3Index;
+        let modelParams = {};
+        let allresiduals = [];
+        let sortedallresiduals = [];
+        let residuals = [];
+        let sortedresiduals = [];
+        let cuantiles = [];
+        let hyperbolaPointsOriginal = [];
+        let hyperbolaPoints01 = [];
+        let outliers = [];
+        let validIndices = [];
+
+        function applyvar3bandwidth() {
+            const var3bandwidthInput = document.getElementById('var3bandwidthInput');
+            const var3bandwidthValue = parseFloat(var3bandwidthInput.value);
+            const var3bandwidthInfo = document.getElementById('var3bandwidthInfo');
+
+            if (isNaN(var3bandwidthValue) || var3bandwidthValue <= 0 || var3bandwidthValue >= 1) {
+                var3bandwidthInfo.innerHTML = '<div class="error">✗ Error: var3bandwidth must be between 0 and 1 (exclusive).</div>';
+                return;
+            }
+
+            var3bandwidth = var3bandwidthValue;
+            var3bandwidthInfo.innerHTML = `<div class="success">✓ var3bandwidth updated: ${var3bandwidth.toFixed(3)}</div>`;
+        }
+
+        window.addEventListener('load', function() {
+            if (typeof Plotly !== 'undefined') {
+                document.getElementById('fileInfo').innerHTML = 
+                    '<div class="success">✓ Plotly loaded successfully</div>';
+            } else {
+                document.getElementById('fileInfo').innerHTML = 
+                    '<div class="error">✗ Error: Plotly has not loaded</div>';
+            }
+        });
+
+        function loadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please select a CSV file');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                parseCSV(text);
+            };
+            reader.readAsText(file);
+        }
+
+        function parseCSV(text) {
+            const lines = text.trim().split('\n');
+            headers = lines[0].split(',').map(h => h.trim());
+            
+            rawData = [];
+            for (let i = 1; i < lines.length; i++) {
+                const values = lines[i].split(',').map(v => {
+                    const num = parseFloat(v.trim());
+                    return isNaN(num) ? null : num;
+                });
+                if (values.some(v => v !== null)) {
+                    rawData.push(values);
+                }
+            }
+
+            processData();
+            setupVariableSelectors();
+            displayFileInfo();
+        }
+
+        function displayFileInfo() {
+            const fileInfo = document.getElementById('fileInfo');
+            fileInfo.innerHTML = `
+                <div class="success">
+                    <p>✓ File loaded successfully</p>
+                    <p>Detected columns: ${headers.join(', ')}</p>
+                    <p>Data rows: ${rawData.length}</p>
+                    <p>Columns transformed to logarithm: ${logColumns.length > 0 ? logColumns.map(i => headers[i]).join(', ') : 'None'}</p>
+                </div>
+            `;
+        }
+
+        function processData() {
+            logColumns = [];
+            processedData = rawData.map(row => [...row]);
+
+            for (let col = 0; col < headers.length; col++) {
+                const allValues = rawData.map(row => row[col]).filter(v => v !== null);
+                if (allValues.length === 0) continue;
+
+                const hasNonPositive = allValues.some(v => v <= 0);
+                if (hasNonPositive) continue;
+
+                const values = allValues;
+                const min = Math.min(...values);
+                const max = Math.max(...values);
+                const isLogColumn = (max / min > 1000) && min > 0;
+
+                if (isLogColumn) {
+                    logColumns.push(col);
+                    for (let row = 0; row < processedData.length; row++) {
+                        if (processedData[row][col] !== null) {
+                            processedData[row][col] = Math.log10(processedData[row][col]);
+                        }
+                    }
+                }
+
+                for (let row = 0; row < processedData.length; row++) {
+                    if (processedData[row][col] !== null && 
+                        !Number.isInteger(rawData[row][col])) {
+                        processedData[row][col] = parseFloat(processedData[row][col].toPrecision(6));
+                    }
+                }
+            }
+
+            datosescalaoriginal = processedData.map(row => [...row]);
+        }
+
+        function setupVariableSelectors() {
+            const varverSelect = document.getElementById('varverSelect');
+            const varhorSelect = document.getElementById('varhorSelect');
+            
+            varverSelect.innerHTML = '';
+            varhorSelect.innerHTML = '';
+
+            headers.forEach((header, index) => {
+                const option1 = document.createElement('option');
+                option1.value = index;
+                option1.textContent = logColumns.includes(index) ? `log(${header})` : header;
+                varverSelect.appendChild(option1);
+
+                const option2 = document.createElement('option');
+                option2.value = index;
+                option2.textContent = logColumns.includes(index) ? `log(${header})` : header;
+                varhorSelect.appendChild(option2);
+            });
+            
+            if (headers.length > 2) {
+                varverSelect.value = 2;
+                varhorSelect.value = 1;
+            }
+            document.getElementById('variableSelectors').style.display = 'block';
+        }
+
+        function selectVariables() {
+            varverIndex = parseInt(document.getElementById('varverSelect').value);
+            varhorIndex = parseInt(document.getElementById('varhorSelect').value);
+
+            if (varverIndex === varhorIndex) {
+                alert('Vertical and horizontal variables must be different');
+                return;
+            }
+
+            var3Index = [0, 1, 2].find(i => i !== varverIndex && i !== varhorIndex);
+
+            const newOrder = [varhorIndex, varverIndex, var3Index];
+            const newHeaders = newOrder.map(i => headers[i]);
+            const newLogColumns = newOrder.map((orig, newPos) => 
+                logColumns.includes(orig) ? newPos : -1).filter(i => i >= 0);
+
+            headers = newHeaders;
+            logColumns = newLogColumns;
+            
+            processedData = processedData.map(row => newOrder.map(i => row[i]));
+            datosescalaoriginal = processedData.map(row => [...row]);
+
+            varhorIndex = 0;
+            varverIndex = 1;
+            var3Index = 2;
+
+            varhor = processedData.map(row => row[0]);
+            varver = processedData.map(row => row[1]);
+            var3 = processedData.map(row => row[2]);
+
+            validIndices = Array.from({length: varhor.length}, (_, i) => i);
+            outliers = [];
+
+            generateScatterPlot();
+            generateDataTable();
+            calculateScale01();
+            
+            document.getElementById('toggleScaleBtn').disabled = false;
+            document.getElementById('fitModelBtn').disabled = false;
+        }
+
+        function generateScatterPlot() {
+            const validData = { x: [], y: [], indices: [] };
+            const outlierData = { x: [], y: [], indices: [] };
+
+            for (let i = 0; i < varhor.length; i++) {
+                if (varhor[i] !== null && varver[i] !== null && 
+                    isFinite(varhor[i]) && isFinite(varver[i])) {
+                    if (validIndices.includes(i)) {
+                        validData.x.push(varhor[i]);
+                        validData.y.push(varver[i]);
+                        validData.indices.push(i);
+                    } else if (outliers.some(o => o.index === i)) {
+                        outlierData.x.push(varhor[i]);
+                        outlierData.y.push(varver[i]);
+                        outlierData.indices.push(i);
+                    }
+                }
+            }
+
+            if (validData.x.length === 0 && outlierData.x.length === 0) {
+                document.getElementById('scatterPlot').innerHTML = 
+                    '<div class="error">No valid data for plot</div>';
+                return;
+            }
+
+            const traces = [];
+
+            if (validData.x.length > 0) {
+                traces.push({
+                    x: validData.x,
+                    y: validData.y,
+                    mode: 'markers',
+                    type: 'scatter',
+                    name: 'Valid Data',
+                    marker: { color: 'blue', size: 8 },
+                    text: validData.indices.map(i => `Index: ${i}<br>${headers[0]}: ${varhor[i].toFixed(4)}<br>${headers[1]}: ${varver[i].toFixed(4)}`),
+                    hoverinfo: 'text',
+                    hovertemplate: '%{text}<br>X: %{x:.4f}<br>Y: %{y:.4f}<extra></extra>'
+                });
+            }
+
+            if (outlierData.x.length > 0) {
+                traces.push({
+                    x: outlierData.x,
+                    y: outlierData.y,
+                    mode: 'markers',
+                    type: 'scatter',
+                    name: 'Outliers',
+                    marker: { 
+                        color: 'blue', 
+                        size: 8,
+                        line: { color: 'blue', width: 2 }
+                    },
+                    text: outlierData.indices.map(i => `Index: ${i}<br>${headers[0]}: ${varhor[i].toFixed(4)}<br>${headers[1]}: ${varver[i].toFixed(4)}`),
+                    hoverinfo: 'text',
+                    hovertemplate: '%{text}<br>X: %{x:.4f}<br>Y: %{y:.4f}<extra></extra>'
+                });
+            }
+
+            const layout = {
+                title: `${headers[1]} vs ${headers[0]} (Valid: ${validData.x.length}, Outliers: ${outlierData.x.length})`,
+                xaxis: { 
+                    title: headers[0],
+                    type: logColumns.includes(0) ? 'log' : 'linear'
+                },
+                yaxis: { 
+                    title: headers[1],
+                    type: logColumns.includes(1) ? 'log' : 'linear'
+                },
+                width: 700,
+                height: 500,
+                showlegend: true
+            };
+
+            Plotly.newPlot('scatterPlot', traces, layout);
+        }
+
+        function generateDataTable() {
+            const tableHead = document.getElementById('tableHead');
+            const tableBody = document.getElementById('tableBody');
+            
+            const headerRow = document.createElement('tr');
+            headers.forEach((header, i) => {
+                const th = document.createElement('th');
+                th.textContent = logColumns.includes(i) ? `log(${header})` : header;
+                headerRow.appendChild(th);
+            });
+            tableHead.innerHTML = '';
+            tableHead.appendChild(headerRow);
+
+            updateTableData();
+        }
+
+        function updateTableData() {
+            const tableBody = document.getElementById('tableBody');
+            const dataToShow = currentDataScale === 'original' ? datosescalaoriginal : datosescala01;
+            
+            tableBody.innerHTML = '';
+            dataToShow.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                if (!validIndices.includes(index)) {
+                    tr.style.backgroundColor = '#ffcccc';
+                }
+                row.forEach(value => {
+                    const td = document.createElement('td');
+                    td.textContent = value !== null ? value.toFixed(4) : 'N/A';
+                    tr.appendChild(td);
+                });
+                tableBody.appendChild(tr);
+            });
+        }
+
+        function calculateScale01() {
+            datosescala01 = [];
+            
+            for (let col = 0; col < headers.length; col++) {
+                const columnValues = datosescalaoriginal.map(r => r[col]);
+                const scaledValues = convertToScale01(columnValues, col);
+                datosescala01.push(scaledValues);
+            }
+            
+            datosescala01 = datosescala01[0].map((_, rowIndex) => 
+                datosescala01.map(col => col[rowIndex])
+            );
+        }
+
+        function toggleDataScale() {
+            const button = document.getElementById('toggleScaleBtn');
+            if (currentDataScale === 'original') {
+                currentDataScale = '01';
+                button.textContent = 'Show Original Data';
+            } else {
+                currentDataScale = 'original';
+                button.textContent = 'Show Data in [0,1] Scale';
+            }
+            updateTableData();
+        }
+
+        function fitModel() {
+            validIndices = Array.from({length: varhor.length}, (_, i) => i);
+            outliers = [];
+
+            const validData = [];
+            const validDataIndices = [];
+            for (let i of validIndices) {
+                if (varhor[i] !== null && varver[i] !== null && var3[i] !== null &&
+                    isFinite(varhor[i]) && isFinite(varver[i]) && isFinite(var3[i])) {
+                    validData.push([varhor[i], varver[i], var3[i]]);
+                    validDataIndices.push(i);
+                }
+            }
+
+            if (validData.length < 7) {
+                console.warn('Insufficient valid data for fitting');
+                alert('Not enough valid data for fitting (minimum 7 points)');
+                return false;
+            }
+
+            try {
+                const X = [];
+                const y = [];
+                validData.forEach(([h, v, t]) => {
+                    X.push([1, h, v, t, h*v, h*t, v*t]);
+                    y.push(-h*v*t);
+                });
+
+                const params = leastSquares(X, y);
+                modelParams = {
+                    C0: params[0],
+                    C1: params[1],
+                    C2: params[2],
+                    C3: params[3],
+                    C12: params[4],
+                    C13: params[5],
+                    C23: params[6]
+                };
+
+                residuals = calculateresiduals(validDataIndices, modelParams);
+                allresiduals = residuals;
+                sortedresiduals = [...residuals].sort((a, b) => a - b);
+
+                displayModelResults();
+                plotResidualsCDF(residuals);
+
+                return true;
+            } catch (error) {
+                console.error('Error in model fitting:', error);
+                alert('Error fitting model. Check input data.');
+                return false;
+            }
+        }
+
+        function detectOutliers(iteration) {
+            try {
+                const validVarhor = validIndices.map(i => varhor[i]).filter(v => v !== null && isFinite(v));
+                const validVarver = validIndices.map(i => varver[i]).filter(v => v !== null && isFinite(v));
+                const varhorMin = validVarhor.length > 0 ? Math.min(...validVarhor) : 0;
+                const varverMin = validVarver.length > 0 ? Math.min(...validVarver) : 0;
+
+                const validVar3 = validIndices.map(i => var3[i]).filter(v => v !== null && isFinite(v));
+                if (validVar3.length === 0) {
+                    throw new Error('No valid data for var3');
+                }
+                const var3Min = Math.min(...validVar3);
+                const var3Max = Math.max(...validVar3);
+                
+                const var3Values = [];
+                for (let i = 0; i < 5; i++) {
+                    var3Values.push(var3Min + (var3Max - var3Min) * i / 4);
+                }
+
+                const newOutliers = new Set();
+                const var3Range = var3Max - var3Min;
+                const tolerance = var3bandwidth * var3Range;
+
+                var3Values.forEach(var3Val => {
+                    const hyperbola = new Hyperbola({
+                        ...modelParams,
+                        var3: var3Val,
+                        varhorMin,
+                        varhorMax: Math.max(...validVarhor),
+                        cuantiles: [0]
+                    });
+
+                    const verticalAsymptote = hyperbola.getVerticalAsymptote();
+                    const horizontalAsymptote = hyperbola.getHorizontalAsymptote();
+
+                    validIndices.forEach(i => {
+                        if (var3[i] !== null && Math.abs(var3[i] - var3Val) <= tolerance) {
+                            const h = varhor[i];
+                            const v = varver[i];
+                            if ((isFinite(verticalAsymptote) && h <= verticalAsymptote) || 
+                                (isFinite(horizontalAsymptote) && v <= horizontalAsymptote)) {
+                                console.log(`Outlier detected in iteration ${iteration}, index=${i}, var3=${var3[i].toFixed(3)}, varhor=${h.toFixed(4)}, varver=${v.toFixed(4)}`);
+                                newOutliers.add(i);
+                                if (!outliers.some(o => o.index === i)) {
+                                    outliers.push({
+                                        index: i,
+                                        varhor: h,
+                                        varver: v,
+                                        var3: var3[i],
+                                        residual: residuals[validIndices.indexOf(i)]
+                                    });
+                                }
+                            }
+                        }
+                    });
+                });
+
+                validIndices = validIndices.filter(i => !newOutliers.has(i));
+
+                let finalMessage = `Outlier detection:\n`;
+                finalMessage += `Valid data remaining: ${validIndices.length}\n`;
+                if (newOutliers.size > 0) {
+                    finalMessage += `Outliers detected (${newOutliers.size}):\n`;
+                    outliers.filter(o => newOutliers.has(o.index)).forEach(o => {
+                        finalMessage += `  - Index: ${o.index}, ${headers[0]}: ${o.varhor.toFixed(4)}, ${headers[1]}: ${o.varver.toFixed(4)}, ${headers[2]}: ${o.var3.toFixed(4)}, Residual: ${o.residual.toFixed(4)}\n`;
+                    });
+                    console.log(`Outliers detected:`, outliers.filter(o => newOutliers.has(o.index)));
+                } else {
+                    finalMessage += `No outliers detected.\n`;
+                }
+
+                alert(finalMessage);
+                console.log(finalMessage);
+
+                generateScatterPlot();
+
+                return { success: true, newOutliers: newOutliers.size };
+            } catch (error) {
+                console.error(`Error in outlier detection:`, error);
+                alert(`Error detecting outliers: ${error.message}`);
+                return { success: false, newOutliers: 0 };
+            }
+        }
+
+        function runAnalysis() {
+            if (validIndices.length < 7) {
+                alert('Not enough valid data to continue analysis (minimum 7 points).');
+                return;
+            }
+
+            if (!fitModel()) {
+                alert('Error fitting model. Cannot continue with analysis.');
+                return;
+            }
+
+            const result = detectOutliers(1);
+            if (!result.success) {
+                alert('Error in outlier detection. Analysis terminated.');
+                return;
+            }
+
+            let finalMessage = `Outlier detection completed.\n`;
+            finalMessage += `Total outliers detected: ${result.newOutliers}.\n`;
+            finalMessage += `Valid data remaining: ${validIndices.length}.`;
+
+            if (validIndices.length < 7) {
+                finalMessage += '\nWarning: Not enough valid data after removing outliers.';
+                alert(finalMessage);
+                return;
+            }
+
+            alert(finalMessage);
+            console.log(finalMessage);
+
+            generateScatterPlot();
+            calculateQuantiles();
+            generateHyperbolaPlots();
+            document.getElementById('downloadResidualsPlotBtn').style.display = 'block';
+        }
+
+        function downloadPlotAsPDF(plotId, filename) {
+            const plotElement = document.getElementById(plotId);
+            if (!plotElement) {
+                console.error('Plotly element not found:', plotId);
+                alert('Error: Could not find plot to export.');
+                return;
+            }
+
+            Plotly.relayout(plotId, {
+                width: 1200,
+                height: 900,
+                paper_bgcolor: 'white',
+                plot_bgcolor: 'white'
+            }).then(() => {
+                Plotly.toImage(plotElement, {
+                    format: 'png',
+                    width: 2400,
+                    height: 1800,
+                    scale: 2
+                }).then(function(dataUrl) {
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF({
+                        orientation: 'landscape',
+                        unit: 'mm',
+                        format: 'a4'
+                    });
+
+                    const imgProps = pdf.getImageProperties(dataUrl);
+                    const pdfWidth = pdf.internal.pageSize.getWidth() - 20;
+                    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                    
+                    const y = (pdf.internal.pageSize.getHeight() - pdfHeight) / 2;
+                    
+                    pdf.addImage(dataUrl, 'PNG', 10, y, pdfWidth, pdfHeight);
+                    pdf.save(filename);
+                    
+                    Plotly.relayout(plotId, {
+                        width: 700,
+                        height: 500
+                    });
+                }).catch(function(error) {
+                    console.error('Error generating image:', error);
+                    alert('Error generating plot image.');
+                });
+            });
+        }
+
+        function leastSquares(X, y) {
+            const n = X.length;
+            const m = X[0].length;
+            
+            if (n < m) {
+                throw new Error('Insufficient data for number of parameters');
+            }
+            
+            const XtX = [];
+            for (let i = 0; i < m; i++) {
+                XtX[i] = [];
+                for (let j = 0; j < m; j++) {
+                    let sum = 0;
+                    for (let k = 0; k < n; k++) {
+                        sum += X[k][i] * X[k][j];
+                    }
+                    XtX[i][j] = sum;
+                }
+            }
+
+            const Xty = [];
+            for (let i = 0; i < m; i++) {
+                let sum = 0;
+                for (let k = 0; k < n; k++) {
+                    sum += X[k][i] * y[k];
+                }
+                Xty[i] = sum;
+            }
+
+            return solveLinearSystem(XtX, Xty);
+        }
+
+        function solveLinearSystem(A, b) {
+            const n = A.length;
+            const augmented = A.map((row, i) => [...row, b[i]]);
+            const epsilon = 1e-12;
+
+            for (let i = 0; i < n; i++) {
+                let maxRow = i;
+                for (let k = i + 1; k < n; k++) {
+                    if (Math.abs(augmented[k][i]) > Math.abs(augmented[maxRow][i])) {
+                        maxRow = k;
+                    }
+                }
+                
+                if (Math.abs(augmented[maxRow][i]) < epsilon) {
+                    throw new Error(`Singular matrix at row ${i}. Data may be linearly dependent.`);
+                }
+                
+                [augmented[i], augmented[maxRow]] = [augmented[maxRow], augmented[i]];
+
+                for (let k = i + 1; k < n; k++) {
+                    const factor = augmented[k][i] / augmented[i][i];
+                    for (let j = i; j <= n; j++) {
+                        augmented[k][j] -= factor * augmented[i][j];
+                    }
+                }
+            }
+
+            const x = new Array(n);
+            for (let i = n - 1; i >= 0; i--) {
+                x[i] = augmented[i][n];
+                for (let j = i + 1; j < n; j++) {
+                    x[i] -= augmented[i][j] * x[j];
+                }
+                x[i] /= augmented[i][i];
+            }
+
+            return x;
+        }
+
+        function displayModelResults() {
+            const resultsDiv = document.getElementById('modelResults');
+            if (!resultsDiv) {
+                console.error('modelResults element not found');
+                return;
+            }
+            
+            const validData = validIndices.map(i => [varhor[i], varver[i], var3[i]])
+                .filter(([h, v, t]) => h !== null && v !== null && t !== null && 
+                                      isFinite(h) && isFinite(v) && isFinite(t));
+
+            const predictions = [];
+            const actualValues = [];
+            
+            validData.forEach(([h, v, t]) => {
+                const pred = modelParams.C0 + modelParams.C1*h + modelParams.C2*v + 
+                            modelParams.C3*t + modelParams.C12*h*v + modelParams.C13*h*t + 
+                            modelParams.C23*v*t;
+                const actual = -h*v*t;
+                predictions.push(pred);
+                actualValues.push(actual);
+            });
+
+            const n = residuals.length;
+            const meanActual = actualValues.reduce((a, b) => a + b, 0) / n;
+            const meanResiduals = residuals.reduce((a, b) => a + b, 0) / n;
+            
+            const mse = residuals.reduce((sum, r) => sum + r ** 2, 0) / n;
+            const rmse = Math.sqrt(mse);
+            const mae = residuals.reduce((sum, r) => sum + Math.abs(r), 0) / n;
+            const ssTotal = actualValues.reduce((sum, actual) => sum + (actual - meanActual) ** 2, 0);
+            const ssResidual = residuals.reduce((sum, r) => sum + r ** 2, 0);
+            const rSquared = ssTotal > 0 ? 1 - (ssResidual / ssTotal) : 0;
+            
+            let mape = null;
+            const nonZeroActuals = actualValues.filter(val => Math.abs(val) > 1e-10);
+            if (nonZeroActuals.length > 0) {
+                let mapeSum = 0;
+                actualValues.forEach((actual, i) => {
+                    if (Math.abs(actual) > 1e-10) {
+                        mapeSum += Math.abs(residuals[i] / actual);
+                    }
+                });
+                mape = (mapeSum / nonZeroActuals.length) * 100;
+            }
+
+            const variance = n > 1 ? residuals.reduce((sum, r) => sum + (r - meanResiduals) ** 2, 0) / (n - 1) : 0;
+            const stdDev = Math.sqrt(variance);
+
+            let html = '<div class="parameters">';
+            html += '<h3>Estimated Parameters:</h3>';
+            html += `<p>C0 = ${modelParams.C0.toFixed(6)}</p>`;
+            html += `<p>C1 = ${modelParams.C1.toFixed(6)}</p>`;
+            html += `<p>C2 = ${modelParams.C2.toFixed(6)}</p>`;
+            html += `<p>C3 = ${modelParams.C3.toFixed(6)}</p>`;
+            html += `<p>C12 = ${modelParams.C12.toFixed(6)}</p>`;
+            html += `<p>C13 = ${modelParams.C13.toFixed(6)}</p>`;
+            html += `<p>C23 = ${modelParams.C23.toFixed(6)}</p>`;
+            html += '</div>';
+
+            html += '<div class="parameters">';
+            html += '<h3>Model Quality Metrics:</h3>';
+            html += `<p>Number of observations: ${n}</p>`;
+            html += `<p>Mean of residuals: ${meanResiduals.toFixed(6)}</p>`;
+            html += `<p>Standard deviation of residuals: ${stdDev.toFixed(6)}</p>`;
+            html += `<p>Variance of residuals: ${variance.toFixed(6)}</p>`;
+            html += `<p>MSE (Mean Squared Error): ${mse.toFixed(6)}</p>`;
+            html += `<p>RMSE (Root Mean Squared Error): ${rmse.toFixed(6)}</p>`;
+            html += `<p>MAE (Mean Absolute Error): ${mae.toFixed(6)}</p>`;
+            html += `<p>R² (Coefficient of Determination): ${rSquared.toFixed(6)}</p>`;
+            
+            if (mape !== null) {
+                html += `<p>MAPE (Mean Absolute Percentage Error): ${mape.toFixed(2)}%</p>`;
+            } else {
+                html += `<p>MAPE: Not calculable (zero values present)</p>`;
+            }
+            
+            html += '</div>';
+
+            resultsDiv.innerHTML = html;
+        }
+
+        function plotResidualsCDF(residuals) {
+            if (residuals.length === 0) {
+                document.getElementById('residualsPlot').innerHTML = 
+                    '<div class="error">No residual or quantile data for plotting</div>';
+                return;
+            }
+
+            const sortedResiduals = [...residuals].sort((a, b) => a - b);
+            const cdfY = sortedResiduals.map((_, i) => (i + 1) / sortedResiduals.length);
+
+            const colors = [
+                '#FF0000', '#FF4500', '#FF8C00', '#FFA500',
+                '#4682B4', '#1E90FF', '#4169E1'
+            ];
+            const percentiles = [0, 0.05, 0.25, 0.50, 0.75, 0.95, 0.99];
+            
+            const cdfTrace = {
+                x: sortedResiduals,
+                y: cdfY,
+                mode: 'markers+lines',
+                type: 'scatter',
+                name: 'Empirical CDF',
+                line: { color: 'blue', size: 3 },
+                marker: { color: 'blue', size: 3 }
+            };
+
+            const percentileTrace = {
+                x: cuantiles,
+                y: percentiles,
+                mode: 'markers',
+                type: 'scatter',
+                name: 'Percentiles',
+                marker: {
+                    color: colors,
+                    size: 12,
+                    line: {
+                        color: 'black',
+                        width: 1
+                    }
+                },
+                text: percentiles.map(p => `P${(p*100).toFixed(0)}`),
+                hoverinfo: 'text+x+y'
+            };
+
+            const layout = {
+                title: 'Empirical Distribution Function of Residuals',
+                xaxis: { title: 'Residuals (ε)' },
+                yaxis: { title: 'F(ε)', range: [0, 1] },
+                width: 700,
+                height: 500,
+                showlegend: true,
+                legend: {
+                    orientation: 'h',
+                    y: -0.2
+                }
+            };
+
+            Plotly.newPlot('residualsPlot', [cdfTrace, percentileTrace], layout);
+            return sortedResiduals;
+        }
+
+        function calculateresiduals(validIndices, modelParams) {
+            residuals = [];
+            const filteredValidData = validIndices.map(i => [varhor[i], varver[i], var3[i]])
+                .filter(([h, v, t]) => h !== null && v !== null && t !== null && 
+                        isFinite(h) && isFinite(v) && isFinite(t));
+
+            filteredValidData.forEach(([h, v, t]) => {
+                const predicted = modelParams.C0 + modelParams.C1*h + modelParams.C2*v + 
+                    modelParams.C3*t + modelParams.C12*h*v + modelParams.C13*h*t + 
+                    modelParams.C23*v*t;
+                const actual = -h*v*t;
+                const residual = actual - predicted;
+                residuals.push(residual);
+            });
+            return residuals;
+        }
+
+        function calculateQuantiles() {
+            const percentiles = [0, 0.05, 0.25, 0.50, 0.75, 0.95, 0.99];
+            const sortedResiduals = [...residuals].sort((a, b) => a - b);
+            const n = sortedResiduals.length;
+
+            if (n === 0) {
+                console.error("No residuals to calculate quantiles");
+                cuantiles = [];
+                return;
+            }
+
+            cuantiles = percentiles.map(p => {
+                const pos = p * (n - 1);
+                const lower = Math.floor(pos);
+                const upper = Math.ceil(pos);
+                
+                if (lower === upper) {
+                    return sortedResiduals[lower];
+                } else {
+                    const weight = pos - lower;
+                    return sortedResiduals[lower] * (1 - weight) + sortedResiduals[upper] * weight;
+                }
+            });
+
+            console.log("Calculated quantiles:", cuantiles);
+            displayQuantiles();
+        }
+
+        function displayQuantiles() {
+            const resultsDiv = document.getElementById('quantilesResults');
+            const percentiles = [0, 0.05, 0.25, 0.50, 0.75, 0.95, 0.99];
+            
+            let html = '<h3>Residual Quantiles:</h3>';
+            html += '<div class="quantiles-line">';
+            percentiles.forEach((p, i) => {
+                html += `P${(p*100).toFixed(0)} = ${cuantiles[i].toFixed(6)}; `;
+            });
+            html += '</div>';
+            
+            resultsDiv.innerHTML = html;
+            
+            document.getElementById('scaledPlotsBtn').disabled = false;
+        }
+
+        function generateHyperbolaPlots() {
+            const validVar3 = var3.filter((v, idx) => validIndices.includes(idx) && v !== null);
+            const var3Min = Math.min(...validVar3);
+            const var3Max = Math.max(...validVar3);
+            
+            const var3Values = [];
+            for (let i = 0; i < 5; i++) {
+                var3Values.push(var3Min + (var3Max - var3Min) * i / 4);
+            }
+
+            const varverMin = Math.min(...varver.filter((v, idx) => validIndices.includes(idx) && v !== null));
+            const varverMax = Math.max(...varver.filter((v, idx) => validIndices.includes(idx) && v !== null));
+            const varverRange = varverMax - varverMin;
+            const adjustedMin = varverMin - 0.2 * varverRange;
+            const adjustedMax = varverMax + 0.2 * varverRange;
+
+            const varhorValues = varhor.filter((v, idx) => validIndices.includes(idx) && v !== null);
+            const varhorMax = Math.max(...varhorValues);
+
+            let plotsHTML = '';
+            hyperbolaPointsOriginal = [];
+
+            const percentiles = [0, 0.05, 0.25, 0.50, 0.75, 0.95, 0.99];
+            const colors = [
+                '#FF0000', '#FF4500', '#FF8C00', '#FFA500',
+                '#4682B4', '#1E90FF', '#4169E1'
+            ];
+
+            var3Values.forEach((var3Val, plotIndex) => {
+                const plotId = `hyperbola-plot-${plotIndex}`;
+                const cdfPlotId = `cdf-plot-${plotIndex}`;
+                const quantilesId = `quantiles-${plotIndex}`;
+                
+                plotsHTML += `
+                    <div class="plot-row">
+                        <div class="plot-container">
+                            <button class="download-btn" onclick="downloadPlotAsPDF('${plotId}', 'Hyperbola_${var3Val.toFixed(3)}.pdf')" style="display: none;" id="downloadBtn_${plotId}">Download Plot as PDF</button>
+                            <div id="${plotId}" style="margin: 20px 0; width: 50%; display: inline-block;"></div>
+                        </div>
+                        <div class="plot-container">
+                            <button class="download-btn" onclick="downloadPlotAsPDF('${cdfPlotId}', 'CDF_${var3Val.toFixed(3)}.pdf')" style="display: none;" id="downloadBtn_${cdfPlotId}">Download Plot as PDF</button>
+                            <div id="${cdfPlotId}" style="margin: 20px 0; width: 50%; display: inline-block;"></div>
+                        </div>
+                    </div>
+                    <div id="${quantilesId}" class="quantiles-line"></div>
+                `;
+
+                setTimeout(() => {
+                    try {
+                        const var3Range = var3Max - var3Min;
+                        const tolerance = var3bandwidth * var3Range;
+                        const filteredIndices = [];
+                        const residualsForVar3 = [];
+                        
+                        for (let i of validIndices) {
+                            if (varhor[i] !== null && varver[i] !== null && var3[i] !== null &&
+                                isFinite(varhor[i]) && isFinite(varver[i]) && isFinite(var3[i])) {
+                                
+                                if (Math.abs(var3[i] - var3Val) <= tolerance) {
+                                    const predicted = modelParams.C0 + modelParams.C1*varhor[i] + modelParams.C2*varver[i] + 
+                                                    modelParams.C3*var3Val + modelParams.C12*varhor[i]*varver[i] + 
+                                                    modelParams.C13*varhor[i]*var3Val + modelParams.C23*varver[i]*var3Val;
+                                    const actual = -varhor[i]*varver[i]*var3Val;
+                                    const residual = -actual + predicted;
+                                    
+                                    residualsForVar3.push(residual);
+                                    filteredIndices.push(i);
+                                }
+                            }
+                        }
+
+                        const filteredVarhor = filteredIndices.map(i => varhor[i]).filter(v => v !== null && isFinite(v));
+                        const filteredVarver = filteredIndices.map(i => varver[i]).filter(v => v !== null && isFinite(v));
+                        const localVarhorMin = filteredVarhor.length > 0 ? Math.min(...filteredVarhor) : Math.min(...varhor.filter((v, idx) => validIndices.includes(idx) && v !== null));
+                        const localVarverMin = filteredVarver.length > 0 ? Math.min(...filteredVarver) : Math.min(...varver.filter((v, idx) => validIndices.includes(idx) && v !== null));
+
+                        const sortedResiduals = [...residualsForVar3].sort((a, b) => a - b);
+                        const n = sortedResiduals.length;
+                        const currentQuantiles = percentiles.map(p => {
+                            const pos = p * (n - 1);
+                            const lower = Math.floor(pos);
+                            const upper = Math.ceil(pos);
+                            
+                            if (lower === upper) {
+                                return sortedResiduals[lower];
+                            } else {
+                                const weight = pos - lower;
+                                return sortedResiduals[lower] * (1 - weight) + sortedResiduals[upper] * weight;
+                            }
+                        });
+
+                        const quantilesDiv = document.getElementById(quantilesId);
+                        let quantilesHTML = `<strong>Percentiles for ${headers[2]} = ${var3Val.toFixed(3)} (based on ${n} points within ±${var3bandwidth.toFixed(3)}):</strong> `;
+                        percentiles.forEach((p, i) => {
+                            quantilesHTML += `P${(p*100).toFixed(0)} = ${currentQuantiles[i].toFixed(6)}; `;
+                        });
+                        quantilesDiv.innerHTML = quantilesHTML;
+
+                        const hyperbola = new Hyperbola({
+                            ...modelParams,
+                            var3: var3Val,
+                            varhorMin: localVarhorMin,
+                            varhorMax: varhorMax,
+                            cuantiles: currentQuantiles,
+                            step: (varhorMax - localVarhorMin) / 200
+                        });
+                        displayAsymptotesInfo(hyperbola, var3Val, plotId, localVarhorMin, localVarverMin);
+
+                        const traces = [];
+                        const plotPoints = { quantiles: [], x: [], y: [], var3: var3Val, reversed: false };
+
+                        plotPoints.reversed = isReversedPercentiles(currentQuantiles, varhor.filter((v, idx) => validIndices.includes(idx)), var3Val, modelParams);
+                        currentQuantiles.forEach((quantile, qIndex) => {
+                            const points = hyperbola.generatePointsForQuantile(quantile);
+                            if (points.x.length > 0) {
+                                const filteredPoints = { x: [], y: [] };
+                                for (let i = 0; i < points.x.length; i++) {
+                                    if (points.y[i] >= adjustedMin && points.y[i] <= adjustedMax) {
+                                        filteredPoints.x.push(points.x[i]);
+                                        filteredPoints.y.push(points.y[i]);
+                                    }
+                                }
+                                
+                                let qIndex0 = qIndex;
+                                if (plotPoints.reversed) {
+                                    qIndex0 = percentiles.length - 1 - qIndex;
+                                }
+
+                                if (filteredPoints.x.length > 0) {
+                                    traces.push({
+                                        x: filteredPoints.x,
+                                        y: filteredPoints.y,
+                                        mode: 'lines',
+                                        name: `P${(percentiles[qIndex0] * 100).toFixed(0)}`,
+                                        line: { 
+                                            color: colors[qIndex0 % colors.length],
+                                            width: 3,
+                                            dash: percentiles[qIndex0] === 0.5 ? 'dash' : 'solid'
+                                        }
+                                    });
+                                    
+                                    plotPoints.quantiles.push(quantile);
+                                    plotPoints.x.push(filteredPoints.x);
+                                    plotPoints.y.push(filteredPoints.y);
+                                }
+                            }
+                        });
+
+                        const nearVar3Points = { x: [], y: [] };
+                        const outlierPoints = { x: [], y: [] };
+                        for (let i of validIndices) {
+                            if (varhor[i] !== null && varver[i] !== null && var3[i] !== null) {
+                                if (Math.abs(var3[i] - var3Val) <= tolerance) {
+                                    nearVar3Points.x.push(varhor[i]);
+                                    nearVar3Points.y.push(varver[i]);
+                                }
+                            }
+                        }
+                        for (let o of outliers) {
+                            if (Math.abs(o.var3 - var3Val) <= tolerance) {
+                                outlierPoints.x.push(o.varhor);
+                                outlierPoints.y.push(o.varver);
+                            }
+                        }
+
+                        if (nearVar3Points.x.length > 0) {
+                            traces.push({
+                                x: nearVar3Points.x,
+                                y: nearVar3Points.y,
+                                mode: 'markers',
+                                name: `Data (${headers[2]} in [${(var3Val-tolerance).toFixed(3)}, ${(var3Val+tolerance).toFixed(3)}])`,
+                                marker: { 
+                                    color: '#FF4500',
+                                    size: 8,
+                                    symbol: 'circle'
+                                }
+                            });
+                        }
+
+                        if (outlierPoints.x.length > 0) {
+                            traces.push({
+                                x: outlierPoints.x,
+                                y: outlierPoints.y,
+                                mode: 'markers',
+                                name: 'Outliers',
+                                marker: { 
+                                    color: 'blue',
+                                    size: 8,
+                                    line: { color: 'blue', width: 2 }
+                                }
+                            });
+                        }
+
+                        const otherPoints = { x: [], y: [] };
+                        for (let i of validIndices) {
+                            if (varhor[i] !== null && varver[i] !== null && var3[i] !== null) {
+                                if (!filteredIndices.includes(i)) {
+                                    otherPoints.x.push(varhor[i]);
+                                    otherPoints.y.push(varver[i]);
+                                }
+                            }
+                        }
+                        if (otherPoints.x.length > 0) {
+                            traces.push({
+                                x: otherPoints.x,
+                                y: otherPoints.y,
+                                mode: 'markers',
+                                name: 'Data (others)',
+                                marker: { 
+                                    color: 'rgba(0,0,0,0.3)',
+                                    size: 6,
+                                    symbol: 'circle'
+                                }
+                            });
+                        }
+
+                        hyperbolaPointsOriginal.push(plotPoints);
+
+                        const layout = {
+                            title: `Hyperbolas for ${headers[2]} = ${var3Val.toFixed(3)} (n=${n})`,
+                            xaxis: { 
+                                title: headers[0],
+                                type: logColumns.includes(0) ? 'log' : 'linear',
+                                range: logColumns.includes(0) ? null : [localVarhorMin - 0.1*(varhorMax-localVarhorMin), varhorMax + 0.1*(varhorMax-localVarhorMin)]
+                            },
+                            yaxis: { 
+                                title: headers[1],
+                                type: logColumns.includes(1) ? 'log' : 'linear',
+                                range: logColumns.includes(1) ? null : [adjustedMin, adjustedMax]
+                            },
+                            width: 600,
+                            height: 500,
+                            showlegend: true,
+                            legend: {
+                                x: 1,
+                                y: 1,
+                                xanchor: 'right',
+                                yanchor: 'top'
+                            }
+                        };
+
+                        Plotly.newPlot(plotId, traces, layout);
+
+                        const cdfY = sortedResiduals.map((_, i) => (i + 1) / n);
+                        
+                        const cdfTrace = {
+                            x: sortedResiduals,
+                            y: cdfY,
+                            mode: 'lines',
+                            type: 'scatter',
+                            name: 'Empirical CDF',
+                            line: { color: 'blue', width: 2 }
+                        };
+
+                        const percentileTrace = {
+                            x: currentQuantiles,
+                            y: percentiles,
+                            mode: 'markers',
+                            type: 'scatter',
+                            name: 'Percentiles',
+                            marker: {
+                                color: colors,
+                                size: 12,
+                                line: {
+                                    color: 'black',
+                                    width: 1
+                                }
+                            },
+                            text: percentiles.map(p => `P${(p*100).toFixed(0)}`),
+                            hoverinfo: 'text+x+y'
+                        };
+
+                        const cdfLayout = {
+                            title: `CDF of Residuals for ${headers[2]} ≈ ${var3Val.toFixed(3)}`,
+                            xaxis: { title: 'Residuals' },
+                            yaxis: { title: 'Probability', range: [0, 1] },
+                            width: 600,
+                            height: 500,
+                            showlegend: true
+                        };
+
+                        Plotly.newPlot(cdfPlotId, [cdfTrace, percentileTrace], cdfLayout);
+
+                        document.getElementById(`downloadBtn_${plotId}`).style.display = 'block';
+                        document.getElementById(`downloadBtn_${cdfPlotId}`).style.display = 'block';
+
+                    } catch (error) {
+                        document.getElementById(plotId).innerHTML = 
+                            `<div class="error">Error generating hyperbolas: ${error.message}</div>`;
+                        document.getElementById(cdfPlotId).innerHTML = 
+                            `<div class="error">Error generating CDF: ${error.message}</div>`;
+                    }
+                }, plotIndex * 100);
+            });
+
+            document.getElementById('hyperbolaPlots').innerHTML = plotsHTML;
+            document.getElementById('scaledPlotsBtn').disabled = false;
+        }
+
+        function generateScaled01Plots() {
+            const varhorValid = varhor.filter((v, idx) => validIndices.includes(idx) && v !== null && isFinite(v));
+            const varverValid = varver.filter((v, idx) => validIndices.includes(idx) && v !== null && isFinite(v));
+            const ecdfX = calculateECDF(varhorValid);
+            const ecdfY = calculateECDF(varverValid);
+
+            if (ecdfX.length === 0 || ecdfY.length === 0) {
+                document.getElementById('hyperbolaPlots01').innerHTML = 
+                    '<div class="error">No valid data to generate ECDFs in [0,1] scale</div>';
+                return;
+            }
+
+            let plotsHTML = '<h3>Plots in [0,1] Scale:</h3>';
+            
+            hyperbolaPointsOriginal.forEach((originalPoints, plotIndex) => {
+                const plotId = `hyperbola-plot-01-${plotIndex}`;
+                plotsHTML += `
+                    <div class="plot-container">
+                        <button class="download-btn" onclick="downloadPlotAsPDF('${plotId}', 'Hyperbola_01_${originalPoints.var3.toFixed(3)}.pdf')" id="downloadBtn_${plotId}">Download Plot as PDF</button>
+                        <div id="${plotId}" style="margin: 20px 0;"></div>
+                    </div>
+                `;
+                
+                setTimeout(() => {
+                    try {
+                        const traces = [];
+                        const var3Val = originalPoints.var3;
+                        
+                        const hyperbola = new Hyperbola({
+                            ...modelParams,
+                            var3: var3Val,
+                            cuantiles: originalPoints.quantiles
+                        });
+                        
+                        const verticalAsymptote = hyperbola.getVerticalAsymptote();
+                        const horizontalAsymptote = hyperbola.getHorizontalAsymptote();
+                        
+                        const nearVar3Points = { x: [], y: [] };
+                        const outlierPoints = { x: [], y: [] };
+                        const otherPoints = { x: [], y: [] };
+                        
+                        for (let i of validIndices) {
+                            if (varhor[i] !== null && varver[i] !== null && var3[i] !== null) {
+                                const var3Range = Math.max(...var3.filter((v, idx) => validIndices.includes(idx) && v !== null)) - 
+                                                Math.min(...var3.filter((v, idx) => validIndices.includes(idx) && v !== null));
+                                const tolerance = var3bandwidth * var3Range;
+                                
+                                if (Math.abs(var3[i] - var3Val) <= tolerance) {
+                                    const scaledX = transformToScale01(varhor[i], ecdfX);
+                                    const scaledY = transformToScale01(varver[i], ecdfY);
+                                    if (scaledX !== null && scaledY !== null) {
+                                        nearVar3Points.x.push(scaledX);
+                                        nearVar3Points.y.push(scaledY);
+                                    }
+                                } else {
+                                    const scaledX = transformToScale01(varhor[i], ecdfX);
+                                    const scaledY = transformToScale01(varver[i], ecdfY);
+                                    if (scaledX !== null && scaledY !== null) {
+                                        otherPoints.x.push(scaledX);
+                                        otherPoints.y.push(scaledY);
+                                    }
+                                }
+                            }
+                        }
+                        
+                        for (let o of outliers) {
+                            const var3Range = Math.max(...var3.filter((v, idx) => validIndices.includes(idx) && v !== null)) - 
+                                            Math.min(...var3.filter((v, idx) => validIndices.includes(idx) && v !== null));
+                            const tolerance = var3bandwidth * var3Range;
+                            
+                            if (Math.abs(o.var3 - var3Val) <= tolerance) {
+                                const scaledX = transformToScale01(o.varhor, ecdfX);
+                                const scaledY = transformToScale01(o.varver, ecdfY);
+                                if (scaledX !== null && scaledY !== null) {
+                                    outlierPoints.x.push(scaledX);
+                                    outlierPoints.y.push(scaledY);
+                                }
+                            }
+                        }
+                        
+                        const colors = [
+                            '#FF0000', '#FF4500', '#FF8C00', '#FFA500',
+                            '#4682B4', '#1E90FF', '#4169E1'
+                        ];
+                        const percentiles = [0, 0.05, 0.25, 0.50, 0.75, 0.95, 0.99];
+                        
+                        for (let qIndex = 0; qIndex < originalPoints.quantiles.length; qIndex++) {
+                            const quantile = originalPoints.quantiles[qIndex];
+                            const scaledXPoints = [];
+                            const scaledYPoints = [];
+                            
+                            for (let xScaled = 0.01; xScaled <= 0.99; xScaled += 0.01) {
+                                const xOriginal = inverseTransformFromScale01(xScaled, ecdfX);
+                                
+                                const yOriginal = hyperbola.calculateVarver(xOriginal, quantile);
+                                
+                                if (yOriginal !== null && isFinite(yOriginal)) {
+                                    const yScaled = transformToScale01(yOriginal, ecdfY);
+                                    
+                                    const isWithinBounds = 
+                                        (isFinite(verticalAsymptote) && xOriginal > verticalAsymptote) &&
+                                        (isFinite(horizontalAsymptote) && yOriginal > horizontalAsymptote);
+                                        
+                                    if (yScaled !== null && isFinite(yScaled) && 
+                                        yScaled >= 0 && yScaled <= 1 && isWithinBounds) {
+                                        scaledXPoints.push(xScaled);
+                                        scaledYPoints.push(yScaled);
+                                    }
+                                }
+                            }
+                            
+                            if (scaledXPoints.length > 0) {
+                                let qIndex0 = qIndex;
+                                if (originalPoints.reversed) {
+                                    qIndex0 = percentiles.length - 1 - qIndex;
+                                }
+                                
+                                traces.push({
+                                    x: scaledXPoints,
+                                    y: scaledYPoints,
+                                    mode: 'lines',
+                                    name: `P${(percentiles[qIndex0] * 100).toFixed(0)}`,
+                                    line: { 
+                                        color: colors[qIndex0 % colors.length],
+                                        width: 3,
+                                        dash: percentiles[qIndex0] === 0.5 ? 'dash' : 'solid'
+                                    }
+                                });
+                            }
+                        }
+                        
+                        if (nearVar3Points.x.length > 0) {
+                            traces.push({
+                                x: nearVar3Points.x,
+                                y: nearVar3Points.y,
+                                mode: 'markers',
+                                name: `Data (${headers[2]} in [${(var3Val-var3bandwidth).toFixed(3)}, ${(var3Val+var3bandwidth).toFixed(3)}])`,
+                                marker: { 
+                                    color: '#FF4500',
+                                    size: 8,
+                                    symbol: 'circle'
+                                }
+                            });
+                        }
+                        
+                        if (outlierPoints.x.length > 0) {
+                            traces.push({
+                                x: outlierPoints.x,
+                                y: outlierPoints.y,
+                                mode: 'markers',
+                                name: 'Outliers',
+                                marker: { 
+                                    color: 'blue',
+                                    size: 8,
+                                    line: { color: 'blue', width: 2 }
+                                }
+                            });
+                        }
+                        
+                        if (otherPoints.x.length > 0) {
+                            traces.push({
+                                x: otherPoints.x,
+                                y: otherPoints.y,
+                                mode: 'markers',
+                                name: 'Data (others)',
+                                marker: { 
+                                    color: 'rgba(0,0,0,0.3)',
+                                    size: 6,
+                                    symbol: 'circle'
+                                }
+                            });
+                        }
+                        
+                        const layout = {
+                            title: `Hyperbolas in [0,1] scale for ${headers[2]} = ${var3Val.toFixed(3)}`,
+                            xaxis: { 
+                                title: `${headers[0]} ([0,1] scale)`,
+                                range: [0, 1]
+                            },
+                            yaxis: { 
+                                title: `${headers[1]} ([0,1] scale)`,
+                                range: [0, 1]
+                            },
+                            width: 700,
+                            height: 500,
+                            showlegend: true,
+                            legend: {
+                                x: 1,
+                                y: 1,
+                                xanchor: 'right',
+                                yanchor: 'top'
+                            }
+                        };
+                        
+                        Plotly.newPlot(plotId, traces, layout);
+                        document.getElementById(`downloadBtn_${plotId}`).style.display = 'block';
+                        
+                    } catch (error) {
+                        document.getElementById(plotId).innerHTML = 
+                            `<div class="error">Error generating hyperbolas in [0,1] scale: ${error.message}</div>`;
+                    }
+                }, plotIndex * 100);
+            });
+
+            document.getElementById('hyperbolaPlots01').innerHTML = plotsHTML;
+        }
+    </script>
+</body>
+</html>
