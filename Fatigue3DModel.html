@@ -550,7 +550,7 @@
                     '<div class="success">Entorno: Local - Usar selector de archivos</div>';
             } else {
                 document.getElementById('fileInfo').innerHTML += 
-                    '<div class="success">Entorno: GitHub Pages - Intentar cargar archivo del repositorio</div>';
+                    '<div class="success">Entorno: GitHub Pages - Cargando DataFatigue.csv automáticamente...</div>';
                 // En GitHub, intentar cargar DataFatigue.csv automáticamente
                 setTimeout(() => {
                     loadFileFromGitHub();
@@ -595,9 +595,11 @@
 
         // Nuevo código (para GitHub)
         // Reemplaza la función loadFileFromGitHub():
+        // Reemplaza la función loadFileFromGitHub():
+        // Reemplaza la función loadFileFromGitHub():
         function loadFileFromGitHub() {
-            const fileName = prompt("Introduce el nombre del archivo CSV:", "DataFatigue.csv");
-            if (!fileName) return;
+            // Cargar directamente el archivo por defecto sin preguntar
+            const fileName = "DataFatigue.csv";
             
             // Intentar diferentes rutas posibles
             const possiblePaths = [
@@ -612,7 +614,8 @@
 
         function tryLoadFile(paths, index) {
             if (index >= paths.length) {
-                alert('Error: No se pudo encontrar el archivo en ninguna de las rutas posibles');
+                document.getElementById('fileInfo').innerHTML += 
+                    '<div class="error">No se pudo encontrar DataFatigue.csv. Por favor, asegúrate de que el archivo esté en el repositorio.</div>';
                 return;
             }
             
@@ -624,7 +627,8 @@
                     return response.text();
                 })
                 .then(text => {
-                    console.log('Archivo cargado desde:', paths[index]);
+                    document.getElementById('fileInfo').innerHTML += 
+                        `<div class="success">Archivo cargado correctamente desde: ${paths[index]}</div>`;
                     parseCSV(text);
                 })
                 .catch(error => {
