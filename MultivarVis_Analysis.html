@@ -935,7 +935,7 @@
 
             // Nuevo método para cargar desde GitHub
             async loadFileFromGitHub() {
-                const fileName = prompt("Introduce el nombre del archivo CSV (ej: datos.csv):");
+                const fileName = prompt("Introduce el nombre del archivo CSV:", "DataMultivarVis_Analysis.csv");
                 if (!fileName) return;
                 
                 this.showLoading();
