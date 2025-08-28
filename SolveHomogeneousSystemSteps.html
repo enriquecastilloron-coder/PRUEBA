@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homogeneous Linear System Solver</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: linear-gradient(145deg, #f8f9ff, #e8f0ff);
+            border-radius: 15px;
+            border: 2px solid #e0e8ff;
+        }
+
+        .input-section h2 {
+            color: #4a5568;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .matrix-input {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .size-controls {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .size-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .size-control label {
+            font-weight: bold;
+            color: #4a5568;
+        }
+
+        .size-control input {
+            width: 60px;
+            padding: 8px;
+            border: 2px solid #cbd5e0;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .matrix-grid {
+            display: grid;
+            gap: 8px;
+            margin: 20px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+            overflow-x: auto;
+        }
+
+        .matrix-input-field {
+            width: 80px;
+            height: 40px;
+            text-align: center;
+            border: 2px solid #cbd5e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .matrix-input-field:focus {
+            border-color: #667eea;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .examples {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #ff7e5f, #feb47b);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #56ab2f, #a8e6cf);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .result-section {
+            margin-top: 30px;
+            padding: 25px;
+            background: linear-gradient(145deg, #f0fff4, #e8f5e8);
+            border-radius: 15px;
+            border: 2px solid #c6f6d5;
+            display: none;
+        }
+
+        .result-section.show {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-section h2 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .matrix-display {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #e2e8f0;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+
+        .matrix-display h3 {
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .matrix-row {
+            display: flex;
+            gap: 15px;
+            margin: 8px 0;
+            font-family: 'Courier New', monospace;
+        }
+
+        .matrix-cell {
+            min-width: 80px;
+            text-align: center;
+            padding: 8px;
+            background: #f7fafc;
+            border-radius: 4px;
+            border: 1px solid #e2e8f0;
+            font-weight: normal;
+            color: #2d3748;
+            transition: all 0.3s ease;
+        }
+
+        .matrix-cell.free-variable {
+            background: #fed7d7 !important;
+            border: 2px solid #e53e3e !important;
+            font-weight: bold !important;
+            color: #c53030 !important;
+        }
+
+        .matrix-cell.basic-variable {
+            background: #c6f6d5 !important;
+            border: 2px solid #38a169 !important;
+            font-weight: bold !important;
+            color: #2f855a !important;
+        }
+
+        .solution-vectors {
+            background: linear-gradient(145deg, #fff5f5, #fed7d7);
+            border: 2px solid #feb2b2;
+        }
+
+        .vector-item {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .no-solution {
+            text-align: center;
+            padding: 20px;
+            background: #fff5f5;
+            border-radius: 10px;
+            border: 2px solid #feb2b2;
+            color: #c53030;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .step-section {
+            background: linear-gradient(145deg, #fff9e6, #fef5e7);
+            border: 2px solid #f6e05e;
+            margin: 20px 0;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .step-header {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: white;
+            padding: 15px 20px;
+            font-weight: bold;
+            font-size: 1.2em;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.3s ease;
+        }
+
+        .step-header:hover {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+        }
+
+        .step-content {
+            padding: 20px;
+            display: none;
+        }
+
+        .step-content.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .step-info {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            color: #1e40af;
+        }
+
+        .step-calculation {
+            background: #fefce8;
+            border: 1px solid #fde047;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .toggle-all {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .color-legend {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #e9ecef;
+        }
+
+        .legend-item {
+            display: inline-block;
+            margin: 5px 15px 5px 0;
+            font-size: 14px;
+        }
+
+        .legend-color {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            margin-right: 8px;
+            vertical-align: middle;
+            border: 2px solid;
+        }
+
+        .legend-basic {
+            background: #c6f6d5;
+            border-color: #38a169;
+        }
+
+        .legend-free {
+            background: #fed7d7;
+            border-color: #e53e3e;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .examples {
+                flex-direction: column;
+            }
+            
+            .size-controls {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .matrix-cell {
+                min-width: 60px;
+                font-size: 12px;
+                padding: 6px;
+            }
+
+            .legend-item {
+                display: block;
+                margin: 8px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔢 Homogeneous Linear System Solver</h1>
+        
+        <div class="input-section">
+            <h2>📊 Matrix Configuration</h2>
+            
+            <div class="size-controls">
+                <div class="size-control">
+                    <label for="rows">Rows:</label>
+                    <input type="number" id="rows" min="1" max="10" value="4">
+                </div>
+                <div class="size-control">
+                    <label for="cols">Columns:</label>
+                    <input type="number" id="cols" min="1" max="10" value="4">
+                </div>
+                <button class="btn btn-secondary" onclick="createMatrix()">Create Matrix</button>
+            </div>
+
+            <div class="examples">
+                <button class="btn btn-primary" onclick="loadExample1()">Example 1 (4×4)</button>
+                <button class="btn btn-primary" onclick="loadExample2()">Example 2 (4×5)</button>
+                <button class="btn btn-primary" onclick="loadExample3()">Example 3 (4×4)</button>
+                <button class="btn btn-success" onclick="solveSystem()">Solve System</button>
+            </div>
+
+            <div id="matrixContainer">
+                <div class="matrix-grid" id="matrixGrid"></div>
+            </div>
+        </div>
+
+        <div class="result-section" id="resultSection">
+            <h2>🎯 Results</h2>
+            <div id="results"></div>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced function that tracks each step
+        function solveLinearSystemWithSteps(A) {
+            const m = A.length;           
+            const n = A[0].length;        
+            const steps = [];
+            
+            // Create identity matrix B (n×n)
+            let B = [];
+            for (let i = 0; i < n; i++) {
+                B[i] = [];
+                for (let j = 0; j < n; j++) {
+                    B[i][j] = (i === j) ? 1 : 0;
+                }
+            }
+            
+            // Add initial step
+            steps.push({
+                stepNumber: 0,
+                description: "Initial matrix B (identity)",
+                currentRow: -1,
+                matrixB: JSON.parse(JSON.stringify(B)),
+                pivotColumns: new Set(),
+                calculations: ["B = I (identity matrix)"]
+            });
+            
+            const pivotColumns = new Set();
+            
+            // Process each row of A
+            for (let i = 0; i < m; i++) {
+                const a_i = A[i];
+                
+                // Check if row is zero
+                if (a_i.every(val => Math.abs(val) < 1e-10)) {
+                    steps.push({
+                        stepNumber: i + 1,
+                        description: `Processing row ${i + 1}: Zero row - skipped`,
+                        currentRow: i,
+                        matrixB: JSON.parse(JSON.stringify(B)),
+                        pivotColumns: new Set(pivotColumns),
+                        calculations: [`Row ${i + 1}: [${a_i.map(x => x.toFixed(2)).join(', ')}] is zero row`, "This row is skipped"]
+                    });
+                    continue;
+                }
+                
+                // Calculate scalar products c = a_i · B_j
+                const c = [];
+                const calculations = [];
+                calculations.push(`Row ${i + 1}: [${a_i.map(x => x.toFixed(2)).join(', ')}]`);
+                calculations.push("Computing scalar products c_j = a_i · B_j:");
+                
+                for (let j = 0; j < n; j++) {
+                    let sum = 0;
+                    let terms = [];
+                    for (let k = 0; k < n; k++) {
+                        sum += a_i[k] * B[k][j];
+                        if (Math.abs(a_i[k]) > 1e-10) {
+                            terms.push(`${a_i[k].toFixed(2)}×${B[k][j].toFixed(2)}`);
+                        }
+                    }
+                    c[j] = sum;
+                    if (terms.length > 0) {
+                        calculations.push(`c_${j + 1} = ${terms.join(' + ')} = ${sum.toFixed(4)}`);
+                    } else {
+                        calculations.push(`c_${j + 1} = 0`);
+                    }
+                }
+                
+                // Find pivot column
+                let pivotCol = -1;
+                for (let j = 0; j < n; j++) {
+                    if (!pivotColumns.has(j) && 
+                        (Math.abs(c[j] - 1) < 1e-10 || Math.abs(c[j] + 1) < 1e-10)) {
+                        pivotCol = j;
+                        break;
+                    }
+                }
+                
+                if (pivotCol === -1) {
+                    steps.push({
+                        stepNumber: i + 1,
+                        description: `Processing row ${i + 1}: No valid pivot column`,
+                        currentRow: i,
+                        matrixB: JSON.parse(JSON.stringify(B)),
+                        pivotColumns: new Set(pivotColumns),
+                        calculations: [...calculations, "No pivot column found (c_j ≠ ±1 or already used)", "This row is a linear combination of previous ones"]
+                    });
+                    continue;
+                }
+                
+                const pivot = c[pivotCol];
+                calculations.push(`Pivot column: ${pivotCol + 1} (c_${pivotCol + 1} = ${pivot.toFixed(4)})`);
+                pivotColumns.add(pivotCol);
+                
+                // Create new matrix B
+                const newB = [];
+                for (let k = 0; k < n; k++) {
+                    newB[k] = [];
+                }
+                
+                // Divide pivot column by pivot
+                calculations.push("Transformations:");
+                calculations.push(`New column ${pivotCol + 1}: B_${pivotCol + 1} = B_${pivotCol + 1} / ${pivot.toFixed(4)}`);
+                for (let k = 0; k < n; k++) {
+                    newB[k][pivotCol] = B[k][pivotCol] / pivot;
+                }
+                
+                // Transform other columns
+                for (let j = 0; j < n; j++) {
+                    if (j !== pivotCol) {
+                        calculations.push(`Column ${j + 1}: B_${j + 1} = B_${j + 1} - ${c[j].toFixed(4)} × (new column ${pivotCol + 1})`);
+                        for (let k = 0; k < n; k++) {
+                            newB[k][j] = B[k][j] - c[j] * newB[k][pivotCol];
+                        }
+                    }
+                }
+                
+                B = newB;
+                
+                steps.push({
+                    stepNumber: i + 1,
+                    description: `Processing row ${i + 1}: Pivot column ${pivotCol + 1}`,
+                    currentRow: i,
+                    matrixB: JSON.parse(JSON.stringify(B)),
+                    pivotColumns: new Set(pivotColumns),
+                    pivotColumn: pivotCol,
+                    calculations: calculations
+                });
+            }
+            
+            // Find solution columns (non-pivot columns)
+            const freeVariableColumns = [];
+            for (let j = 0; j < n; j++) {
+                if (!pivotColumns.has(j)) {
+                    freeVariableColumns.push(j);
+                }
+            }
+            
+            // Extract basis vectors
+            const basisVectors = [];
+            for (let j of freeVariableColumns) {
+                const vector = [];
+                for (let i = 0; i < n; i++) {
+                    vector.push(B[i][j]);
+                }
+                basisVectors.push(vector);
+            }
+            
+            return {
+                finalMatrix: B,
+                basisVectors: basisVectors,
+                pivotColumns: Array.from(pivotColumns),
+                freeVariableColumns: freeVariableColumns,
+                steps: steps
+            };
+        }
+
+        let currentMatrix = [];
+
+        function createMatrix() {
+            const rows = parseInt(document.getElementById('rows').value);
+            const cols = parseInt(document.getElementById('cols').value);
+            const grid = document.getElementById('matrixGrid');
+            
+            grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            grid.innerHTML = '';
+            
+            currentMatrix = [];
+            for (let i = 0; i < rows; i++) {
+                currentMatrix[i] = [];
+                for (let j = 0; j < cols; j++) {
+                    const input = document.createElement('input');
+                    input.type = 'number';
+                    input.step = 'any';
+                    input.className = 'matrix-input-field';
+                    input.placeholder = '0';
+                    input.value = '0';
+                    input.setAttribute('data-row', i);
+                    input.setAttribute('data-col', j);
+                    grid.appendChild(input);
+                    currentMatrix[i][j] = 0;
+                }
+            }
+        }
+
+        function loadExample1() {
+            const example1 = [
+                [1, -1, -2, 0],
+                [1, -3, 0, 0],
+                [0, 1, -1, 0],
+                [0, 1, 0, 0]
+            ];
+            
+            document.getElementById('rows').value = 4;
+            document.getElementById('cols').value = 4;
+            createMatrix();
+            loadMatrixData(example1);
+        }
+
+        function loadExample2() {
+            const example2 = [
+                [1, 1, 0, 0, 1],
+                [1, -3, 1, 1, -1],
+                [-2, 0, -1, 0, -1],
+                [0, 0, 0, 0, 0]
+            ];
+            
+            document.getElementById('rows').value = 4;
+            document.getElementById('cols').value = 5;
+            createMatrix();
+            loadMatrixData(example2);
+        }
+
+        function loadExample3() {
+            const example3 = [
+                [0,0,0,1],
+                [0,1,1,0],
+                [1,0,-2,0],
+                [0,0,0,0]
+            ];
+            
+            document.getElementById('rows').value = 4;
+            document.getElementById('cols').value = 4;
+            createMatrix();
+            loadMatrixData(example3);
+        }
+
+        function loadMatrixData(matrix) {
+            const inputs = document.querySelectorAll('.matrix-input-field');
+            inputs.forEach(input => {
+                const row = parseInt(input.getAttribute('data-row'));
+                const col = parseInt(input.getAttribute('data-col'));
+                if (matrix[row] && matrix[row][col] !== undefined) {
+                    input.value = matrix[row][col];
+                } else {
+                    input.value = 0;
+                }
+            });
+        }
+
+        function getMatrixFromInputs() {
+            const rows = parseInt(document.getElementById('rows').value);
+            const cols = parseInt(document.getElementById('cols').value);
+            const matrix = [];
+            
+            for (let i = 0; i < rows; i++) {
+                matrix[i] = [];
+                for (let j = 0; j < cols; j++) {
+                    const input = document.querySelector(`[data-row="${i}"][data-col="${j}"]`);
+                    matrix[i][j] = parseFloat(input.value) || 0;
+                }
+            }
+            
+            return matrix;
+        }
+
+        function solveSystem() {
+            const matrix = getMatrixFromInputs();
+            const result = solveLinearSystemWithSteps(matrix);
+            displayResults(result, matrix);
+        }
+
+        function toggleStep(stepId) {
+            const content = document.getElementById(`step-content-${stepId}`);
+            const isVisible = content.classList.contains('show');
+            
+            if (isVisible) {
+                content.classList.remove('show');
+            } else {
+                content.classList.add('show');
+            }
+        }
+
+        function toggleAllSteps(show) {
+            const contents = document.querySelectorAll('.step-content');
+            contents.forEach(content => {
+                if (show) {
+                    content.classList.add('show');
+                } else {
+                    content.classList.remove('show');
+                }
+            });
+        }
+
+        function displayResults(result, originalMatrix) {
+            const resultSection = document.getElementById('resultSection');
+            const resultsDiv = document.getElementById('results');
+            
+            let html = `
+                <div class="matrix-display">
+                    <h3>📋 Original Matrix (A)</h3>
+                    ${formatMatrix(originalMatrix)}
+                </div>
+                
+                <div class="toggle-all">
+                    <button class="btn btn-secondary" onclick="toggleAllSteps(true)">Expand All Steps</button>
+                    <button class="btn btn-secondary" onclick="toggleAllSteps(false)">Collapse All Steps</button>
+                </div>
+                
+                <h3 style="color: #4a5568; margin: 20px 0;">🔄 Algorithm Evolution</h3>
+            `;
+            
+            // Add step-by-step evolution
+            result.steps.forEach((step, index) => {
+                html += `
+                    <div class="step-section">
+                        <div class="step-header" onclick="toggleStep(${index})">
+                            Step ${step.stepNumber}: ${step.description} ${step.currentRow >= 0 ? '🔍' : '🏁'}
+                        </div>
+                        <div id="step-content-${index}" class="step-content">
+                            <div class="step-info">
+                                ${step.stepNumber === 0 ? 
+                                    'We start with the identity matrix B. This matrix will be transformed step by step.' :
+                                    `Processing row ${step.currentRow + 1} of matrix A.`
+                                }
+                            </div>
+                            
+                            ${step.calculations ? `
+                                <div class="step-calculation">
+                                    <strong>Calculations:</strong><br>
+                                    ${step.calculations.join('<br>')}
+                                </div>
+                            ` : ''}
+                            
+                            <div class="matrix-display">
+                                <h4>Matrix B after step ${step.stepNumber}</h4>
+                                ${formatMatrix(step.matrixB, result.freeVariableColumns, result.pivotColumns)}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += `
+                <div class="matrix-display">
+                    <h3>🔄 Final Matrix B</h3>
+                    <div class="color-legend">
+                        <strong>Color Legend:</strong><br>
+                        <div class="legend-item">
+                            <span class="legend-color legend-basic"></span>
+                            <strong>Green:</strong> Basic variables (pivot columns)
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color legend-free"></span>
+                            <strong>Red:</strong> Free variables (non-pivot columns)
+                        </div>
+                    </div>
+                    ${formatMatrix(result.finalMatrix, result.freeVariableColumns, result.pivotColumns)}
+                </div>
+            `;
+            
+            if (result.basisVectors.length === 0) {
+                html += `
+                    <div class="matrix-display no-solution">
+                        <h3>❌ Solution</h3>
+                        <p>Only the trivial solution (zero vector) exists</p>
+                        <p>The system has full rank</p>
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="matrix-display solution-vectors">
+                        <h3>✅ Solution Space Basis</h3>
+                        <p><strong>Dimension of solution space:</strong> ${result.basisVectors.length}</p>
+                        <p><strong>Basis vectors:</strong></p>
+                `;
+                
+                result.basisVectors.forEach((vector, i) => {
+                    html += `
+                        <div class="vector-item">
+                            <strong>v${i+1}:</strong> [${vector.map(x => x.toFixed(4)).join(', ')}]
+                        </div>
+                    `;
+                });
+                
+                // Generate solution formula
+                let solutionFormula = '';
+                let constantsList = '';
+                
+                if (result.basisVectors.length === 1) {
+                    solutionFormula = 'x = c₁v₁';
+                    constantsList = 'c₁ is an arbitrary constant';
+                } else if (result.basisVectors.length === 2) {
+                    solutionFormula = 'x = c₁v₁ + c₂v₂';
+                    constantsList = 'c₁, c₂ are arbitrary constants';
+                } else {
+                    const terms = [];
+                    for (let i = 1; i <= result.basisVectors.length; i++) {
+                        if (i === 1) terms.push('c₁v₁');
+                        else if (i === 2) terms.push('c₂v₂');
+                        else if (i === result.basisVectors.length) terms.push(`c${i}v${i}`);
+                        else if (i === 3 && result.basisVectors.length > 3) terms.push('...');
+                    }
+                    solutionFormula = 'x = ' + terms.join(' + ');
+                    
+                    const constants = [];
+                    for (let i = 1; i <= result.basisVectors.length; i++) {
+                        if (i === 1) constants.push('c₁');
+                        else if (i === 2) constants.push('c₂');
+                        else if (i === result.basisVectors.length) constants.push(`c${i}`);
+                        else if (i === 3 && result.basisVectors.length > 3) constants.push('...');
+                    }
+                    constantsList = constants.join(', ') + ' are arbitrary constants';
+                }
+                
+                html += `
+                        <p style="margin-top: 15px; font-style: italic; color: #666;">
+                            The general solution is: <strong>${solutionFormula}</strong>
+                            <br>where ${constantsList}.
+                        </p>
+                    </div>
+                `;
+            }
+            
+            resultsDiv.innerHTML = html;
+            resultSection.classList.add('show');
+            resultSection.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function formatMatrix(matrix, freeVariableColumns = [], pivotColumns = []) {
+            if (!matrix || matrix.length === 0) return '<p>Empty matrix</p>';
+            
+            return matrix.map(row => 
+                `<div class="matrix-row">
+                    ${row.map((cell, colIndex) => {
+                        let cellClass = 'matrix-cell';
+                        if (freeVariableColumns.includes(colIndex)) {
+                            cellClass += ' free-variable';
+                        } else if (pivotColumns.includes(colIndex)) {
+                            cellClass += ' basic-variable';
+                        }
+                        return `<div class="${cellClass}">${typeof cell === 'number' ? cell.toFixed(4) : cell}</div>`;
+                    }).join('')}
+                </div>`
+            ).join('');
+        }
+
+        // Initialize with a 4x4 matrix
+        window.onload = function() {
+            createMatrix();
+        };
+    </script>
+</body>
+</html>
