@@ -534,7 +534,6 @@
             var3bandwidth = var3bandwidthValue;
             var3bandwidthInfo.innerHTML = `<div class="success">✓ var3bandwidth updated: ${var3bandwidth.toFixed(3)}</div>`;
         }
-
         window.addEventListener('load', function() {
             if (typeof Plotly !== 'undefined') {
                 document.getElementById('fileInfo').innerHTML = 
@@ -548,22 +547,25 @@
             if (isLocalEnvironment()) {
                 document.getElementById('fileInfo').innerHTML += 
                     '<div class="success">Entorno: Local - Usar selector de archivos</div>';
+                // En local, mostrar el input file y NO cargar automáticamente
+                document.getElementById('fileInput').style.display = 'inline-block';
             } else {
                 document.getElementById('fileInfo').innerHTML += 
                     '<div class="success">Entorno: GitHub Pages - Cargando DataFatigue.csv automáticamente...</div>';
-                // En GitHub, intentar cargar DataFatigue.csv automáticamente
+                // En GitHub, ocultar el input file y cargar automáticamente
+                document.getElementById('fileInput').style.display = 'none';
                 setTimeout(() => {
                     loadFileFromGitHub();
-                }, 1000);
+                }, 500);
             }
         });
 
-        // Detectar si estamos en local o en GitHub Pages
+        // Función corregida para detectar entorno
         function isLocalEnvironment() {
             return window.location.protocol === 'file:' || 
                 window.location.hostname === 'localhost' || 
                 window.location.hostname === '127.0.0.1' ||
-                window.location.port !== '';
+                (window.location.hostname === '' && window.location.protocol === 'file:');
         }
 
         // Reemplaza toda la función loadFile():
@@ -598,44 +600,28 @@
         // Reemplaza la función loadFileFromGitHub():
         // Reemplaza la función loadFileFromGitHub():
         function loadFileFromGitHub() {
-            // Cargar directamente el archivo por defecto sin preguntar
             const fileName = "DataFatigue.csv";
             
-            // Intentar diferentes rutas posibles
-            const possiblePaths = [
-                './' + fileName,
-                fileName,
-                './data/' + fileName,
-                './Data/' + fileName
-            ];
-            
-            tryLoadFile(possiblePaths, 0);
-        }
-
-        function tryLoadFile(paths, index) {
-            if (index >= paths.length) {
-                document.getElementById('fileInfo').innerHTML += 
-                    '<div class="error">No se pudo encontrar DataFatigue.csv. Por favor, asegúrate de que el archivo esté en el repositorio.</div>';
-                return;
-            }
-            
-            fetch(paths[index])
+            // Para GitHub Pages, usar solo la ruta relativa simple
+            fetch(fileName)
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error('Archivo no encontrado en: ' + paths[index]);
+                        throw new Error(`HTTP error! status: ${response.status}`);
                     }
                     return response.text();
                 })
                 .then(text => {
                     document.getElementById('fileInfo').innerHTML += 
-                        `<div class="success">Archivo cargado correctamente desde: ${paths[index]}</div>`;
+                        `<div class="success">Archivo cargado correctamente desde: ${fileName}</div>`;
                     parseCSV(text);
                 })
                 .catch(error => {
-                    console.log('Intentando siguiente ruta:', error.message);
-                    tryLoadFile(paths, index + 1);
+                    console.error('Error cargando archivo:', error);
+                    document.getElementById('fileInfo').innerHTML += 
+                        '<div class="error">Error: No se pudo encontrar DataFatigue.csv. Asegúrate de que esté en la raíz del repositorio.</div>';
                 });
         }
+
 
         function parseCSV(text) {
             const lines = text.trim().split('\n');
