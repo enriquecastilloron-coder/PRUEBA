@@ -577,7 +577,6 @@
             }
         }
 
-        // Tu código actual (para local) - NO CAMBIAR
         function loadFileLocal() {
             const fileInput = document.getElementById('fileInput');
             const file = fileInput.files[0];
@@ -587,20 +586,28 @@
                 return;
             }
 
+            document.getElementById('fileInfo').innerHTML += 
+                `<div class="success">Cargando archivo: ${file.name}</div>`;
+
             const reader = new FileReader();
             reader.onload = function(e) {
                 const text = e.target.result;
+                document.getElementById('fileInfo').innerHTML += 
+                    `<div class="success">Archivo cargado exitosamente: ${file.name}</div>`;
                 parseCSV(text);
             };
             reader.readAsText(file);
         }
 
         // Nuevo código (para GitHub)
-        // Reemplaza la función loadFileFromGitHub():
-        // Reemplaza la función loadFileFromGitHub():
-        // Reemplaza la función loadFileFromGitHub():
         function loadFileFromGitHub() {
             const fileName = "DataFatigue.csv";
+            
+            // Mostrar mensaje de carga
+            document.getElementById('fileInfo').innerHTML = 
+                `<div class="success">✓ Plotly loaded successfully</div>` +
+                `<div class="success">Entorno: GitHub Pages - Cargando ${fileName} automáticamente...</div>` +
+                `<div class="loading">Cargando archivo: ${fileName}...</div>`;
             
             // Para GitHub Pages, usar solo la ruta relativa simple
             fetch(fileName)
@@ -611,14 +618,19 @@
                     return response.text();
                 })
                 .then(text => {
-                    document.getElementById('fileInfo').innerHTML += 
-                        `<div class="success">Archivo cargado correctamente desde: ${fileName}</div>`;
+                    // Reemplazar el mensaje de carga con el mensaje de éxito
+                    document.getElementById('fileInfo').innerHTML = 
+                        `<div class="success">✓ Plotly loaded successfully</div>` +
+                        `<div class="success">Entorno: GitHub Pages - Cargando ${fileName} automáticamente...</div>` +
+                        `<div class="success">Archivo cargado exitosamente: ${fileName}</div>`;
                     parseCSV(text);
                 })
                 .catch(error => {
                     console.error('Error cargando archivo:', error);
-                    document.getElementById('fileInfo').innerHTML += 
-                        '<div class="error">Error: No se pudo encontrar DataFatigue.csv. Asegúrate de que esté en la raíz del repositorio.</div>';
+                    document.getElementById('fileInfo').innerHTML = 
+                        `<div class="success">✓ Plotly loaded successfully</div>` +
+                        `<div class="success">Entorno: GitHub Pages - Cargando ${fileName} automáticamente...</div>` +
+                        `<div class="error">Error: No se pudo cargar ${fileName}. Asegúrate de que esté en la raíz del repositorio.</div>`;
                 });
         }
 
@@ -645,12 +657,22 @@
 
         function displayFileInfo() {
             const fileInfo = document.getElementById('fileInfo');
-            fileInfo.innerHTML = `
+            
+            // Obtener el nombre del archivo según el entorno
+            let fileName = '';
+            if (isLocalEnvironment()) {
+                const fileInput = document.getElementById('fileInput');
+                fileName = fileInput.files[0] ? fileInput.files[0].name : 'archivo local';
+            } else {
+                fileName = 'DataFatigue.csv';
+            }
+            
+            fileInfo.innerHTML += `
                 <div class="success">
-                    <p>✓ File loaded successfully</p>
-                    <p>Detected columns: ${headers.join(', ')}</p>
-                    <p>Data rows: ${rawData.length}</p>
-                    <p>Columns transformed to logarithm: ${logColumns.length > 0 ? logColumns.map(i => headers[i]).join(', ') : 'None'}</p>
+                    <p>✓ Archivo procesado exitosamente: <strong>${fileName}</strong></p>
+                    <p>Columnas detectadas: ${headers.join(', ')}</p>
+                    <p>Filas de datos: ${rawData.length}</p>
+                    <p>Columnas transformadas a logaritmo: ${logColumns.length > 0 ? logColumns.map(i => headers[i]).join(', ') : 'Ninguna'}</p>
                 </div>
             `;
         }
