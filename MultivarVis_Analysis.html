@@ -728,6 +728,11 @@
                        🔄 Show All Lines
                    </button>
                </div>
+               <div class="control-group">
+                    <button class="btn btn-toggle" id="showCentralData" onclick="dataClass.showCentralDataWithBand();">
+                        📊 Show Central Data + Band
+                    </button>
+                </div>
            </div>
            <div style="position: relative;">
                <canvas id="parallelPlot"></canvas>
@@ -787,8 +792,11 @@
                 this.lastRenderTime = 0;
                 this.minRenderInterval = 16;
                 this.globalPercentage = 20;
-                this.exactPercentages = {}; // Nueva propiedad para porcentajes exactos
-
+                this.exactPercentages = {}; 
+                // Nueva propiedad para porcentajes exactos
+                this.showCentralBand = false;
+                this.centralDataIndex = -1;
+                this.centralBandPercentage = 20;
                 
                 this.initCanvas();
                 this.initDragDrop();
@@ -831,12 +839,17 @@
                 document.getElementById('toggleScale').textContent = '📏 Show Data in [0,1] Scale';
                 document.getElementById('toggleAllLines').textContent = '🔄 Show All Lines';
                 document.getElementById('toggleAllLines').classList.remove('active');
+                document.getElementById('showCentralData').textContent = '📊 Show Central Data + Band';
+                document.getElementById('showCentralData').classList.remove('active');
+                document.getElementById('showCentralData').textContent = '📊 Show Central Data + Band';
+                document.getElementById('showCentralData').classList.remove('active');
                 document.getElementById('bottomAligned').textContent = '⬇️ Bottom Aligned';
                 document.getElementById('bottomAligned').classList.remove('active');
                 document.getElementById('topAligned').textContent = '⬆️ Top Aligned';
                 document.getElementById('topAligned').classList.remove('active');
                 document.getElementById('conditionalProbability').textContent = '0.00000000';
-                
+                document.getElementById('showCentralData').ondblclick = null;
+
                 // Resetear estadísticas
                 document.getElementById('rowCount').textContent = '0';
                 document.getElementById('colCount').textContent = '0';
@@ -908,7 +921,9 @@
                     this.renderLogCheckboxes();
                     this.renderTable();
                     
-                    this.toggleScale();
+                    if (!this.isScaled) {
+                        this.toggleScale();
+                    }
                     
                     setTimeout(() => {
                         this.resizeCanvas();
@@ -1001,6 +1016,14 @@
                 });
                 
                 this.debouncedRender();
+                // Si está mostrando la banda central, recalcular
+                if (this.showCentralBand) {
+                    this.findOptimalCentralData();
+                }
+                // Si está mostrando la banda central, recalcular
+                if (this.showCentralBand) {
+                    this.findOptimalCentralData();
+                }
             }
 
             updateSliderFromPercentage(name, percentage) {
@@ -1085,6 +1108,10 @@
                     this.sliders[name] = this.convertSliderToScaled(name);
                 } else {
                     this.sliders[name] = { ...this.originalSliders[name] };
+                }
+                // Si está mostrando la banda central, recalcular
+                if (this.showCentralBand) {
+                    this.findOptimalCentralData();
                 }
             }
             initCanvas() {
@@ -1272,6 +1299,10 @@
                 });
                 
                 this.debouncedRender();
+                // Si está mostrando la banda central, recalcular
+                if (this.showCentralBand) {
+                    this.findOptimalCentralData();
+                }
             }
 
             // Método para alternar entre mostrar todas las líneas o solo un subconjunto
@@ -1553,6 +1584,10 @@
                 this.clearPercentageInputs();
                 this.renderTable();
                 this.debouncedRender();
+                // Si está mostrando la banda central, recalcular
+                if (this.showCentralBand) {
+                    this.findOptimalCentralData();
+                }
             }
 
             calculatePercentageFromOriginal(name) {
@@ -1877,6 +1912,101 @@
                         }
                     });
                     if (validPath) ctx.stroke();
+                }
+
+                // Dibujar la banda central y la línea central si está activada
+                if (this.showCentralBand && this.centralDataIndex >= 0) {
+                    // Asegurar que estamos en escala [0,1]
+                    if (!this.isScaled) {
+                        console.warn('Central band requires [0,1] scale');
+                        return;
+                    }
+                    
+                    const centralRow = this.scaledData[this.centralDataIndex];
+                    const bandHalfSize = this.centralBandPercentage / 200; // 0.1 para 20%
+                    
+                    // Dibujar todas las líneas que están en la banda
+                    const linesInBand = [];
+                    for (let rowIdx = 0; rowIdx < this.scaledData.length; rowIdx++) {
+                        const row = this.scaledData[rowIdx];
+                        let isInBand = true;
+                        
+                        // Verificar si está en la banda
+                        for (let col = 0; col < this.columnOrder.length; col++) {
+                            const candidateValue = centralRow[col];
+                            const rowValue = row[col];
+                            
+                            if (isNaN(rowValue) || isNaN(candidateValue)) {
+                                isInBand = false;
+                                break;
+                            }
+                            
+                            const minBand = Math.max(0, candidateValue - bandHalfSize);
+                            const maxBand = Math.min(1, candidateValue + bandHalfSize);
+                            
+                            if (rowValue < minBand || rowValue > maxBand) {
+                                isInBand = false;
+                                break;
+                            }
+                        }
+                        
+                        if (isInBand) {
+                            linesInBand.push({row, rowIdx});
+                        }
+                    }
+                    
+                    // Dibujar las bandas en cada eje
+                    this.columnOrder.forEach((name, i) => {
+                        const x = margin.left + i * axisSpacing;
+                        const centralValue = centralRow[i];
+                        if (isNaN(centralValue)) return;
+                        
+                        const minBand = Math.max(0, centralValue - bandHalfSize);
+                        const maxBand = Math.min(1, centralValue + bandHalfSize);
+                        
+                        const yMin = margin.top + plotHeight * (1 - minBand);
+                        const yMax = margin.top + plotHeight * (1 - maxBand);
+                        
+                        // Dibujar la banda
+                        ctx.fillStyle = 'rgba(60, 120, 60, 0.6)'; // Verde mucho más oscuro
+                        ctx.fillRect(x - 15, yMax, 30, yMin - yMax);
+                        
+                        // Bordes de la banda
+                        ctx.strokeStyle = 'rgba(34, 139, 34, 0.9)'; // Verde más oscuro para los bordes
+                        ctx.lineWidth = 2;                        
+                        ctx.beginPath();
+                        ctx.moveTo(x - 15, yMax);
+                        ctx.lineTo(x + 15, yMax);
+                        ctx.moveTo(x - 15, yMin);
+                        ctx.lineTo(x + 15, yMin);
+                        ctx.stroke();
+                    });
+                    
+                    // Dibujar todas las líneas en la banda
+                    linesInBand.forEach(({row, rowIdx}) => {
+                        ctx.beginPath();
+                        ctx.strokeStyle = rowIdx === this.centralDataIndex ? 'rgba(255, 0, 0, 0.9)' : 'rgba(144, 238, 144, 0.8)';
+                        ctx.lineWidth = rowIdx === this.centralDataIndex ? 4 : 2;
+                        
+                        let validPath = false;
+                        this.columnOrder.forEach((name, i) => {
+                            const x = margin.left + i * axisSpacing;
+                            const val = row[i];
+                            if (isNaN(val)) return;
+                            
+                            const y = margin.top + plotHeight * (1 - val);
+                            
+                            if (!validPath) {
+                                ctx.moveTo(x, y);
+                                validPath = true;
+                            } else {
+                                ctx.lineTo(x, y);
+                            }
+                        });
+                        if (validPath) ctx.stroke();
+                    });
+                    
+                    console.log(`Showing ${linesInBand.length} lines in central band`);
                 }
 
                 // Dibujar ejes, ticks y sliders POR ENCIMA de las líneas
@@ -2646,6 +2776,145 @@
 
                 // Show feedback
                 this.showFeedback('logFeedback', 'Application reset successfully');
+            }
+            showCentralDataWithBand() {
+                // Asegurar que estamos en escala [0,1]
+                if (!this.isScaled) {
+                    this.toggleScale();
+                }
+                
+                this.showCentralBand = !this.showCentralBand;
+                const btn = document.getElementById('showCentralData');
+                
+                if (this.showCentralBand) {
+                    btn.textContent = '📊 Hide Central Data + Band';
+                    btn.classList.add('active');
+                    this.findOptimalCentralData();
+                    
+                    // Configurar doble-click para actualizar sliders
+                    btn.ondblclick = () => {
+                        this.updateSlidersFromCentralBand();
+                    };
+                } else {
+                    btn.textContent = '📊 Show Central Data + Band';
+                    btn.classList.remove('active');
+                    this.centralDataIndex = -1;
+                    
+                    // Remover doble-click
+                    btn.ondblclick = null;
+                }
+                
+                this.debouncedRender();
+            }
+
+            findOptimalCentralData() {
+                if (this.scaledData.length === 0) return;
+                
+                let bestIndex = -1;
+                let maxIncludedCount = 0;
+                
+                // En escala [0,1], trabajamos directamente con los datos escalados
+                const numCols = this.columnOrder.length;
+                const bandHalfSize = this.centralBandPercentage / 200; // 0.1 para 20%
+                
+                // Para cada fila candidata
+                for (let candidateIdx = 0; candidateIdx < this.scaledData.length; candidateIdx++) {
+                    const candidateRow = this.scaledData[candidateIdx];
+                    
+                    // Verificar que el candidato no tenga valores NaN
+                    let validCandidate = true;
+                    for (let col = 0; col < numCols; col++) {
+                        if (isNaN(candidateRow[col])) {
+                            validCandidate = false;
+                            break;
+                        }
+                    }
+                    if (!validCandidate) continue;
+                    
+                    // Contar cuántos datos están en la banda del 20% alrededor de este candidato
+                    let includedCount = 0;
+                    
+                    for (let rowIdx = 0; rowIdx < this.scaledData.length; rowIdx++) {
+                        const row = this.scaledData[rowIdx];
+                        let isInBand = true;
+                        
+                        // Verificar si todas las variables están dentro de la banda
+                        for (let col = 0; col < numCols; col++) {
+                            const candidateValue = candidateRow[col];
+                            const rowValue = row[col];
+                            
+                            if (isNaN(rowValue)) {
+                                isInBand = false;
+                                break;
+                            }
+                            
+                            // En escala [0,1], la banda es simplemente ±bandHalfSize
+                            const minBand = Math.max(0, candidateValue - bandHalfSize);
+                            const maxBand = Math.min(1, candidateValue + bandHalfSize);
+                            
+                            if (rowValue < minBand || rowValue > maxBand) {
+                                isInBand = false;
+                                break;
+                            }
+                        }
+                        
+                        if (isInBand) {
+                            includedCount++;
+                        }
+                    }
+                    
+                    if (includedCount > maxIncludedCount) {
+                        maxIncludedCount = includedCount;
+                        bestIndex = candidateIdx;
+                    }
+                }
+                
+                this.centralDataIndex = bestIndex;
+                console.log(`Selected central data index: ${bestIndex}, includes ${maxIncludedCount} data points in [0,1] scale`);
+            }
+
+            updateSlidersFromCentralBand() {
+                if (this.centralDataIndex < 0 || !this.showCentralBand) return;
+                
+                const centralRow = this.scaledData[this.centralDataIndex];
+                const bandHalfSize = this.centralBandPercentage / 200; // 0.1 para 20%
+                
+                // Actualizar cada slider a los límites de la banda central
+                this.columnOrder.forEach((name, i) => {
+                    const centralValue = centralRow[i];
+                    if (isNaN(centralValue)) return;
+                    
+                    const minBand = Math.max(0, centralValue - bandHalfSize);
+                    const maxBand = Math.min(1, centralValue + bandHalfSize);
+                    
+                    // Convertir de escala [0,1] a valores originales
+                    const colIndex = this.columnNames.indexOf(name);
+                    const values = this.transformedData.map(row => row[colIndex]).filter(v => !isNaN(v));
+                    if (values.length === 0) return;
+                    
+                    const sortedValues = [...values].sort((a, b) => a - b);
+                    const n = sortedValues.length;
+                    
+                    const minIndex = Math.floor(minBand * (n - 1));
+                    const maxIndex = Math.floor(maxBand * (n - 1));
+                    
+                    this.originalSliders[name] = {
+                        min: sortedValues[Math.max(0, Math.min(minIndex, n - 1))],
+                        max: sortedValues[Math.max(0, Math.min(maxIndex, n - 1))],
+                        isDragging: false,
+                        dragHandle: null
+                    };
+                    
+                    // Actualizar slider escalado
+                    this.sliders[name] = this.convertSliderToScaled(name);
+                    
+                    // Actualizar porcentaje exacto
+                    const inRange = values.filter(v => v >= this.originalSliders[name].min && v <= this.originalSliders[name].max).length;
+                    this.exactPercentages[name] = (inRange / values.length * 100);
+                });
+                
+                console.log('Sliders updated to match central band');
+                this.debouncedRender();
             }
         }
 
