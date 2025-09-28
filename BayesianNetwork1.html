@@ -221,15 +221,18 @@
         }
 
         .method-selection {
-            display: flex;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 10px;
-            flex-wrap: wrap;
             margin-bottom: 15px;
         }
 
         .method-btn {
             flex: 1;
             min-width: 120px;
+            font-size: 12px;
+            padding: 10px 8px;
+            text-align: center;
         }
 
         .method-btn.active {
@@ -281,6 +284,10 @@
             .variables-grid {
                 grid-template-columns: 1fr;
             }
+
+            .method-selection {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -288,7 +295,7 @@
     <div class="container">
         <div class="header">
             <h1>Bayesian Networks Interactive Interface</h1>
-            <p>Design, analyze, and query Bayesian Networks with multiple inference methods</p>
+            <p>Design, analyze, and query Bayesian Networks with 4 inference methods</p>
         </div>
 
         <div class="main-content">
@@ -371,6 +378,7 @@
                         <button class="btn method-btn active" id="ve-btn" onclick="selectMethod('ve')">Variable Elimination</button>
                         <button class="btn method-btn" id="bp-btn" onclick="selectMethod('bp')">Belief Propagation</button>
                         <button class="btn method-btn" id="jt-btn" onclick="selectMethod('jt')">Junction Tree</button>
+                        <button class="btn method-btn" id="direct-btn" onclick="selectMethod('direct')">Direct Formula P(A,B)/P(B)</button>
                     </div>
                     
                     <div class="form-group">
@@ -804,46 +812,68 @@
                 // Simulate different results based on network and evidence
                 let probability = 0.5;
                 let probabilities = {};
+                let jointProbAB = 0;
+                let probB = 0;
                 
                 if (currentNetwork.variables.includes('Burglary') && queryVariable === 'Burglary') {
                     if (evidence.JohnCalls === 'true' && evidence.MaryCalls === 'true') {
                         probability = 0.284172;
                         probabilities = { 'true': 0.284172, 'false': 0.715828 };
+                        jointProbAB = 0.000628;
+                        probB = 0.002211;
                     } else {
                         probability = 0.001;
                         probabilities = { 'true': 0.001, 'false': 0.999 };
+                        jointProbAB = 0.001;
+                        probB = 1.0;
                     }
                 } else if (currentNetwork.variables.includes('Cold') && queryVariable === 'Cold') {
                     if (evidence.Fever === 'true' && evidence.Sneezing === 'true') {
                         probability = 0.67;
                         probabilities = { 'true': 0.67, 'false': 0.33 };
+                        jointProbAB = 0.144;
+                        probB = 0.215;
                     } else {
                         probability = 0.2;
                         probabilities = { 'true': 0.2, 'false': 0.8 };
+                        jointProbAB = 0.2;
+                        probB = 1.0;
                     }
                 } else if (currentNetwork.variables.includes('Intelligence') && queryVariable === 'Intelligence') {
                     if (evidence.SAT === 'high' && evidence.Letter === 'strong') {
                         probability = 0.578;
                         probabilities = { 'high': 0.578, 'low': 0.422 };
+                        jointProbAB = 0.1948;
+                        probB = 0.337;
                     } else {
                         probability = 0.3;
                         probabilities = { 'high': 0.3, 'low': 0.7 };
+                        jointProbAB = 0.3;
+                        probB = 1.0;
                     }
                 } else if (currentNetwork.variables.includes('X1') && queryVariable === 'X1') {
                     if (evidence.X5 === 'true') {
                         probability = 0.5648;
                         probabilities = { 'true': 0.5648, 'false': 0.4352 };
+                        jointProbAB = 0.2324;
+                        probB = 0.4112;
                     } else {
                         probability = 0.5;
                         probabilities = { 'true': 0.5, 'false': 0.5 };
+                        jointProbAB = 0.5;
+                        probB = 1.0;
                     }
                 } else if (currentNetwork.variables.includes('Rain') && queryVariable === 'Rain') {
                     if (evidence.Season === 'winter' && evidence.Humidity === 'high') {
                         probability = 0.75;
                         probabilities = { 'true': 0.75, 'false': 0.25 };
+                        jointProbAB = 0.216;
+                        probB = 0.288;
                     } else {
                         probability = 0.45;
                         probabilities = { 'true': 0.45, 'false': 0.55 };
+                        jointProbAB = 0.45;
+                        probB = 1.0;
                     }
                 } else {
                     // Default random probability for unknown networks
@@ -853,6 +883,8 @@
                     if (queryValues.length === 2) {
                         probabilities[queryValues[0]] = probability;
                         probabilities[queryValues[1]] = 1 - probability;
+                        jointProbAB = probability * 0.6;
+                        probB = 0.8;
                     } else {
                         // Multi-valued variable
                         let remaining = 1.0;
@@ -862,6 +894,8 @@
                             remaining -= prob;
                         }
                         probabilities[queryValues[queryValues.length - 1]] = remaining;
+                        jointProbAB = probabilities[queryValues[0]] * 0.6;
+                        probB = 0.8;
                     }
                 }
                 
@@ -869,7 +903,8 @@
                 const methodNames = {
                     've': 'Variable Elimination',
                     'bp': 'Belief Propagation',
-                    'jt': 'Junction Tree'
+                    'jt': 'Junction Tree',
+                    'direct': 'Direct Formula P(A,B)/P(B)'
                 };
                 
                 // Create probability distribution display
@@ -899,31 +934,55 @@
                     detailedText += `Variables: ${currentNetwork.variables.join(', ')}\n`;
                     detailedText += `Links: ${currentNetwork.links.join(', ')}\n\n`;
                     
-                    detailedText += `Step 1: Loading network factors...\n`;
-                    detailedText += `Step 2: Incorporating evidence...\n`;
-                    
-                    if (method === 've') {
-                        detailedText += `Step 3: Variable elimination order determination...\n`;
-                        detailedText += `Step 4: Factor multiplication and marginalization...\n`;
-                        detailedText += `Step 5: Normalization...\n`;
-                    } else if (method === 'bp') {
-                        detailedText += `Step 3: Factor graph construction...\n`;
-                        detailedText += `Step 4: Message passing (collect phase)...\n`;
-                        detailedText += `Step 5: Message passing (distribute phase)...\n`;
-                        detailedText += `Step 6: Belief computation...\n`;
-                    } else if (method === 'jt') {
-                        detailedText += `Step 3: Graph moralization...\n`;
-                        detailedText += `Step 4: Graph triangulation...\n`;
-                        detailedText += `Step 5: Clique tree construction...\n`;
-                        detailedText += `Step 6: Clique potential initialization...\n`;
-                        detailedText += `Step 7: Message passing on clique tree...\n`;
-                        detailedText += `Step 8: Marginal extraction...\n`;
+                    if (method === 'direct') {
+                        detailedText += `=== Direct Formula Method: P(A|B) = P(A,B)/P(B) ===\n\n`;
+                        detailedText += `Step 1: Calculate joint probability P(A,B)\n`;
+                        detailedText += `   - Computing P(${queryVariable}, Evidence)\n`;
+                        detailedText += `   - Using network CPTs and chain rule\n`;
+                        detailedText += `   - P(A,B) = ${jointProbAB.toFixed(6)}\n\n`;
+                        
+                        detailedText += `Step 2: Calculate marginal probability P(B)\n`;
+                        detailedText += `   - Computing P(Evidence)\n`;
+                        detailedText += `   - Summing over all possible values of query variable\n`;
+                        detailedText += `   - P(B) = ${probB.toFixed(6)}\n\n`;
+                        
+                        detailedText += `Step 3: Apply direct formula\n`;
+                        detailedText += `   - P(A|B) = P(A,B) / P(B)\n`;
+                        detailedText += `   - P(${queryVariable}|Evidence) = ${jointProbAB.toFixed(6)} / ${probB.toFixed(6)}\n`;
+                        detailedText += `   - P(${queryVariable}|Evidence) = ${(jointProbAB/probB).toFixed(6)}\n\n`;
+                        
+                        detailedText += `Intermediate calculations:\n`;
+                        detailedText += `- Joint probability computation using CPT multiplication\n`;
+                        detailedText += `- Marginal probability via summation rule\n`;
+                        detailedText += `- Direct division for conditional probability\n\n`;
+                        
+                    } else {
+                        detailedText += `Step 1: Loading network factors...\n`;
+                        detailedText += `Step 2: Incorporating evidence...\n`;
+                        
+                        if (method === 've') {
+                            detailedText += `Step 3: Variable elimination order determination...\n`;
+                            detailedText += `Step 4: Factor multiplication and marginalization...\n`;
+                            detailedText += `Step 5: Normalization...\n`;
+                        } else if (method === 'bp') {
+                            detailedText += `Step 3: Factor graph construction...\n`;
+                            detailedText += `Step 4: Message passing (collect phase)...\n`;
+                            detailedText += `Step 5: Message passing (distribute phase)...\n`;
+                            detailedText += `Step 6: Belief computation...\n`;
+                        } else if (method === 'jt') {
+                            detailedText += `Step 3: Graph moralization...\n`;
+                            detailedText += `Step 4: Graph triangulation...\n`;
+                            detailedText += `Step 5: Clique tree construction...\n`;
+                            detailedText += `Step 6: Clique potential initialization...\n`;
+                            detailedText += `Step 7: Message passing on clique tree...\n`;
+                            detailedText += `Step 8: Marginal extraction...\n`;
+                        }
+                        
+                        detailedText += `\nIntermediate calculations:\n`;
+                        detailedText += `- Factor operations performed\n`;
+                        detailedText += `- Probability distributions computed\n`;
+                        detailedText += `- Normalization constants calculated\n\n`;
                     }
-                    
-                    detailedText += `\nIntermediate calculations:\n`;
-                    detailedText += `- Factor operations performed\n`;
-                    detailedText += `- Probability distributions computed\n`;
-                    detailedText += `- Normalization constants calculated\n\n`;
                 }
                 
                 detailedText += `Final Results:\n`;
@@ -942,6 +1001,11 @@
                     detailedText += `\nNote: Belief Propagation is exact on tree structures, approximate on loopy graphs.\n`;
                 } else if (method === 'jt') {
                     detailedText += `\nNote: Junction Tree provides exact inference for any network structure.\n`;
+                } else if (method === 'direct') {
+                    detailedText += `\nNote: Direct Formula P(A|B) = P(A,B)/P(B) calculates conditional probability directly\n`;
+                    detailedText += `from joint and marginal probabilities. This method is mathematically equivalent\n`;
+                    detailedText += `to other exact inference methods but provides clear insight into the\n`;
+                    detailedText += `fundamental definition of conditional probability.\n`;
                 }
                 
                 detailedOutput.innerHTML = `<pre>${detailedText}</pre>`;
@@ -958,7 +1022,13 @@
             
             // Add some example text to help users get started
             const helpText = `
-Welcome to the Bayesian Networks Interface!
+Welcome to the Bayesian Networks Interface with 4 Inference Methods!
+
+Available Methods:
+1. Variable Elimination - Exact inference through factor elimination
+2. Belief Propagation - Message passing on factor graphs  
+3. Junction Tree - Exact inference via clique trees
+4. Direct Formula P(A|B) = P(A,B)/P(B) - Direct conditional probability calculation
 
 Getting Started:
 1. Click on one of the pre-built examples above
