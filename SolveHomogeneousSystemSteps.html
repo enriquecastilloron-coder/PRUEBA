@@ -486,11 +486,10 @@
                     }
                 }
                 
-                // Find pivot column
+                // Find pivot column - MODIFIED: Any non-zero value is acceptable
                 let pivotCol = -1;
                 for (let j = 0; j < n; j++) {
-                    if (!pivotColumns.has(j) && 
-                        (Math.abs(c[j] - 1) < 1e-10 || Math.abs(c[j] + 1) < 1e-10)) {
+                    if (!pivotColumns.has(j) && Math.abs(c[j]) > 1e-10) {
                         pivotCol = j;
                         break;
                     }
@@ -503,7 +502,7 @@
                         currentRow: i,
                         matrixB: JSON.parse(JSON.stringify(B)),
                         pivotColumns: new Set(pivotColumns),
-                        calculations: [...calculations, "No pivot column found (c_j ≠ ±1 or already used)", "This row is a linear combination of previous ones"]
+                        calculations: [...calculations, "No pivot column found (all c_j are zero or already used)", "This row is a linear combination of previous ones"]
                     });
                     continue;
                 }
