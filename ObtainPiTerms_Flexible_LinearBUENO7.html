@@ -559,10 +559,21 @@ P,Power,1,2,-3,0
 T,Time,0,0,1,0
 Q,Electric charge,0,0,1,1`
                 },
-                
+
+                combined: {
+                    name: 'Case 7: Combined (Dimensionless + Non-Participating)',
+                    description: 'Multiple case conditions simultaneously',
+                    csv: `Notation,Meaning,M,L,T
+F,Force,1,1,-2
+v,Velocity,0,1,-1
+L,Length,0,1,0
+Re,Reynolds number,0,0,0
+m,Mass,1,0,0`
+                },
+
                 // Special case examples
                 standard: {
-                    name: 'Case 5: Standard Valid Case',
+                    name: 'Case 6: Standard Valid Case',
                     description: 'Normal case with valid π terms',
                     csv: `Notation,Meaning,M,L,T
 F,Force,1,1,-2
@@ -620,17 +631,6 @@ F,Force,1,1,-2
 m,Mass,1,0,0
 T,Time,0,0,1`
                 },
-                
-                combined: {
-                    name: 'Case 7: Combined (Dimensionless + Non-Participating)',
-                    description: 'Multiple case conditions simultaneously',
-                    csv: `Notation,Meaning,M,L,T
-F,Force,1,1,-2
-v,Velocity,0,1,-1
-L,Length,0,1,0
-Re,Reynolds number,0,0,0
-m,Mass,1,0,0`
-                }
             };
 
             const example = examples[exampleType];
@@ -1442,14 +1442,14 @@ m,Mass,1,0,0`
             const container = document.getElementById('historyContainer');
             
             if (history.length === 0) {
-                container.innerHTML = '<p style="text-align: center; color: #999;">No items in history</p>';
+                container.innerHTML = '<p style="text-align: center; color: #999;">No hay elementos en el historial</p>';
                 return;
             }
             
             let html = '';
             history.forEach((item, i) => {
                 const date = new Date(item.timestamp);
-                // CAMBIADO: Mostrar solo el nombre del problema sin "Case X"
+                // Mostrar solo el nombre del problema sin "Case X"
                 const displayName = item.result.problemName;
                 html += '<div class="history-item" onclick="displayResults(history[' + i + '].result)">';
                 html += `<div style="font-weight: 600;">${displayName}</div>`;
@@ -1461,7 +1461,7 @@ m,Mass,1,0,0`
             
             container.innerHTML = html;
         }
-
+ 
         function clearHistory() {
             if (confirm('Are you sure you want to clear the history?')) {
                 history = [];
@@ -1474,32 +1474,36 @@ m,Mass,1,0,0`
         // AUTO-TEST FUNCTION - CORREGIDA
         // ========================================
 
+// ========================================
+// AUTO-TEST FUNCTION - CORREGIDA
+// ========================================
+
         function runAllExamples() {
             const examples = [
                 'drag', 'pendulum', 'fatigue', 'endurancefatigue', 'heat', 'flow', 
                 'thermodynamics', 'electrical', 'fullrank', 'nullcol', 'nullrows',
-                 'nonparticipating', 'dependent', 'standard', 'combined'
+                'nonparticipating', 'dependent', 'standard', 'combined'
             ];
             
             let currentIndex = 0;
             const results = [];
             
-            // GUARDAR el historial actual antes de empezar
-            const originalHistory = [...history];
+            // LIMPIAR el historial completamente antes de empezar
+            history = [];
             
             function runNextExample() {
                 if (currentIndex >= examples.length) {
-                    // Todos los ejemplos completados - RESTAURAR el historial original + nuevos
-                    history = [...originalHistory, ...history];
-                    updateHistory();
+                    // Todos los ejemplos completados
+                    showNotification(`¡Auto-test completado! Se ejecutaron ${examples.length} ejemplos.`, 'success');
+                    console.log('Resultados del auto-test:', results);
                     
-                    showNotification(`Auto-test completed! Ran ${examples.length} examples.`, 'success');
-                    console.log('Auto-test results:', results);
+                    // Actualizar el historial para mostrar todos los resultados
+                    updateHistory();
                     return;
                 }
                 
                 const exampleType = examples[currentIndex];
-                showNotification(`Running example ${currentIndex + 1}/${examples.length}: ${exampleType}`, 'info');
+                showNotification(`Ejecutando ejemplo ${currentIndex + 1}/${examples.length}: ${exampleType}`, 'info');
                 
                 // Load the example
                 loadExampleCase(exampleType);
@@ -1515,8 +1519,11 @@ m,Mass,1,0,0`
                             piTerms: result.piTerms.length
                         });
                         
-                        // Add to history
-                        addToHistory(result);
+                        // Add to history (sin límites durante el auto-test)
+                        history.unshift({
+                            timestamp: new Date().toISOString(),
+                            result: result
+                        });
                         
                         // Display results
                         displayResults(result);
@@ -1524,7 +1531,7 @@ m,Mass,1,0,0`
                         currentIndex++;
                         
                         // Run next example after a delay
-                        setTimeout(runNextExample, 1500);
+                        setTimeout(runNextExample, 1000);
                         
                     } catch (error) {
                         results.push({
@@ -1533,16 +1540,18 @@ m,Mass,1,0,0`
                             error: error.message
                         });
                         
-                        showNotification(`Error in example ${exampleType}: ${error.message}`, 'error');
+                        showNotification(`Error en ejemplo ${exampleType}: ${error.message}`, 'error');
                         currentIndex++;
-                        setTimeout(runNextExample, 1000);
+                        setTimeout(runNextExample, 800);
                     }
-                }, 500);
+                }, 300);
             }
             
             // Start the auto-test
-            showNotification(`Starting auto-test with ${examples.length} examples...`, 'info');
-            runNextExample();
+            showNotification(`Iniciando auto-test con ${examples.length} ejemplos...`, 'info');
+            
+            // Pequeño delay antes de empezar
+            setTimeout(runNextExample, 500);
         }
 
         function addAutoTestButton() {
