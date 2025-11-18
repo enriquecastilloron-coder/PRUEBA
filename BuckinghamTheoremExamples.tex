@@ -1,0 +1,1477 @@
+
+\subsection{Analysis 1: Drag Force on Sphere}
+\label{sec:Drag_Force_on_Sphere}
+
+\begin{problembox}
+\textbf{Physical Problem:} Determine the drag force acting on a sphere moving through a viscous fluid at steady velocity.
+\end{problembox}
+
+This analysis examines how the drag force $F$ depends on fluid properties (density $\rho$ and dynamic viscosity $\mu$), sphere characteristics (diameter $D$), and flow conditions (velocity $v$). The problem is fundamental in fluid mechanics with diverse applications: aerodynamic design of vehicles and aircraft, particle settling in industrial separations, sediment transport in environmental systems, and drug delivery through biological fluids.
+
+
+
+Understanding the drag force relationship enables engineers to optimize shapes for minimal resistance, predict terminal velocities of falling objects, design efficient filtration systems, and model pollutant dispersion in natural waters. The analysis also reveals the transition between viscous-dominated (Stokes) and inertia-dominated flow regimes, providing insight into when different physical mechanisms control the drag behavior. This is used in aerospace (aircraft drag), automotive (vehicle aerodynamics), and marine engineering (ship resistance). These variables are consistent across textbooks and experimental studies.
+
+\paragraph{System Variables: } The system variables are given in this table.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|l|r|r|r|}
+\hline
+\textbf{Variable} & \textbf{Description} & \textbf{[M]} & \textbf{[L]} & \textbf{[T]} \\
+\hline
+$F$ & Drag force & 1 & 1 & -2 \\
+$\rho$ & Fluid density & 1 & -3 & 0 \\
+$v$ & Velocity & 0 & 1 & -1 \\
+$D$ & Sphere diameter & 0 & 1 & 0 \\
+$\mu$ & Dynamic viscosity & 1 & -1 & -1 \\
+
+\hline
+\end{tabular}
+\caption{Variables and dimensions for Drag Force on Sphere}
+\end{table}
+
+The dimensional analysis has been performed using the methods described previously to identify the dimensionless $\pi$ parameters that govern this problem. The key parameters of the analysis are summarized below.
+
+\paragraph{Analysis Summary}
+\begin{itemize}
+\item Number of variables: $n = 5$
+\item Number of dimensions: $m = 3$
+\item Matrix rank: $k = 3$
+\item Number of $\pi$ terms: $n - k = 2$
+\end{itemize}
+
+\paragraph{Analysis Status}
+System status: \textcolor{orange}{\textbf{VALID}} - Case 6: Standard Case: The system is valid and produces meaningful dimensionless $\pi$ terms.
+
+
+\paragraph{Variable Classification}
+\begin{itemize}
+\item \textbf{Pivot columns:} 1, 2, 3
+\item \textbf{Basic variables:} $F$, $\rho$, $v$
+\item \textbf{Free variables:} $D$, $\mu$
+\end{itemize}
+
+                \paragraph{Dimensional Matrices}
+                The homogeneous linear system generated from the original dimensional matrix $\mathbf{D}$ has been solved to obtain the basis vectors for the solution null space.
+
+                \textbf{Original Dimensional Matrix $\mathbf{D}$:}
+                \[\mathbf{D} = \begin{array}{r|rrr}
+                & \text{[}M\text{]} & \text{[}L\text{]} & \text{[}T\text{]} \\
+                \hline
+                F & 1 & 1 & -2 \\
+\rho & 1 & -3 & 0 \\
+v & 0 & 1 & -1 \\
+D & 0 & 1 & 0 \\
+\mu & 1 & -1 & -1 \\
+
+                \end{array}\]
+
+
+        \textbf{Final Matrix $\mathbf{B}$:}
+        \[\mathbf{B} = \begin{array}{r|rrrrr}
+        & Pivot & Pivot & Pivot & \pi_{1} & \pi_{2} \\
+        \hline
+        F & 1.50 & 0.50 & 0.50 & -0.50 & -0.50 \\
+\rho & -0.50 & -0.50 & -0.50 & 0.50 & -0.50 \\
+v & -3 & -1 & -2 & 1 & 0 \\
+D & 0 & 0 & 0 & 1 & 0 \\
+\mu & 0 & 0 & 0 & 0 & 1 \\
+
+        \end{array}\]
+
+        \paragraph{Dimensionless $\pi$ Terms: }
+        The resulting dimensionless groups that characterize this example are:
+\begin{equation}
+\pi_{1} = \frac{\rho \, v^{2} \, D^{2}}{F}
+\end{equation}
+\begin{equation}
+\pi_{2} = \frac{\mu^{2}}{F \, \rho}
+\end{equation}
+
+                    \paragraph{Functional Relationship}
+                    The general relationship governing this problem is:
+                    \begin{equation}
+                    \pi_1 = f(\pi_2)
+                    \end{equation}
+
+                    This relationship must be determined through experimental data or additional theoretical analysis to establish the associated model.
+
+
+\subsection{Analysis 2: Simple Pendulum Period}
+\label{sec:Simple_Pendulum_Period}
+
+\begin{problembox}
+\textbf{Physical Problem:} Determine the oscillation period of a simple pendulum under small angle approximations.
+\end{problembox}
+
+This system examines how the period $T$ depends on pendulum length $L$, gravitational acceleration $g$, and mass $m$. The dimensional analysis reveals a fundamental insight: the period is independent of mass, demonstrating the universality of gravitational motion. This result connects to Galileo's principle of equivalence and forms the basis for precision timekeeping devices.
+
+
+
+The analysis extends beyond simple pendulums to compound pendulums, torsional oscillators, and seismic detection systems. Understanding the $T \propto \sqrt{L/g}$ scaling law enables the design of pendulum clocks, earthquake monitoring instruments, and gravitational measurement devices. The mass independence also explains why pendulum-based gravimeters can measure local gravitational variations without calibration for different test masses, making them valuable tools in geophysics and resource exploration.  This is standard in physics and mechanical engineering for pendulum dynamics. The small-angle approximation simplifies the analysis, and $Theta$ is included only for large oscillations.
+
+\paragraph{System Variables: } The system variables are given in this table.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|l|r|r|r|}
+\hline
+\textbf{Variable} & \textbf{Description} & \textbf{[M]} & \textbf{[L]} & \textbf{[T]} \\
+\hline
+$T$ & Oscillation period & 0 & 0 & 1 \\
+$L$ & Pendulum length & 0 & 1 & 0 \\
+$g$ & Gravitational acceleration & 0 & 1 & -2 \\
+$m$ & Pendulum mass & 1 & 0 & 0 \\
+
+\hline
+\end{tabular}
+\caption{Variables and dimensions for Simple Pendulum Period}
+\end{table}
+
+The dimensional analysis has been performed using the methods described previously to identify the dimensionless $\pi$ parameters that govern this problem. The key parameters of the analysis are summarized below.
+
+\paragraph{Analysis Summary}
+\begin{itemize}
+\item Number of variables: $n = 4$
+\item Number of dimensions: $m = 3$
+\item Matrix rank: $k = 3$
+\item Number of $\pi$ terms: $n - k = 1$
+\end{itemize}
+
+\paragraph{Analysis Status}
+System status: \textcolor{red}{\textbf{ERROR}} - Case 4: Non-Participating Variables: Some variables do not participate in any $\pi$ term. This is an error - all dimensional variables must participate.
+
+\textbf{Note:} This analysis contains configuration errors and cannot produce valid $\pi$ terms.
+
+
+\paragraph{Variable Classification}
+\begin{itemize}
+\item \textbf{Pivot columns:} 4, 2, 1
+\item \textbf{Basic variables:} $m$, $L$, $T$
+\item \textbf{Free variables:} $g$
+\end{itemize}
+
+                \paragraph{Dimensional Matrices}
+                The homogeneous linear system generated from the original dimensional matrix $\mathbf{D}$ has been solved to obtain the basis vectors for the solution null space.
+
+                \textbf{Original Dimensional Matrix $\mathbf{D}$:}
+                \[\mathbf{D} = \begin{array}{r|rrr}
+                & \text{[}M\text{]} & \text{[}L\text{]} & \text{[}T\text{]} \\
+                \hline
+                T & 0 & 0 & 1 \\
+L & 0 & 1 & 0 \\
+g & 0 & 1 & -2 \\
+m & 1 & 0 & 0 \\
+
+                \end{array}\]
+
+
+        \textbf{Final Matrix $\mathbf{B}$:}
+        \[\mathbf{B} = \begin{array}{r|rrrr}
+        & Pivot & Pivot & \pi_{1} & Pivot \\
+        \hline
+        T & 1 & 0 & 2 & 0 \\
+L & 0 & 1 & -1 & 0 \\
+g & 0 & 0 & 1 & 0 \\
+m & 0 & 0 & 0 & 1 \\
+
+        \end{array}\]
+
+        \paragraph{Dimensionless $\pi$ Terms: }
+        \textit{No dimensionless $\pi$ terms were generated due to configuration errors identified above.}
+
+
+\subsection{Analysis 3: Basic Fatigue Analysis}
+\label{sec:Basic_Fatigue_Analysis}
+
+\begin{problembox}
+\textbf{Physical Problem:} Analyze the relationship between stress levels and fatigue life in materials under cyclic loading.
+\end{problembox}
+
+This system examines how the number of cycles to failure $N$ depends on minimum stress $\sigma_{min}$ and maximum stress $\sigma_{max}$. The dimensional analysis reveals the fundamental scaling relationships underlying S-N curves (Wohler curves) and connects to Paris' law for crack propagation. Understanding these relationships enables prediction of component lifetime and optimization of stress ratios for enhanced durability.
+
+
+
+The analysis extends to mean stress effects, stress concentration factors, and variable amplitude loading encountered in real applications. Critical insights include the roles of stress range $(\sigma_{max} - \sigma_{min})$ and stress ratio $R = \sigma_{min}/\sigma_{max}$ in determining fatigue behavior. This framework supports design methodologies for offshore structures, wind turbines, bridges, and biomedical implants, where accurate fatigue life prediction prevents catastrophic failures and enables condition-based maintenance strategies.  This is common in aerospace (aircraft components), civil engineering (bridges), and mechanical engineering (machine parts). The variables are standard but context-dependent.
+
+\paragraph{System Variables: } The system variables are given in this table.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|l|r|r|r|r|}
+\hline
+\textbf{Variable} & \textbf{Description} & \textbf{[M]} & \textbf{[L]} & \textbf{[T]} & \textbf{[C]} \\
+\hline
+$\sigma_{min}$ & Minimum stress & 1 & -1 & -2 & 0 \\
+$\sigma_{max}$ & Maximum stress & 1 & -1 & -2 & 0 \\
+$N$ & Number of cycles & 0 & 0 & 0 & 1 \\
+
+\hline
+\end{tabular}
+\caption{Variables and dimensions for Basic Fatigue Analysis}
+\end{table}
+
+The dimensional analysis has been performed using the methods described previously to identify the dimensionless $\pi$ parameters that govern this problem. The key parameters of the analysis are summarized below.
+
+\paragraph{Analysis Summary}
+\begin{itemize}
+\item Number of variables: $n = 3$
+\item Number of dimensions: $m = 4$
+\item Matrix rank: $k = 2$
+\item Number of $\pi$ terms: $n - k = 1$
+\end{itemize}
+
+\paragraph{Analysis Status}
+System status: \textcolor{red}{\textbf{ERROR}} - Case 4: Non-Participating Variables: Some variables do not participate in any $\pi$ term. This is an error - all dimensional variables must participate.
+
+\textbf{Note:} This analysis contains configuration errors and cannot produce valid $\pi$ terms.
+
+
+\paragraph{Variable Classification}
+\begin{itemize}
+\item \textbf{Pivot columns:} 1, 3
+\item \textbf{Basic variables:} $\sigma_{min}$, $N$
+\item \textbf{Free variables:} $\sigma_{max}$
+\end{itemize}
+
+                \paragraph{Dimensional Matrices}
+                The homogeneous linear system generated from the original dimensional matrix $\mathbf{D}$ has been solved to obtain the basis vectors for the solution null space.
+
+                \textbf{Original Dimensional Matrix $\mathbf{D}$:}
+                \[\mathbf{D} = \begin{array}{r|rrrr}
+                & \text{[}M\text{]} & \text{[}L\text{]} & \text{[}T\text{]} & \text{[}C\text{]} \\
+                \hline
+                \sigma_{min} & 1 & -1 & -2 & 0 \\
+\sigma_{max} & 1 & -1 & -2 & 0 \\
+N & 0 & 0 & 0 & 1 \\
+
+                \end{array}\]
+
+
+        \textbf{Final Matrix $\mathbf{B}$:}
+        \[\mathbf{B} = \begin{array}{r|rrr}
+        & Pivot & \pi_{1} & Pivot \\
+        \hline
+        \sigma_{min} & 1 & -1 & 0 \\
+\sigma_{max} & 0 & 1 & 0 \\
+N & 0 & 0 & 1 \\
+
+        \end{array}\]
+
+        \paragraph{Dimensionless $\pi$ Terms: }
+        \textit{No dimensionless $\pi$ terms were generated due to configuration errors identified above.}
+
+
+\subsection{Analysis 4: Endurance Fatigue Analysis}
+\label{sec:Endurance_Fatigue_Analysis}
+
+\begin{problembox}
+\textbf{Physical Problem:} Analyze fatigue life incorporating material endurance limits and reference cycle counts for comprehensive life prediction.
+\end{problembox}
+
+This system examines how fatigue life $N$ depends on stress levels ($\sigma_{min}$, $\sigma_{max}$) relative to the endurance limit $\sigma_e$ and reference cycle count $N_0$. The dimensional analysis reveals the scaling relationships that govern the transition from finite-life to infinite-life regimes, enabling design strategies for both high-cycle fatigue (HCF) and very high-cycle fatigue (VHCF) applications.
+
+
+
+The endurance limit concept, while idealized for steels, provides crucial design benchmarks and connects to probabilistic fatigue models where scatter factors and reliability requirements determine safe operating stresses. This framework supports fatigue-tolerant design in power generation equipment, railway infrastructure, and marine structures operating under millions of load cycles. Advanced applications include fretting fatigue analysis, multiaxial loading conditions, and environmental effects where the apparent endurance limit shifts due to corrosion, temperature, or frequency-dependent mechanisms.  These models are used in design of rotating machinery, turbines, and structural components.
+
+\paragraph{System Variables: } The system variables are given in this table.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|l|r|r|r|r|}
+\hline
+\textbf{Variable} & \textbf{Description} & \textbf{[M]} & \textbf{[L]} & \textbf{[T]} & \textbf{[C]} \\
+\hline
+$\sigma_e$ & Reference stress & 1 & -1 & -2 & 0 \\
+$\sigma_{min}$ & Minimum stress & 1 & -1 & -2 & 0 \\
+$\sigma_{max}$ & Maximum stress & 1 & -1 & -2 & 0 \\
+$N_0$ & Limit number of cycles & 0 & 0 & 0 & 1 \\
+$N$ & Number of cycles & 0 & 0 & 0 & 1 \\
+
+\hline
+\end{tabular}
+\caption{Variables and dimensions for Endurance Fatigue Analysis}
+\end{table}
+
+The dimensional analysis has been performed using the methods described previously to identify the dimensionless $\pi$ parameters that govern this problem. The key parameters of the analysis are summarized below.
+
+\paragraph{Analysis Summary}
+\begin{itemize}
+\item Number of variables: $n = 5$
+\item Number of dimensions: $m = 4$
+\item Matrix rank: $k = 2$
+\item Number of $\pi$ terms: $n - k = 3$
+\end{itemize}
+
+\paragraph{Analysis Status}
+System status: \textcolor{orange}{\textbf{VALID}} - Case 5: Linear Dependencies: Linear dependencies reduce the matrix rank, increasing the number of $\pi$ terms.
+
+
+\paragraph{Variable Classification}
+\begin{itemize}
+\item \textbf{Pivot columns:} 1, 4
+\item \textbf{Basic variables:} $\sigma_e$, $N_0$
+\item \textbf{Free variables:} $\sigma_{min}$, $\sigma_{max}$, $N$
+\end{itemize}
+
+                \paragraph{Dimensional Matrices}
+                The homogeneous linear system generated from the original dimensional matrix $\mathbf{D}$ has been solved to obtain the basis vectors for the solution null space.
+
+                \textbf{Original Dimensional Matrix $\mathbf{D}$:}
+                \[\mathbf{D} = \begin{array}{r|rrrr}
+                & \text{[}M\text{]} & \text{[}L\text{]} & \text{[}T\text{]} & \text{[}C\text{]} \\
+                \hline
+                \sigma_e & 1 & -1 & -2 & 0 \\
+\sigma_{min} & 1 & -1 & -2 & 0 \\
+\sigma_{max} & 1 & -1 & -2 & 0 \\
+N_0 & 0 & 0 & 0 & 1 \\
+N & 0 & 0 & 0 & 1 \\
+
+                \end{array}\]
+
+
+        \textbf{Final Matrix $\mathbf{B}$:}
+        \[\mathbf{B} = \begin{array}{r|rrrrr}
+        & Pivot & \pi_{1} & \pi_{2} & Pivot & \pi_{3} \\
+        \hline
+        \sigma_e & 1 & -1 & -1 & 0 & 0 \\
+\sigma_{min} & 0 & 1 & 0 & 0 & 0 \\
+\sigma_{max} & 0 & 0 & 1 & 0 & 0 \\
+N_0 & 0 & 0 & 0 & 1 & -1 \\
+N & 0 & 0 & 0 & 0 & 1 \\
+
+        \end{array}\]
+
+        \paragraph{Dimensionless $\pi$ Terms: }
+        The resulting dimensionless groups that characterize this example are:
+\begin{equation}
+\pi_{1} = \frac{\sigma_{min}}{\sigma_e}
+\end{equation}
+\begin{equation}
+\pi_{2} = \frac{\sigma_{max}}{\sigma_e}
+\end{equation}
+\begin{equation}
+\pi_{3} = \frac{N}{N_0}
+\end{equation}
+
+                    \paragraph{Functional Relationship}
+                    The general relationship governing this problem is:
+                    \begin{equation}
+                    \pi_1 = f(\pi_2,\pi_3)
+                    \end{equation}
+
+                    This relationship must be determined through experimental data or additional theoretical analysis to establish the associated model.
+
+
+\subsection{Analysis 5: Convective Heat Transfer}
+\label{sec:Convective_Heat_Transfer}
+
+\begin{problembox}
+\textbf{Physical Problem:} Determine the heat transfer coefficient for forced convection over a surface in fluid flow.
+\end{problembox}
+
+This system examines how the heat transfer coefficient $h$ depends on thermal conductivity $k$, characteristic length $L$, fluid density $\rho$, velocity $v$, and specific heat $c_p$. The dimensional analysis reveals the fundamental scaling relationships underlying the Nusselt, Reynolds, and Prandtl numbers, which form the cornerstone of convective heat transfer correlations used in engineering design.
+
+
+
+Understanding these dimensionless groups enables prediction of heat transfer rates across vastly different scales and applications: from microprocessor cooling with characteristic lengths in micrometers to industrial heat exchangers with meter-scale dimensions. The analysis connects momentum and thermal boundary layer development, explaining why high-velocity flows and high-conductivity fluids enhance heat transfer. This framework extends to natural convection (incorporating buoyancy effects), mixed convection regimes, and phase-change heat transfer, supporting the design of electronics cooling systems, power plant condensers, and renewable energy systems.
+
+\paragraph{System Variables: } The system variables are given in this table.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|l|r|r|r|r|}
+\hline
+\textbf{Variable} & \textbf{Description} & \textbf{[M]} & \textbf{[L]} & \textbf{[T]} & \textbf{[H]} \\
+\hline
+$h$ & Transfer coefficient & 1 & 0 & -3 & -1 \\
+$k$ & Thermal conductivity & 1 & 1 & -3 & -1 \\
+$L$ & Characteristic length & 0 & 1 & 0 & 0 \\
+$\rho$ & Density & 1 & -3 & 0 & 0 \\
+$v$ & Velocity & 0 & 1 & -1 & 0 \\
+$cp$ & Specific heat & 0 & 2 & -2 & -1 \\
+
+\hline
+\end{tabular}
+\caption{Variables and dimensions for Convective Heat Transfer}
+\end{table}
+
+The dimensional analysis has been performed using the methods described previously to identify the dimensionless $\pi$ parameters that govern this problem. The key parameters of the analysis are summarized below.
+
+\paragraph{Analysis Summary}
+\begin{itemize}
+\item Number of variables: $n = 6$
+\item Number of dimensions: $m = 4$
+\item Matrix rank: $k = 4$
+\item Number of $\pi$ terms: $n - k = 2$
+\end{itemize}
+
+\paragraph{Analysis Status}
+System status: \textcolor{orange}{\textbf{VALID}} - Case 6: Standard Case: The system is valid and produces meaningful dimensionless $\pi$ terms.
+
+
+\paragraph{Variable Classification}
+\begin{itemize}
+\item \textbf{Pivot columns:} 1, 2, 4, 5
+\item \textbf{Basic variables:} $h$, $k$, $\rho$, $v$
+\item \textbf{Free variables:} $L$, $cp$
+\end{itemize}
+
+                \paragraph{Dimensional Matrices}
+                The homogeneous linear system generated from the original dimensional matrix $\mathbf{D}$ has been solved to obtain the basis vectors for the solution null space.
+
+                \textbf{Original Dimensional Matrix $\mathbf{D}$:}
+                \[\mathbf{D} = \begin{array}{r|rrrr}
+                & \text{[}M\text{]} & \text{[}L\text{]} & \text{[}T\text{]} & \text{[}H\text{]} \\
+                \hline
+                h & 1 & 0 & -3 & -1 \\
+k & 1 & 1 & -3 & -1 \\
+L & 0 & 1 & 0 & 0 \\
+\rho & 1 & -3 & 0 & 0 \\
+v & 0 & 1 & -1 & 0 \\
+cp & 0 & 2 & -2 & -1 \\
+
+                \end{array}\]
+
+
+        \textbf{Final Matrix $\mathbf{B}$:}
+        \[\mathbf{B} = \begin{array}{r|rrrrrr}
+        & Pivot & Pivot & \pi_{1} & Pivot & Pivot & \pi_{2} \\
+        \hline
+        h & -3 & -1 & 1 & -1 & -1 & -1 \\
+k & 3 & 1 & -1 & 1 & 0 & 0 \\
+L & 0 & 0 & 1 & 0 & 0 & 0 \\
+\rho & 1 & 0 & 0 & 0 & 1 & 1 \\
+v & 0 & 0 & 0 & -1 & 3 & 1 \\
+cp & 0 & 0 & 0 & 0 & 0 & 1 \\
+
+        \end{array}\]
+
+        \paragraph{Dimensionless $\pi$ Terms: }
+        The resulting dimensionless groups that characterize this example are:
+\begin{equation}
+\pi_{1} = \frac{h \, L}{k}
+\end{equation}
+\begin{equation}
+\pi_{2} = \frac{\rho \, v \, cp}{h}
+\end{equation}
+
+                    \paragraph{Functional Relationship}
+                    The general relationship governing this problem is:
+                    \begin{equation}
+                    \pi_1 = f(\pi_2)
+                    \end{equation}
+
+                    This relationship must be determined through experimental data or additional theoretical analysis to establish the associated model.
+
+
+\subsection{Analysis 6: Pipe Flow Pressure Drop}
+\label{sec:Pipe_Flow_Pressure_Drop}
+
+\begin{problembox}
+\textbf{Physical Problem:} Determine pressure drop in pipe flow systems for hydraulic design applications.
+\end{problembox}
+
+This system examines how pressure drop $D_P$ depends on fluid density $\rho$, average velocity $v$, pipe diameter $D$, length $L$, and surface roughness $\varepsilon$. The dimensional analysis yields the fundamental relationships underlying the Darcy-Weisbach equation and Moody diagram, connecting the friction factor to Reynolds number and relative roughness for both laminar and turbulent flow regimes.
+
+
+
+Understanding these scaling laws enables prediction of pressure losses across diverse applications: from microfluidic devices with Reynolds numbers below unity to large-scale water distribution systems with highly turbulent flows. The analysis reveals why doubling pipe diameter reduces pressure drop by a factor of 32 for laminar flow, and explains the transition from smooth-pipe to rough-pipe behavior in turbulent flows. This framework extends to complex geometries including pipe networks, fittings, and valves, supporting the design of oil pipelines, chemical process equipment, and biomedical flow systems where precise pressure control is critical. This is applied in HVAC systems, heat exchangers, and aerospace (cooling systems).
+
+\paragraph{System Variables: } The system variables are given in this table.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|l|r|r|r|}
+\hline
+\textbf{Variable} & \textbf{Description} & \textbf{[M]} & \textbf{[L]} & \textbf{[T]} \\
+\hline
+$D_p$ & Pressure drop & 1 & -1 & -2 \\
+$\rho$ & Density & 1 & -3 & 0 \\
+$v$ & Velocity & 0 & 1 & -1 \\
+$D$ & Pipe diameter & 0 & 1 & 0 \\
+$L$ & Pipe length & 0 & 1 & 0 \\
+$\epsilon$ & Roughness & 0 & 1 & 0 \\
+$\mu$ & Viscosity & 1 & -1 & -1 \\
+
+\hline
+\end{tabular}
+\caption{Variables and dimensions for Pipe Flow Pressure Drop}
+\end{table}
+
+The dimensional analysis has been performed using the methods described previously to identify the dimensionless $\pi$ parameters that govern this problem. The key parameters of the analysis are summarized below.
+
+\paragraph{Analysis Summary}
+\begin{itemize}
+\item Number of variables: $n = 7$
+\item Number of dimensions: $m = 3$
+\item Matrix rank: $k = 3$
+\item Number of $\pi$ terms: $n - k = 4$
+\end{itemize}
+
+\paragraph{Analysis Status}
+System status: \textcolor{orange}{\textbf{VALID}} - Case 6: Standard Case: The system is valid and produces meaningful dimensionless $\pi$ terms.
+
+
+\paragraph{Variable Classification}
+\begin{itemize}
+\item \textbf{Pivot columns:} 1, 2, 4
+\item \textbf{Basic variables:} $D_p$, $\rho$, $D$
+\item \textbf{Free variables:} $v$, $L$, $\epsilon$, $\mu$
+\end{itemize}
+
+                \paragraph{Dimensional Matrices}
+                The homogeneous linear system generated from the original dimensional matrix $\mathbf{D}$ has been solved to obtain the basis vectors for the solution null space.
+
+                \textbf{Original Dimensional Matrix $\mathbf{D}$:}
+                \[\mathbf{D} = \begin{array}{r|rrr}
+                & \text{[}M\text{]} & \text{[}L\text{]} & \text{[}T\text{]} \\
+                \hline
+                D_p & 1 & -1 & -2 \\
+\rho & 1 & -3 & 0 \\
+v & 0 & 1 & -1 \\
+D & 0 & 1 & 0 \\
+L & 0 & 1 & 0 \\
+\epsilon & 0 & 1 & 0 \\
+\mu & 1 & -1 & -1 \\
+
+                \end{array}\]
+
+
+        \textbf{Final Matrix $\mathbf{B}$:}
+        \[\mathbf{B} = \begin{array}{r|rrrrrrr}
+        & Pivot & Pivot & \pi_{1} & Pivot & \pi_{2} & \pi_{3} & \pi_{4} \\
+        \hline
+        D_p & 0 & 0 & -0.50 & -0.50 & 0 & 0 & -0.50 \\
+\rho & 1 & 0 & 0.50 & 0.50 & 0 & 0 & -0.50 \\
+v & 0 & 0 & 1 & 0 & 0 & 0 & 0 \\
+D & 3 & 1 & 0 & 1 & -1 & -1 & -1 \\
+L & 0 & 0 & 0 & 0 & 1 & 0 & 0 \\
+\epsilon & 0 & 0 & 0 & 0 & 0 & 1 & 0 \\
+\mu & 0 & 0 & 0 & 0 & 0 & 0 & 1 \\
+
+        \end{array}\]
+
+        \paragraph{Dimensionless $\pi$ Terms: }
+        The resulting dimensionless groups that characterize this example are:
+\begin{equation}
+\pi_{1} = \frac{\rho \, v^{2}}{D_p}
+\end{equation}
+\begin{equation}
+\pi_{2} = \frac{L}{D}
+\end{equation}
+\begin{equation}
+\pi_{3} = \frac{\epsilon}{D}
+\end{equation}
+\begin{equation}
+\pi_{4} = \frac{\mu^{2}}{D_p \, \rho \, D^{2}}
+\end{equation}
+
+                    \paragraph{Functional Relationship}
+                    The general relationship governing this problem is:
+                    \begin{equation}
+                    \pi_1 = f(\pi_2, \ldots, \pi_{4})
+                    \end{equation}
+
+                    This relationship must be determined through experimental data or additional theoretical analysis to establish the associated model.
+
+
+\subsection{Analysis 7: Thermal Expansion}
+\label{sec:Thermal_Expansion}
+
+\begin{problembox}
+\textbf{Physical Problem:} Analyze dimensional changes in materials due to temperature variations.
+\end{problembox}
+
+This system examines how length change $D_L$ depends on initial length $L_0$, thermal expansion coefficient $\alpha$, and temperature change $D_T$. The dimensional analysis reveals the linear relationship $D_L = \alpha L_0 D_T$, demonstrating that thermal strain is independent of material size, a fundamental principle enabling predictable scaling from laboratory specimens to massive structures.
+
+
+
+This scaling invariance is crucial for designing thermal expansion joints in bridges, pipelines, and buildings, where differential expansion between materials can generate enormous stresses. The analysis extends to bimetallic strips in thermostats, precision instrument design where thermal stability is critical, and semiconductor manufacturing where nanometer-scale thermal expansion affects device performance. Understanding thermal expansion also enables thermal stress analysis in composite materials, jet engine components operating across extreme temperature gradients, and space structures experiencing rapid thermal cycling between sunlit and shadowed conditions. It is used in civil engineering (bridges, buildings), mechanical engineering (machine parts), and material science.
+
+\paragraph{System Variables: } The system variables are given in this table.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|l|r|r|}
+\hline
+\textbf{Variable} & \textbf{Description} & \textbf{[L]} & \textbf{[H]} \\
+\hline
+$D_L$ & Length change & 1 & 0 \\
+$L_0$ & Initial length & 1 & 0 \\
+$\alpha$ & Thermal expansion coefficient & 0 & -1 \\
+$D_T$ & Temperature change & 0 & 1 \\
+
+\hline
+\end{tabular}
+\caption{Variables and dimensions for Thermal Expansion}
+\end{table}
+
+The dimensional analysis has been performed using the methods described previously to identify the dimensionless $\pi$ parameters that govern this problem. The key parameters of the analysis are summarized below.
+
+\paragraph{Analysis Summary}
+\begin{itemize}
+\item Number of variables: $n = 4$
+\item Number of dimensions: $m = 2$
+\item Matrix rank: $k = 2$
+\item Number of $\pi$ terms: $n - k = 2$
+\end{itemize}
+
+\paragraph{Analysis Status}
+System status: \textcolor{orange}{\textbf{VALID}} - Case 6: Standard Case: The system is valid and produces meaningful dimensionless $\pi$ terms.
+
+
+\paragraph{Variable Classification}
+\begin{itemize}
+\item \textbf{Pivot columns:} 1, 3
+\item \textbf{Basic variables:} $D_L$, $\alpha$
+\item \textbf{Free variables:} $L_0$, $D_T$
+\end{itemize}
+
+                \paragraph{Dimensional Matrices}
+                The homogeneous linear system generated from the original dimensional matrix $\mathbf{D}$ has been solved to obtain the basis vectors for the solution null space.
+
+                \textbf{Original Dimensional Matrix $\mathbf{D}$:}
+                \[\mathbf{D} = \begin{array}{r|rr}
+                & \text{[}L\text{]} & \text{[}H\text{]} \\
+                \hline
+                D_L & 1 & 0 \\
+L_0 & 1 & 0 \\
+\alpha & 0 & -1 \\
+D_T & 0 & 1 \\
+
+                \end{array}\]
+
+
+        \textbf{Final Matrix $\mathbf{B}$:}
+        \[\mathbf{B} = \begin{array}{r|rrrr}
+        & Pivot & \pi_{1} & Pivot & \pi_{2} \\
+        \hline
+        D_L & 1 & -1 & 0 & 0 \\
+L_0 & 0 & 1 & 0 & 0 \\
+\alpha & 0 & 0 & -1 & 1 \\
+D_T & 0 & 0 & 0 & 1 \\
+
+        \end{array}\]
+
+        \paragraph{Dimensionless $\pi$ Terms: }
+        The resulting dimensionless groups that characterize this example are:
+\begin{equation}
+\pi_{1} = \frac{L_0}{D_L}
+\end{equation}
+\begin{equation}
+\pi_{2} = \alpha \, D_T
+\end{equation}
+
+                    \paragraph{Functional Relationship}
+                    The general relationship governing this problem is:
+                    \begin{equation}
+                    \pi_1 = f(\pi_2)
+                    \end{equation}
+
+                    This relationship must be determined through experimental data or additional theoretical analysis to establish the associated model.
+
+
+\subsection{Analysis 8: Electrical Circuit (EC)}
+\label{sec:Electrical_Circuit_EC}
+
+\begin{problembox}
+\textbf{Physical Problem:} Analyze the dimensional relationships in a DC electrical circuit containing resistive elements.
+\end{problembox}
+
+This system examines the fundamental electrical quantities: voltage $V$ (potential difference), current $I$ (electrical flow), resistance $R$ (opposition to current flow), power $P$ (energy transfer rate), time $t$, and electric charge $Q$. The dimensional analysis reveals how these variables combine to form dimensionless groups, providing insight into circuit scaling laws, energy efficiency relationships, and transient response characteristics.
+
+
+
+Understanding these dimensionless relationships is essential for circuit optimization, thermal management (through power dissipation analysis), and designing circuits across different scales, from microelectronics to power systems. The analysis also illuminates the connection between Ohm's law, Joule heating, and charge-current relationships, forming the foundation for more complex circuit behaviors including RC time constants and energy storage mechanisms.
+
+\paragraph{System Variables: } The system variables are given in this table.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|l|r|r|r|r|}
+\hline
+\textbf{Variable} & \textbf{Description} & \textbf{[M]} & \textbf{[L]} & \textbf{[T]} & \textbf{[I]} \\
+\hline
+$V$ & Voltage & 1 & 2 & -3 & -1 \\
+$I$ & Intensity & 0 & 0 & 0 & 1 \\
+$R$ & Resistence & 1 & 2 & -3 & -2 \\
+$P$ & Power & 1 & 2 & -3 & 0 \\
+$T$ & Time & 0 & 0 & 1 & 0 \\
+$Q$ & Electric charge & 0 & 0 & 1 & 1 \\
+
+\hline
+\end{tabular}
+\caption{Variables and dimensions for Electrical Circuit (EC)}
+\end{table}
+
+The dimensional analysis has been performed using the methods described previously to identify the dimensionless $\pi$ parameters that govern this problem. The key parameters of the analysis are summarized below.
+
+\paragraph{Analysis Summary}
+\begin{itemize}
+\item Number of variables: $n = 6$
+\item Number of dimensions: $m = 4$
+\item Matrix rank: $k = 3$
+\item Number of $\pi$ terms: $n - k = 3$
+\end{itemize}
+
+\paragraph{Analysis Status}
+System status: \textcolor{orange}{\textbf{VALID}} - Case 5: Linear Dependencies: Linear dependencies reduce the matrix rank, increasing the number of $\pi$ terms.
+
+
+\paragraph{Variable Classification}
+\begin{itemize}
+\item \textbf{Pivot columns:} 1, 5, 2
+\item \textbf{Basic variables:} $V$, $T$, $I$
+\item \textbf{Free variables:} $R$, $P$, $Q$
+\end{itemize}
+
+                \paragraph{Dimensional Matrices}
+                The homogeneous linear system generated from the original dimensional matrix $\mathbf{D}$ has been solved to obtain the basis vectors for the solution null space.
+
+                \textbf{Original Dimensional Matrix $\mathbf{D}$:}
+                \[\mathbf{D} = \begin{array}{r|rrrr}
+                & \text{[}M\text{]} & \text{[}L\text{]} & \text{[}T\text{]} & \text{[}I\text{]} \\
+                \hline
+                V & 1 & 2 & -3 & -1 \\
+I & 0 & 0 & 0 & 1 \\
+R & 1 & 2 & -3 & -2 \\
+P & 1 & 2 & -3 & 0 \\
+T & 0 & 0 & 1 & 0 \\
+Q & 0 & 0 & 1 & 1 \\
+
+                \end{array}\]
+
+
+        \textbf{Final Matrix $\mathbf{B}$:}
+        \[\mathbf{B} = \begin{array}{r|rrrrrr}
+        & Pivot & Pivot & \pi_{1} & \pi_{2} & Pivot & \pi_{3} \\
+        \hline
+        V & 1 & 0 & -1 & -1 & 0 & 0 \\
+I & 1 & 1 & 1 & -1 & 0 & -1 \\
+R & 0 & 0 & 1 & 0 & 0 & 0 \\
+P & 0 & 0 & 0 & 1 & 0 & 0 \\
+T & 3 & 0 & 0 & 0 & 1 & -1 \\
+Q & 0 & 0 & 0 & 0 & 0 & 1 \\
+
+        \end{array}\]
+
+        \paragraph{Dimensionless $\pi$ Terms: }
+        The resulting dimensionless groups that characterize this example are:
+\begin{equation}
+\pi_{1} = \frac{I \, R}{V}
+\end{equation}
+\begin{equation}
+\pi_{2} = \frac{P}{V \, I}
+\end{equation}
+\begin{equation}
+\pi_{3} = \frac{Q}{I \, T}
+\end{equation}
+
+                    \paragraph{Functional Relationship}
+                    The general relationship governing this problem is:
+                    \begin{equation}
+                    \pi_1 = f(\pi_2,\pi_3)
+                    \end{equation}
+
+                    This relationship must be determined through experimental data or additional theoretical analysis to establish the associated model.
+
+
+\subsection{Analysis 9: Turbulent Evaporation}
+\label{sec:Turbulent_Evaporation}
+
+\begin{problembox}
+\textbf{Physical Problem:} Turbulent evaporation from a free surface in the presence of wind.
+\end{problembox}
+
+In the problem of turbulent evaporation from a free surface in the presence of wind, the following variables are considered important. The dimensions are given in brackets and expressed in terms of length $L$ and time $T$: (a) Evaporation under turbulent conditions $V_T$ $[LT^{-1}]$,  (b) Humidity difference $q_s-q$ (saturation deficit), where $q$ is the specific humidity of air and $q_s$ is the specific saturation humidity at the water surface temperature (both dimensionless), (c) Turbulent diffusion coefficient $K$ for water vapor in air $[L^2T^{-1}]$, (d) Wetted surface area $S$ $[L^2]$, (e) Mean wind velocity $U$ $[LT^{-1}]$. The influence of the different variables are analyzed.
+
+\paragraph{System Variables: } The system variables are given in this table.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|l|r|r|}
+\hline
+\textbf{Variable} & \textbf{Description} & \textbf{[L]} & \textbf{[T]} \\
+\hline
+$Vt$ & Evaporation rate & 1 & -1 \\
+$hdif$ & Humidity difference & 0 & 0 \\
+$K$ & Turbulent diffusion coefficient & 2 & -1 \\
+$S$ & Surface area & 2 & 0 \\
+$U$ & Wind velocity & 1 & -1 \\
+
+\hline
+\end{tabular}
+\caption{Variables and dimensions for Turbulent Evaporation}
+\end{table}
+
+The dimensional analysis has been performed using the methods described previously to identify the dimensionless $\pi$ parameters that govern this problem. The key parameters of the analysis are summarized below.
+
+\paragraph{Analysis Summary}
+\begin{itemize}
+\item Number of variables: $n = 5$
+\item Number of dimensions: $m = 2$
+\item Matrix rank: $k = 2$
+\item Number of $\pi$ terms: $n - k = 3$
+\end{itemize}
+
+\paragraph{Analysis Status}
+System status: \textcolor{orange}{\textbf{VALID}} - Case 2 + 6: Multiple conditions detected simultaneously.
+
+
+\paragraph{Variable Classification}
+\begin{itemize}
+\item \textbf{Pivot columns:} 1, 3
+\item \textbf{Basic variables:} $Vt$, $K$
+\item \textbf{Free variables:} $hdif$, $S$, $U$
+\end{itemize}
+
+                \paragraph{Dimensional Matrices}
+                The homogeneous linear system generated from the original dimensional matrix $\mathbf{D}$ has been solved to obtain the basis vectors for the solution null space.
+
+                \textbf{Original Dimensional Matrix $\mathbf{D}$:}
+                \[\mathbf{D} = \begin{array}{r|rr}
+                & \text{[}L\text{]} & \text{[}T\text{]} \\
+                \hline
+                Vt & 1 & -1 \\
+hdif & 0 & 0 \\
+K & 2 & -1 \\
+S & 2 & 0 \\
+U & 1 & -1 \\
+
+                \end{array}\]
+
+
+        \textbf{Final Matrix $\mathbf{B}$:}
+        \[\mathbf{B} = \begin{array}{r|rrrrr}
+        & Pivot & \pi_{1} & Pivot & \pi_{2} & \pi_{3} \\
+        \hline
+        Vt & -1 & 0 & -2 & 2 & -1 \\
+hdif & 0 & 1 & 0 & 0 & 0 \\
+K & 1 & 0 & 1 & -2 & 0 \\
+S & 0 & 0 & 0 & 1 & 0 \\
+U & 0 & 0 & 0 & 0 & 1 \\
+
+        \end{array}\]
+
+        \paragraph{Dimensionless $\pi$ Terms: }
+        The resulting dimensionless groups that characterize this example are:
+\begin{equation}
+\pi_{1} = hdif
+\end{equation}
+\begin{equation}
+\pi_{2} = \frac{Vt^{2} \, S}{K^{2}}
+\end{equation}
+\begin{equation}
+\pi_{3} = \frac{U}{Vt}
+\end{equation}
+
+                    \paragraph{Functional Relationship}
+                    The general relationship governing this problem is:
+                    \begin{equation}
+                    \pi_1 = f(\pi_2,\pi_3)
+                    \end{equation}
+
+                    This relationship must be determined through experimental data or additional theoretical analysis to establish the associated model.
+
+
+\subsection{Analysis 10: Case 1: Full Rank}
+\label{sec:Case_1_Full_Rank}
+
+\begin{problembox}
+\textbf{Physical Problem:} Case 1 refers to a dimensional matrix with full rank (rank equals the number of fundamental dimensions $k$), where all dimensions are independent, and the maximum number of $\pi$ terms ($n - r$) is produced.
+\end{problembox}
+
+This is similar to the Standard case but emphasizes a scenario where the matrix has no linear dependencies among dimensions, ensuring the zero as the unique solution. It's a robust test for both calculation methods, as the Linear System Solver should yield a clean solution, and Null Space Analysis should confirm a well-defined kernel.
+
+\paragraph{System Variables: } The system variables are given in this table.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|l|r|r|r|}
+\hline
+\textbf{Variable} & \textbf{Description} & \textbf{[M]} & \textbf{[L]} & \textbf{[T]} \\
+\hline
+$F$ & Force & 1 & 1 & -2 \\
+$m$ & Mass & 1 & 0 & 0 \\
+$T$ & Time & 0 & 0 & 1 \\
+
+\hline
+\end{tabular}
+\caption{Variables and dimensions for Case 1: Full Rank}
+\end{table}
+
+The dimensional analysis has been performed using the methods described previously to identify the dimensionless $\pi$ parameters that govern this problem. The key parameters of the analysis are summarized below.
+
+\paragraph{Analysis Summary}
+\begin{itemize}
+\item Number of variables: $n = 3$
+\item Number of dimensions: $m = 3$
+\item Matrix rank: $k = 3$
+\item Number of $\pi$ terms: $n - k = 0$
+\end{itemize}
+
+\paragraph{Analysis Status}
+System status: \textcolor{red}{\textbf{ERROR}} - Case 1: Full Rank: The number of variables equals the matrix rank (n = r). No dimensionless $\pi$ terms can be formed.
+
+\textbf{Note:} This analysis contains configuration errors and cannot produce valid $\pi$ terms.
+
+
+\paragraph{Variable Classification}
+\begin{itemize}
+\item \textbf{Pivot columns:} 1, 2, 3
+\item \textbf{Basic variables:} $F$, $m$, $T$
+\item \textbf{Free variables:}
+\end{itemize}
+
+                \paragraph{Dimensional Matrices}
+                The homogeneous linear system generated from the original dimensional matrix $\mathbf{D}$ has been solved to obtain the basis vectors for the solution null space.
+
+                \textbf{Original Dimensional Matrix $\mathbf{D}$:}
+                \[\mathbf{D} = \begin{array}{r|rrr}
+                & \text{[}M\text{]} & \text{[}L\text{]} & \text{[}T\text{]} \\
+                \hline
+                F & 1 & 1 & -2 \\
+m & 1 & 0 & 0 \\
+T & 0 & 0 & 1 \\
+
+                \end{array}\]
+
+
+        \textbf{Final Matrix $\mathbf{B}$:}
+        \[\mathbf{B} = \begin{array}{r|rrr}
+        & Pivot & Pivot & Pivot \\
+        \hline
+        F & 0 & 1 & 0 \\
+m & 1 & -1 & 0 \\
+T & 0 & 2 & 1 \\
+
+        \end{array}\]
+
+        \paragraph{Dimensionless $\pi$ Terms: }
+        \textit{No dimensionless $\pi$ terms were generated due to configuration errors identified above.}
+
+
+\subsection{Analysis 11: Case 2: Null Row (Dimensionless Variable)}
+\label{sec:Case_2_Null_Row_Dimensionless_Variable}
+
+\begin{problembox}
+\textbf{Physical Problem:} Case 2 involves a dimensional matrix with one or more row of zeros, indicating that a variable is dimensionless or has no dimensional contribution (e.g., an angle in radians or a pure number like a proportion or percentile).
+\end{problembox}
+
+This case tests the calculator's handling of variables that are already dimensionless, which should appear directly as $\pi$ terms without further manipulation. For example, a proportiom, a percentile or the angles (all dimensionless) create null rows. The Linear System Solver should identify these trivially, while Null Space Analysis should confirm the variable's independence from the kernel.
+
+\paragraph{System Variables: } The system variables are given in this table.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|l|r|r|r|}
+\hline
+\textbf{Variable} & \textbf{Description} & \textbf{[M]} & \textbf{[L]} & \textbf{[T]} \\
+\hline
+$F$ & Force & 1 & 1 & -2 \\
+$v$ & Velocity & 0 & 1 & -1 \\
+$L$ & Length & 0 & 1 & 0 \\
+$Re$ & Reynolds number & 0 & 0 & 0 \\
+
+\hline
+\end{tabular}
+\caption{Variables and dimensions for Case 2: Null Row (Dimensionless Variable)}
+\end{table}
+
+The dimensional analysis has been performed using the methods described previously to identify the dimensionless $\pi$ parameters that govern this problem. The key parameters of the analysis are summarized below.
+
+\paragraph{Analysis Summary}
+\begin{itemize}
+\item Number of variables: $n = 4$
+\item Number of dimensions: $m = 3$
+\item Matrix rank: $k = 3$
+\item Number of $\pi$ terms: $n - k = 1$
+\end{itemize}
+
+\paragraph{Analysis Status}
+System status: \textcolor{red}{\textbf{ERROR}} - Case 2 + 4: Multiple conditions detected simultaneously.
+
+\textbf{Note:} This analysis contains configuration errors and cannot produce valid $\pi$ terms.
+
+
+\paragraph{Variable Classification}
+\begin{itemize}
+\item \textbf{Pivot columns:} 1, 2, 3
+\item \textbf{Basic variables:} $F$, $v$, $L$
+\item \textbf{Free variables:} $Re$
+\end{itemize}
+
+                \paragraph{Dimensional Matrices}
+                The homogeneous linear system generated from the original dimensional matrix $\mathbf{D}$ has been solved to obtain the basis vectors for the solution null space.
+
+                \textbf{Original Dimensional Matrix $\mathbf{D}$:}
+                \[\mathbf{D} = \begin{array}{r|rrr}
+                & \text{[}M\text{]} & \text{[}L\text{]} & \text{[}T\text{]} \\
+                \hline
+                F & 1 & 1 & -2 \\
+v & 0 & 1 & -1 \\
+L & 0 & 1 & 0 \\
+Re & 0 & 0 & 0 \\
+
+                \end{array}\]
+
+
+        \textbf{Final Matrix $\mathbf{B}$:}
+        \[\mathbf{B} = \begin{array}{r|rrrr}
+        & Pivot & Pivot & Pivot & \pi_{1} \\
+        \hline
+        F & 1 & 0 & 0 & 0 \\
+v & -2 & 0 & -1 & 0 \\
+L & 1 & 1 & 1 & 0 \\
+Re & 0 & 0 & 0 & 1 \\
+
+        \end{array}\]
+
+        \paragraph{Dimensionless $\pi$ Terms: }
+        \textit{No dimensionless $\pi$ terms were generated due to configuration errors identified above.}
+
+
+\subsection{Analysis 12: Case 3: Null Column}
+\label{sec:Case_3_Null_Column}
+
+\begin{problembox}
+\textbf{Physical Problem:} Case 3 represents a dimensional matrix with some column of zeros, meaning one or more dimensions (e.g., M, T, X) are not present in any variable. This could occur in problems where a fundamental dimension is irrelevant (e.g., no temperature in a mechanical system).
+\end{problembox}
+
+This tests the calculator's ability to handle reduced dimensionality. For instance, in a purely geometric problem (e.g., scaling of shapes), only length [L] might appear, creating zero columns for M, T, etc. The calculator should adjust the rank calculation and produce fewer $\pi$ terms than expected.
+
+\paragraph{System Variables: } The system variables are given in this table.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|l|r|r|r|r|}
+\hline
+\textbf{Variable} & \textbf{Description} & \textbf{[M]} & \textbf{[L]} & \textbf{[T]} & \textbf{[X]} \\
+\hline
+$F$ & Force & 1 & 1 & -2 & 0 \\
+$v$ & Velocity & 0 & 1 & -1 & 0 \\
+$L$ & Length & 0 & 1 & 0 & 0 \\
+$\rho$ & Density & 1 & -3 & 0 & 0 \\
+
+\hline
+\end{tabular}
+\caption{Variables and dimensions for Case 3: Null Column}
+\end{table}
+
+The dimensional analysis has been performed using the methods described previously to identify the dimensionless $\pi$ parameters that govern this problem. The key parameters of the analysis are summarized below.
+
+\paragraph{Analysis Summary}
+\begin{itemize}
+\item Number of variables: $n = 4$
+\item Number of dimensions: $m = 4$
+\item Matrix rank: $k = 3$
+\item Number of $\pi$ terms: $n - k = 1$
+\end{itemize}
+
+\paragraph{Analysis Status}
+System status: \textcolor{red}{\textbf{ERROR}} - Case 3: Null Columns: The dimensional matrix contains one or more null columns. This indicates redundant or invalid dimensions.
+
+\textbf{Note:} This analysis contains configuration errors and cannot produce valid $\pi$ terms.
+
+
+\paragraph{Variable Classification}
+\begin{itemize}
+\item \textbf{Pivot columns:} 1, 2, 3
+\item \textbf{Basic variables:} $F$, $v$, $L$
+\item \textbf{Free variables:} $\rho$
+\end{itemize}
+
+                \paragraph{Dimensional Matrices}
+                The homogeneous linear system generated from the original dimensional matrix $\mathbf{D}$ has been solved to obtain the basis vectors for the solution null space.
+
+                \textbf{Original Dimensional Matrix $\mathbf{D}$:}
+                \[\mathbf{D} = \begin{array}{r|rrrr}
+                & \text{[}M\text{]} & \text{[}L\text{]} & \text{[}T\text{]} & \text{[}X\text{]} \\
+                \hline
+                F & 1 & 1 & -2 & 0 \\
+v & 0 & 1 & -1 & 0 \\
+L & 0 & 1 & 0 & 0 \\
+\rho & 1 & -3 & 0 & 0 \\
+
+                \end{array}\]
+
+
+        \textbf{Final Matrix $\mathbf{B}$:}
+        \[\mathbf{B} = \begin{array}{r|rrrr}
+        & Pivot & Pivot & Pivot & \pi_{1} \\
+        \hline
+        F & 1 & 0 & 0 & -1 \\
+v & -2 & 0 & -1 & 2 \\
+L & 1 & 1 & 1 & 2 \\
+\rho & 0 & 0 & 0 & 1 \\
+
+        \end{array}\]
+
+        \paragraph{Dimensionless $\pi$ Terms: }
+        \textit{No dimensionless $\pi$ terms were generated due to configuration errors identified above.}
+
+
+\subsection{Analysis 13: Case 4: Non-Participating Variable}
+\label{sec:Case_4_NonParticipating_Variable}
+
+\begin{problembox}
+\textbf{Physical Problem:} Case 4 represents variables that do not contribute to the final $\pi$ terms, often because they cancel out or are irrelevant to the physical relationship (e.g., mass in a simple pendulum's period).
+\end{problembox}
+
+This tests the calculator's ability to identify variables that, while included, have no effect on the dimensionless groups. For example, in a pendulum, the mass of the bob is often included but found to be non-participating after analysis. Both methods should correctly exclude such variables from the $\pi$ terms.
+
+\paragraph{System Variables: } The system variables are given in this table.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|l|r|r|r|}
+\hline
+\textbf{Variable} & \textbf{Description} & \textbf{[M]} & \textbf{[L]} & \textbf{[T]} \\
+\hline
+$v$ & Velocity & 0 & 1 & -1 \\
+$L$ & Length & 0 & 1 & 0 \\
+$t$ & Time & 0 & 0 & 1 \\
+$m$ & Mass & 1 & 0 & 0 \\
+
+\hline
+\end{tabular}
+\caption{Variables and dimensions for Case 4: Non-Participating Variable}
+\end{table}
+
+The dimensional analysis has been performed using the methods described previously to identify the dimensionless $\pi$ parameters that govern this problem. The key parameters of the analysis are summarized below.
+
+\paragraph{Analysis Summary}
+\begin{itemize}
+\item Number of variables: $n = 4$
+\item Number of dimensions: $m = 3$
+\item Matrix rank: $k = 3$
+\item Number of $\pi$ terms: $n - k = 1$
+\end{itemize}
+
+\paragraph{Analysis Status}
+System status: \textcolor{red}{\textbf{ERROR}} - Case 4: Non-Participating Variables: Some variables do not participate in any $\pi$ term. This is an error - all dimensional variables must participate.
+
+\textbf{Note:} This analysis contains configuration errors and cannot produce valid $\pi$ terms.
+
+
+\paragraph{Variable Classification}
+\begin{itemize}
+\item \textbf{Pivot columns:} 4, 1, 2
+\item \textbf{Basic variables:} $m$, $v$, $L$
+\item \textbf{Free variables:} $t$
+\end{itemize}
+
+                \paragraph{Dimensional Matrices}
+                The homogeneous linear system generated from the original dimensional matrix $\mathbf{D}$ has been solved to obtain the basis vectors for the solution null space.
+
+                \textbf{Original Dimensional Matrix $\mathbf{D}$:}
+                \[\mathbf{D} = \begin{array}{r|rrr}
+                & \text{[}M\text{]} & \text{[}L\text{]} & \text{[}T\text{]} \\
+                \hline
+                v & 0 & 1 & -1 \\
+L & 0 & 1 & 0 \\
+t & 0 & 0 & 1 \\
+m & 1 & 0 & 0 \\
+
+                \end{array}\]
+
+
+        \textbf{Final Matrix $\mathbf{B}$:}
+        \[\mathbf{B} = \begin{array}{r|rrrr}
+        & Pivot & Pivot & \pi_{1} & Pivot \\
+        \hline
+        v & 0 & -1 & 1 & 0 \\
+L & 1 & 1 & -1 & 0 \\
+t & 0 & 0 & 1 & 0 \\
+m & 0 & 0 & 0 & 1 \\
+
+        \end{array}\]
+
+        \paragraph{Dimensionless $\pi$ Terms: }
+        \textit{No dimensionless $\pi$ terms were generated due to configuration errors identified above.}
+
+
+\subsection{Analysis 14: Case 5: Linear Dependencies}
+\label{sec:Case_5_Linear_Dependencies}
+
+\begin{problembox}
+\textbf{Physical Problem:} Linear Dependencies
+\end{problembox}
+
+This example corresponds to the Linear Dependencies case
+
+\paragraph{System Variables: } The system variables are given in this table.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|l|r|r|r|}
+\hline
+\textbf{Variable} & \textbf{Description} & \textbf{[M]} & \textbf{[L]} & \textbf{[T]} \\
+\hline
+$F$ & Force & 1 & 1 & -2 \\
+$F0$ & Initial force & 1 & 1 & -2 \\
+$E$ & Energy & 1 & 2 & -2 \\
+$L$ & Length & 0 & 1 & 0 \\
+$L_0$ & Reflength & 0 & 1 & 0 \\
+
+\hline
+\end{tabular}
+\caption{Variables and dimensions for Case 5: Linear Dependencies}
+\end{table}
+
+The dimensional analysis has been performed using the methods described previously to identify the dimensionless $\pi$ parameters that govern this problem. The key parameters of the analysis are summarized below.
+
+\paragraph{Analysis Summary}
+\begin{itemize}
+\item Number of variables: $n = 5$
+\item Number of dimensions: $m = 3$
+\item Matrix rank: $k = 2$
+\item Number of $\pi$ terms: $n - k = 3$
+\end{itemize}
+
+\paragraph{Analysis Status}
+System status: \textcolor{orange}{\textbf{VALID}} - Case 5: Linear Dependencies: Linear dependencies reduce the matrix rank, increasing the number of $\pi$ terms.
+
+
+\paragraph{Variable Classification}
+\begin{itemize}
+\item \textbf{Pivot columns:} 1, 3
+\item \textbf{Basic variables:} $F$, $E$
+\item \textbf{Free variables:} $F0$, $L$, $L_0$
+\end{itemize}
+
+                \paragraph{Dimensional Matrices}
+                The homogeneous linear system generated from the original dimensional matrix $\mathbf{D}$ has been solved to obtain the basis vectors for the solution null space.
+
+                \textbf{Original Dimensional Matrix $\mathbf{D}$:}
+                \[\mathbf{D} = \begin{array}{r|rrr}
+                & \text{[}M\text{]} & \text{[}L\text{]} & \text{[}T\text{]} \\
+                \hline
+                F & 1 & 1 & -2 \\
+F0 & 1 & 1 & -2 \\
+E & 1 & 2 & -2 \\
+L & 0 & 1 & 0 \\
+L_0 & 0 & 1 & 0 \\
+
+                \end{array}\]
+
+
+        \textbf{Final Matrix $\mathbf{B}$:}
+        \[\mathbf{B} = \begin{array}{r|rrrrr}
+        & Pivot & \pi_{1} & Pivot & \pi_{2} & \pi_{3} \\
+        \hline
+        F & 2 & -1 & -1 & 1 & 1 \\
+F0 & 0 & 1 & 0 & 0 & 0 \\
+E & -1 & 0 & 1 & -1 & -1 \\
+L & 0 & 0 & 0 & 1 & 0 \\
+L_0 & 0 & 0 & 0 & 0 & 1 \\
+
+        \end{array}\]
+
+        \paragraph{Dimensionless $\pi$ Terms: }
+        The resulting dimensionless groups that characterize this example are:
+\begin{equation}
+\pi_{1} = \frac{F0}{F}
+\end{equation}
+\begin{equation}
+\pi_{2} = \frac{F \, L}{E}
+\end{equation}
+\begin{equation}
+\pi_{3} = \frac{F \, L_0}{E}
+\end{equation}
+
+                    \paragraph{Functional Relationship}
+                    The general relationship governing this problem is:
+                    \begin{equation}
+                    \pi_1 = f(\pi_2,\pi_3)
+                    \end{equation}
+
+                    This relationship must be determined through experimental data or additional theoretical analysis to establish the associated model.
+
+
+\subsection{Analysis 15: Case 6: Standard Valid Case}
+\label{sec:Case_6_Standard_Valid_Case}
+
+\begin{problembox}
+\textbf{Physical Problem:} Standard Valid Case
+\end{problembox}
+
+This shows the standard valid case
+
+\paragraph{System Variables: } The system variables are given in this table.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|l|r|r|r|}
+\hline
+\textbf{Variable} & \textbf{Description} & \textbf{[M]} & \textbf{[L]} & \textbf{[T]} \\
+\hline
+$F$ & Force & 1 & 1 & -2 \\
+$v$ & Velocity & 0 & 1 & -1 \\
+$L$ & Length & 0 & 1 & 0 \\
+$\rho$ & Density & 1 & -3 & 0 \\
+
+\hline
+\end{tabular}
+\caption{Variables and dimensions for Case 6: Standard Valid Case}
+\end{table}
+
+The dimensional analysis has been performed using the methods described previously to identify the dimensionless $\pi$ parameters that govern this problem. The key parameters of the analysis are summarized below.
+
+\paragraph{Analysis Summary}
+\begin{itemize}
+\item Number of variables: $n = 4$
+\item Number of dimensions: $m = 3$
+\item Matrix rank: $k = 3$
+\item Number of $\pi$ terms: $n - k = 1$
+\end{itemize}
+
+\paragraph{Analysis Status}
+System status: \textcolor{orange}{\textbf{VALID}} - Case 6: Standard Case: The system is valid and produces meaningful dimensionless $\pi$ terms.
+
+
+\paragraph{Variable Classification}
+\begin{itemize}
+\item \textbf{Pivot columns:} 1, 2, 3
+\item \textbf{Basic variables:} $F$, $v$, $L$
+\item \textbf{Free variables:} $\rho$
+\end{itemize}
+
+                \paragraph{Dimensional Matrices}
+                The homogeneous linear system generated from the original dimensional matrix $\mathbf{D}$ has been solved to obtain the basis vectors for the solution null space.
+
+                \textbf{Original Dimensional Matrix $\mathbf{D}$:}
+                \[\mathbf{D} = \begin{array}{r|rrr}
+                & \text{[}M\text{]} & \text{[}L\text{]} & \text{[}T\text{]} \\
+                \hline
+                F & 1 & 1 & -2 \\
+v & 0 & 1 & -1 \\
+L & 0 & 1 & 0 \\
+\rho & 1 & -3 & 0 \\
+
+                \end{array}\]
+
+
+        \textbf{Final Matrix $\mathbf{B}$:}
+        \[\mathbf{B} = \begin{array}{r|rrrr}
+        & Pivot & Pivot & Pivot & \pi_{1} \\
+        \hline
+        F & 1 & 0 & 0 & -1 \\
+v & -2 & 0 & -1 & 2 \\
+L & 1 & 1 & 1 & 2 \\
+\rho & 0 & 0 & 0 & 1 \\
+
+        \end{array}\]
+
+        \paragraph{Dimensionless $\pi$ Terms: }
+        The resulting dimensionless groups that characterize this example are:
+\begin{equation}
+\pi_{1} = \frac{v^{2} \, L^{2} \, \rho}{F}
+\end{equation}
+
+                    \paragraph{Functional Relationship}
+                    The general relationship governing this problem is:
+                    \begin{equation}
+                    \pi_1 = \text{constant}
+                    \end{equation}
+
+                    This relationship must be determined through experimental data or additional theoretical analysis to establish the associated model.
+
+
+\subsection{Analysis 16: Case 7: Combined (Dimensionless + Participating variables)}
+\label{sec:Case_7_Combined_Dimensionless__Participating_variables}
+
+\begin{problembox}
+\textbf{Physical Problem:} Dimensionless + Participating variables
+\end{problembox}
+
+This example combines two valid (dimensionless and participating variables)
+
+\paragraph{System Variables: } The system variables are given in this table.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|c|l|r|r|r|}
+\hline
+\textbf{Variable} & \textbf{Description} & \textbf{[M]} & \textbf{[L]} & \textbf{[T]} \\
+\hline
+$F$ & Force & 1 & 1 & -2 \\
+$v$ & Velocity & 0 & 1 & -1 \\
+$L$ & Length & 0 & 1 & 0 \\
+$Re$ & Reynolds number & 0 & 0 & 0 \\
+$m$ & Mass & 1 & 0 & 0 \\
+
+\hline
+\end{tabular}
+\caption{Variables and dimensions for Case 7: Combined (Dimensionless + Participating variables)}
+\end{table}
+
+The dimensional analysis has been performed using the methods described previously to identify the dimensionless $\pi$ parameters that govern this problem. The key parameters of the analysis are summarized below.
+
+\paragraph{Analysis Summary}
+\begin{itemize}
+\item Number of variables: $n = 5$
+\item Number of dimensions: $m = 3$
+\item Matrix rank: $k = 3$
+\item Number of $\pi$ terms: $n - k = 2$
+\end{itemize}
+
+\paragraph{Analysis Status}
+System status: \textcolor{orange}{\textbf{VALID}} - Case 2 + 6: Multiple conditions detected simultaneously.
+
+
+\paragraph{Variable Classification}
+\begin{itemize}
+\item \textbf{Pivot columns:} 1, 2, 3
+\item \textbf{Basic variables:} $F$, $v$, $L$
+\item \textbf{Free variables:} $Re$, $m$
+\end{itemize}
+
+                \paragraph{Dimensional Matrices}
+                The homogeneous linear system generated from the original dimensional matrix $\mathbf{D}$ has been solved to obtain the basis vectors for the solution null space.
+
+                \textbf{Original Dimensional Matrix $\mathbf{D}$:}
+                \[\mathbf{D} = \begin{array}{r|rrr}
+                & \text{[}M\text{]} & \text{[}L\text{]} & \text{[}T\text{]} \\
+                \hline
+                F & 1 & 1 & -2 \\
+v & 0 & 1 & -1 \\
+L & 0 & 1 & 0 \\
+Re & 0 & 0 & 0 \\
+m & 1 & 0 & 0 \\
+
+                \end{array}\]
+
+
+        \textbf{Final Matrix $\mathbf{B}$:}
+        \[\mathbf{B} = \begin{array}{r|rrrrr}
+        & Pivot & Pivot & Pivot & \pi_{1} & \pi_{2} \\
+        \hline
+        F & 1 & 0 & 0 & 0 & -1 \\
+v & -2 & 0 & -1 & 0 & 2 \\
+L & 1 & 1 & 1 & 0 & -1 \\
+Re & 0 & 0 & 0 & 1 & 0 \\
+m & 0 & 0 & 0 & 0 & 1 \\
+
+        \end{array}\]
+
+        \paragraph{Dimensionless $\pi$ Terms: }
+        The resulting dimensionless groups that characterize this example are:
+\begin{equation}
+\pi_{1} = Re
+\end{equation}
+\begin{equation}
+\pi_{2} = \frac{v^{2} \, m}{F \, L}
+\end{equation}
+
+                    \paragraph{Functional Relationship}
+                    The general relationship governing this problem is:
+                    \begin{equation}
+                    \pi_1 = f(\pi_2)
+                    \end{equation}
+
+                    This relationship must be determined through experimental data or additional theoretical analysis to establish the associated model.
+                    
