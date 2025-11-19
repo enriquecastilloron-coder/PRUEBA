@@ -466,7 +466,7 @@ L,Length,0,1,0
                 description: 'Variables with linear dimensional dependencies',
                 csv: `Notation,Meaning,M,L,T
 F,Force,1,1,-2
-F_0, Initial force,1,1,-2
+F0, Initial force,1,1,-2
 E,Energy,1,2,-2
 L,Length,0,1,0
 L_0,Reflength,0,1,0`
@@ -934,6 +934,9 @@ T,Time,0,0,1`
 
                     <h3 style="color: #9b59b6; margin-top: 30px;">🔍 Case Classification Examples</h3>
                     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
+                        <button onclick="loadExampleCase('standard'); closeExampleMenu();" class="example-btn" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                            <i class="fas fa-check-circle"></i> Case 6: Standard
+                        </button>
                         <button onclick="loadExampleCase('fullrank'); closeExampleMenu();" class="example-btn" style="background: linear-gradient(135deg, #667eea, #764ba2);">
                             <i class="fas fa-exclamation-triangle"></i> Case 1: Full Rank
                         </button>
@@ -948,9 +951,6 @@ T,Time,0,0,1`
                         </button>
                         <button onclick="loadExampleCase('dependent'); closeExampleMenu();" class="example-btn" style="background: linear-gradient(135deg, #667eea, #764ba2);">
                             <i class="fas fa-link"></i> Case 5: Dependencies
-                        </button>
-                        <button onclick="loadExampleCase('standard'); closeExampleMenu();" class="example-btn" style="background: linear-gradient(135deg, #667eea, #764ba2);">
-                            <i class="fas fa-check-circle"></i> Case 6: Standard
                         </button>
                         <button onclick="loadExampleCase('combined'); closeExampleMenu();" class="example-btn" style="background: linear-gradient(135deg, #e67e22, #d35400);">
                             <i class="fas fa-layer-group"></i> Case 7: Combined
@@ -1585,8 +1585,8 @@ T,Time,0,0,1`
             html += `<h3 class="result-title">Analysis: ${result.problemName}</h3>`;
             html += `<p><strong>Method:</strong> ${result.method || 'Linear System Solver'}</p>`;
             html += `<p><strong>Variables:</strong> n = ${result.variables.length}</p>`;
-            html += `<p><strong>Fundamental dimensions:</strong> k = ${result.dimensions.length} (${result.dimensions.join(', ')})</p>`;
-            html += `<p><strong>Matrix rank:</strong> r = ${result.rank}</p>`;
+            html += `<p><strong>Fundamental dimensions:</strong> m = ${result.dimensions.length} (${result.dimensions.join(', ')})</p>`;
+            html += `<p><strong>Matrix rank:</strong> k = ${result.rank}</p>`;
             
             // Display Case Type Information
             if (result.caseInfo) {
@@ -1605,7 +1605,7 @@ T,Time,0,0,1`
                 `;
             }
             
-            html += `<p><strong>Number of π terms:</strong> ${result.numPiTerms} (n - r = ${result.variables.length} - ${result.rank})</p>`;
+            html += `<p><strong>Number of π terms:</strong> ${result.numPiTerms} (n - k = ${result.variables.length} - ${result.rank})</p>`;
             
             // Dimensional matrix AND Final Matrix B side by side
             html += '<div class="matrix-container">';
