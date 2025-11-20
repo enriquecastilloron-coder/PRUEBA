@@ -1020,9 +1020,9 @@ The classification consists of six cases, covering all valid and problematic con
     \begin{itemize}
         \item \textbf{Condition}: $\text{rank}(\mathbf{D}) < n$, with no null rows or columns, and all variables participate in the $\pi$ terms.
         \item \textbf{Nullity}: $n - \text{rank}(\mathbf{D}) \geq 1$, yielding one or more $\pi$ terms.
-            
+
         \item \textbf{Rank}: $\text{rank}(\mathbf{D}) = m$.
-                        
+
         \item \textbf{Example}: Drag force problem with $n=4$, $\text{rank}(\mathbf{D})=3$, nullity $4-3=1$, one $\pi$ term (e.g., $\pi_1 = \frac{F}{\rho v^2 D^2}$).
         \item \textbf{Description}: Typical dimensional analysis scenario with fewer independent dimensions than variables, producing dimensionless groups.
     \end{itemize}
@@ -1214,19 +1214,18 @@ where $\pi_i$ represent dimensionless groups and $p = n - \text{rank}(\mathbf{D}
 
 \subsection{Linear Algebraic Methodology}
 
-The calculator constructs the dimensional matrix $\mathbf{D} \in \mathbb{R}^{k \times n}$ where each column represents the dimensional formula of a physical variable:
+The calculator constructs the dimensional matrix $\mathbf{D} \in \mathbb{R}^{n \times m}$ where each column represents the dimensional formula of a physical variable:
 \begin{equation}
 \mathbf{D} = \begin{bmatrix}
-a_{11} & a_{12} & \cdots & a_{1n} \\
-a_{21} & a_{22} & \cdots & a_{2n} \\
+a_{11} & a_{12} & \cdots & a_{1m} \\
+a_{21} & a_{22} & \cdots & a_{2m} \\
 \vdots & \vdots & \ddots & \vdots \\
-a_{k1} & a_{k2} & \cdots & a_{kn}
+a_{n1} & a_{n2} & \cdots & a_{nm}
 \end{bmatrix}
 \end{equation}
-
 where $a_{ij}$ represents the exponent of the $i$-th fundamental dimension in the $j$-th variable. The system then performs:
 \begin{enumerate}
-    \item \textbf{Gaussian Elimination}: Systematic row operations to achieve reduced row echelon form (RREF)
+    \item \textbf{Gaussian Elimination}: Systematic row operations to solve the homogeneous system of linear equations.
     \item \textbf{Rank Determination}: Identification of linearly independent rows
     \item \textbf{Null Space Computation}: Determination of basis vectors satisfying $\mathbf{D}\mathbf{v} = \mathbf{0}$
     \item \textbf{$\pi$ Term Construction}: Formation of dimensionless groups from null space vectors
@@ -1246,7 +1245,7 @@ The implementation incorporates sophisticated numerical methods to ensure comput
 \end{itemize}
 
 \subsubsection{Multi-Dimensional Framework}
-The calculator supports a four-dimensional analysis framework encompassing:
+The calculator supports a multi-dimensional analysis framework encompassing dimensiona such as:
 \begin{align}
 \text{Mass Dimension} &\quad [M] \\
 \text{Length Dimension} &\quad [L] \\
@@ -1284,15 +1283,6 @@ The calculator serves as a comprehensive educational platform providing:
     \item \textbf{Historical Context}: Integration of classical problems with modern computational methods
 \end{itemize}
 
-\subsubsection{Research and Development Applications}
-Professional research applications include:
-\begin{enumerate}
-    \item \textbf{Model Development}: Systematic identification of governing parameters
-    \item \textbf{Experimental Design}: Optimization of variable space exploration
-    \item \textbf{Scale-up Procedures}: Dimensional analysis for process intensification
-    \item \textbf{Correlation Development}: Foundation for empirical relationship construction
-\end{enumerate}
-
 \subsection{Technical Innovation and Implementation}\index{Sectioning!Subsections}
 \subsubsection{Modern Web Technologies}
 The platform leverages cutting-edge web technologies:
@@ -1325,7 +1315,7 @@ The calculator incorporates extensive validation mechanisms:
 The platform architecture supports future enhancements including:
 \begin{itemize}
     \item \textbf{Machine Learning Integration}: Pattern recognition in dimensional relationships
-    \item \textbf{Extended Dimensional Systems}: Support for electromagnetic and thermodynamic dimensions
+    \item \textbf{Extended Dimensional Systems}: Support for any dimensions
     \item \textbf{Cloud Computing}: Distributed processing for large-scale dimensional analysis
     \item \textbf{API Development}: Integration with external computational frameworks
 \end{itemize}
@@ -1337,11 +1327,11 @@ The calculator's integration of classical dimensional analysis theory with moder
 
 
 \section{ Real-World Engineering Applications}\index{Sectioning!Sections}
-        This section presents the dimensional analysis for 8 physical systems using the Buckingham $\pi$ theorem. Each analysis includes the system variables, dimensional matrices, and resulting dimensionless groups.
+        This section presents the dimensional analysis for $9$ physical systems using the Buckingham $\pi$ theorem. Each analysis includes the system variables, dimensional matrices, and resulting dimensionless groups.
         For each engineering application, we:
 \begin{enumerate}
     \item Identify the typical physical variables involved.
-    \item List their dimensions in the [M, L, T, $\Theta$, C, I] system.
+    \item List their dimensions in the [M, L, T, H, C, I] system.
     \item Confirm these are standard and commonly used in real-world engineering analyses.
     \item Highlight any potential discrepancies or non-standard choices.
 \end{enumerate}
@@ -1360,7 +1350,24 @@ Once this cases have been clarified, the rank of the remaining matrix is calcula
 
 Next, all the algorithms are listed, whose names are descriptive enough to indicate the associated purposes.
 
-% Algorithm 1: Linear System Solver for Buckingham π Theorem
+\begin{enumerate}
+    \item \textbf{Linear System Solver for Buckingham $\pi$ Theorem:} Solves the linear system arising from the dimensional matrix to find the null space basis vectors. It performs row reduction operations to identify pivot columns and extract basis vectors from non-pivot columns, which form the foundation for generating dimensionless $\pi$ terms.
+
+    \item \textbf{Case Identification for Dimensional Analysis:} Classifies the dimensional analysis problem into six distinct cases based on matrix properties. It detects invalid configurations (full rank, null rows/columns, non-participating variables), identifies linear dependencies, and determines whether the analysis should proceed or abort due to structural errors.
+
+    \item \textbf{$\pi$ Terms Generation with Integer Normalization:} Generates dimensionless $\pi$ terms from the basis vectors obtained from the null space. It normalizes the exponents to integer values by finding an appropriate scaling factor, ensuring that the resulting $\pi$ terms have clean, integer exponents for practical interpretation.
+
+    \item \textbf{Matrix Preprocessing and Validation:} Validates the dimensional matrix before analysis by checking for structural problems such as zero rows (indicating incomplete dimensional specifications), zero columns (dimensionless variables), and insufficient variables. It returns error and warning messages to guide the user in correcting the input.
+
+    \item \textbf{LaTeX Export Generation with Sanitization:} Creates a complete LaTeX document from the analysis history, including problem descriptions, variable tables, dimensional matrices, and $\pi$ terms. It sanitizes special characters to ensure proper LaTeX compilation and formats mathematical expressions correctly.
+
+    \item \textbf{Auto-Test Execution for All Examples:} Runs a comprehensive test suite across multiple predefined examples (drag, pendulum, fatigue, etc.). It executes each analysis sequentially, collects results, manages rendering synchronization, and generates a consolidated test report.
+
+    \item \textbf{Result Display and History Management:} Manages the display of analysis results in HTML format with proper mathematical rendering using MathJax. It maintains a history of analyses (limited to 50 entries), formats matrices and $\pi$ terms for display, and handles case-specific information presentation.
+\end{enumerate}
+
+The pseudo-code of them are shown below:
+% Algorithm 1: Linear System Solver for Buckingham $\pi$ Theorem
 \begin{algorithm}[H]
 \caption{Linear System Solver for Buckingham $\pi$ Theorem}
 \begin{algorithmic}[1]
@@ -1495,7 +1502,7 @@ Next, all the algorithms are listed, whose names are descriptive enough to indic
 \end{algorithmic}
 \end{algorithm}
 
-% Algorithm 3: π Terms Generation with Integer Normalization - CORREGIDO
+% Algorithm 3: $\pi$ Terms Generation with Integer Normalization - CORREGIDO
 \begin{algorithm}[H]
 \caption{$\pi$ Terms Generation with Integer Normalization}
 \begin{algorithmic}[1]
@@ -3389,7 +3396,7 @@ Since $f_0$ is invertible and maps $[0,\infty]$ to $[0,1]$, we must have either 
 \label{eq:sumzero}
 \end{equation}
 
-Since $f_j(u_j) \geq 0$ for all $j$, equation~\eqref{eq:sumzero} implies $f_j(u_j) = 0$ for all $j \neq k$ and $f_k(0) = 0$. If $f_j(u_j) = 0$ for all $u_j \in [0,1]$, this contradicts the invertibility of $f_j$. Thus, $f_0(0) = 1$ and the invertibility and continuity of $f_0$ implies $f_0^{-1}(0) = \infty$, and that $f_0$ and $f_0^{-1}$ are decreasing. In addition, its continuity leads to
+Since $f_j(u_j) \geq 0$ for all $j$, equation~\eqref{eq:sumzero} implies $f_j(u_j) = 0$ for all $j \neq k$ and $f_k(0) = 0$. If $f_j(u_j) = 0$ for all $u_j \in [0,1]$, this contradicts the invertibility of $f_j$. Thus, $f_0(0) = 1$ and the invertibility and continuity of $f_0$ implies $f_0^{-1}(0) = \infty$, and that $f_0$ and $f_0^{-1}$ are decreasing. In addition, its continuity leads to $\bigsqcup$
 \begin{equation}
 \lim_{v \to \infty} f_0(v) = 0.
 \label{eq:limitf0}
