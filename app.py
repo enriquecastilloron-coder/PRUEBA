@@ -180,36 +180,42 @@ def get_holmen_data():
 # ============================================================================
 
 def mle_estimation(N, Deltasigma, config):
-    """Maximum Likelihood Estimation - Weibull distribution with 5 parameters"""
+    """Maximum Likelihood Estimation - Weibull distribution with 5 parameters
+    EXACTAMENTE como en el notebook original"""
     
     def negative_log_likelihood(params):
         N0, Deltasigma0, beta, lambda_param, delta = params
         
+        # Validations
         if N0 <= 0 or Deltasigma0 <= 0 or beta <= 0 or delta <= 0:
-            return 1e10
+            return np.inf
         
-        # Dimensionless variables
+        # Dimensionless transformation
         log_N_dimensionless = np.log(N) - np.log(N0)
         r = np.log(Deltasigma) - np.log(Deltasigma0)
         
-        # Weibull parameters
-        mu_Y = (-lambda_param - delta) / r
-        sigma_Y = delta / (beta * np.abs(r) + 1e-8)
+        # Check for valid r values
+        if np.any(np.abs(r) < 1e-10):
+            return np.inf
         
+        # Weibull parameters for minima
+        mu_Y = (-lambda_param - delta) / r
+        sigma_Y = delta / (beta * np.abs(r))
+        
+        # Check valid sigma
         if np.any(sigma_Y <= 0):
-            return 1e10
+            return np.inf
         
         # Standardized variable
-        z = (log_N_dimensionless - mu_Y) / (sigma_Y + 1e-8)
+        z = (log_N_dimensionless - mu_Y) / sigma_Y
         
-        # Log-likelihood (Weibull for minima, Gumbel parametrization)
-        log_lik = -np.log(sigma_Y + 1e-8) + z - np.exp(z)
+        # Weibull log-likelihood for minima (Gumbel parametrization)
+        log_lik = -np.log(sigma_Y) + z - np.exp(z)
         
         return -np.sum(log_lik)
     
     # Initial guess
     N_min = np.min(N)
-    stress_min = np.min(Deltasigma)
     
     x0 = [
         N_min * 0.5,  # N0
@@ -460,9 +466,13 @@ def main():
             auto_stress_min = max(min(data_temp['Deltasigma']) - 0.03, 0.01)
             auto_stress_max = max(data_temp['Deltasigma']) + 0.03
             
-            stress_min = st.number_input("Min stress", 0.01, 2.0, auto_stress_min, 0.01,
+            # Ajustar rangos del input según los datos
+            min_range = min(0.01, auto_stress_min * 0.5)
+            max_range = max(2.0, auto_stress_max * 1.5)
+            
+            stress_min = st.number_input("Min stress", min_range, max_range, auto_stress_min, 0.01,
                                         help="Auto-calculated from data. You can adjust.")
-            stress_max = st.number_input("Max stress", 0.01, 2.0, auto_stress_max, 0.01,
+            stress_max = st.number_input("Max stress", min_range, max_range, auto_stress_max, 0.01,
                                         help="Auto-calculated from data. You can adjust.")
         else:
             stress_min = st.number_input("Min stress", 0.01, 2.0, 0.3, 0.05)
