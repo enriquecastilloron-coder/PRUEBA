@@ -504,19 +504,33 @@ def main():
             st.subheader("Step 1: Maximum Likelihood Estimation")
             
             if st.button("Run MLE", type="primary", disabled=st.session_state.mle_done):
-                with st.spinner("Running MLE optimization..."):
-                    mle_results = mle_estimation(
-                        np.array(data['N']),
-                        np.array(data['Deltasigma']),
-                        config
-                    )
-                    st.session_state.mle_results = mle_results
-                    st.session_state.mle_done = True
-                    
-                    if mle_results['success']:
-                        st.success("✓ MLE completed successfully!")
-                    else:
-                        st.warning("⚠️ MLE completed with warnings")
+                progress_text = st.empty()
+                progress_bar = st.progress(0)
+                
+                progress_text.text("🔄 Initializing optimization (Differential Evolution)...")
+                progress_bar.progress(20)
+                
+                mle_results = mle_estimation(
+                    np.array(data['N']),
+                    np.array(data['Deltasigma']),
+                    config
+                )
+                
+                progress_text.text("✓ MLE optimization completed!")
+                progress_bar.progress(100)
+                
+                st.session_state.mle_results = mle_results
+                st.session_state.mle_done = True
+                
+                # Clear progress
+                progress_text.empty()
+                progress_bar.empty()
+                
+                if mle_results['success']:
+                    st.success("✓ MLE completed successfully!")
+                    st.info("📊 5 parameters estimated using Maximum Likelihood")
+                else:
+                    st.warning("⚠️ MLE completed with warnings")
             
             if st.session_state.mle_done:
                 mle = st.session_state.mle_results
@@ -540,17 +554,34 @@ def main():
                 st.info("📌 Complete MLE first")
             else:
                 if st.button("Run MCMC", type="primary", disabled=st.session_state.mcmc_done):
-                    with st.spinner(f"Running MCMC ({mcmc_chains} chains, {mcmc_draws} draws)..."):
-                        trace, model = bayesian_inference(
-                            np.array(data['N']),
-                            np.array(data['Deltasigma']),
-                            config,
-                            st.session_state.mle_results
-                        )
-                        st.session_state.trace = trace
-                        st.session_state.model = model
-                        st.session_state.mcmc_done = True
-                        st.success("✓ MCMC sampling completed!")
+                    # Progress indicators
+                    progress_text = st.empty()
+                    progress_bar = st.progress(0)
+                    
+                    progress_text.text(f"🔄 Initializing MCMC ({mcmc_chains} chains, {mcmc_draws} draws)...")
+                    progress_bar.progress(10)
+                    
+                    # Run MCMC
+                    trace, model = bayesian_inference(
+                        np.array(data['N']),
+                        np.array(data['Deltasigma']),
+                        config,
+                        st.session_state.mle_results
+                    )
+                    
+                    progress_text.text("✓ MCMC sampling completed!")
+                    progress_bar.progress(100)
+                    
+                    st.session_state.trace = trace
+                    st.session_state.model = model
+                    st.session_state.mcmc_done = True
+                    
+                    # Clear progress indicators
+                    progress_text.empty()
+                    progress_bar.empty()
+                    
+                    st.success("✓ MCMC sampling completed!")
+                    st.info(f"📊 Sampled {mcmc_chains} chains × {mcmc_draws} draws = {mcmc_chains * mcmc_draws} total samples")
             
             if st.session_state.mcmc_done:
                 st.markdown('<div class="success-box">✓ Bayesian inference complete</div>', 
@@ -579,11 +610,13 @@ def main():
             
             # Posterior distributions
             st.subheader("Posterior Distributions")
-            fig, axes = plt.subplots(2, 2, figsize=(12, 10))
-            az.plot_posterior(trace, var_names=['lambda_val'], ax=axes[0, 0])
+            fig, axes = plt.subplots(3, 2, figsize=(12, 14))
+            az.plot_posterior(trace, var_names=['N0'], ax=axes[0, 0])
             az.plot_posterior(trace, var_names=['Deltasigma0'], ax=axes[0, 1])
             az.plot_posterior(trace, var_names=['beta'], ax=axes[1, 0])
-            az.plot_posterior(trace, var_names=['delta'], ax=axes[1, 1])
+            az.plot_posterior(trace, var_names=['lambda_param'], ax=axes[1, 1])
+            az.plot_posterior(trace, var_names=['delta'], ax=axes[2, 0])
+            axes[2, 1].axis('off')  # Hide unused subplot
             plt.tight_layout()
             st.pyplot(fig)
             plt.close()
@@ -592,43 +625,59 @@ def main():
             st.subheader("Percentile Curves")
             
             if st.button("Compute Percentile Curves", type="primary"):
-                with st.spinner("Computing percentile curves..."):
-                    config = {
-                        'percentiles': [0.01, 0.10, 0.5, 0.90, 0.99],
-                        'stress_min': stress_min,
-                        'stress_max': stress_max,
-                        'stress_points': stress_points
-                    }
-                    stress_levels, percentile_results = compute_percentiles(
-                        trace, config, param_samples
-                    )
-                    
-                    fig, ax = plt.subplots(figsize=(12, 8))
-                    
-                    # Plot data
-                    ax.scatter(data['N'], data['Deltasigma'], 
-                              alpha=0.5, s=30, label='Data', color='gray')
-                    
-                    # Plot percentiles
-                    colors = ['red', 'orange', 'green', 'orange', 'red']
-                    styles = ['--', '-.', '-', '-.', '--']
-                    
-                    for (p, color, style) in zip([0.01, 0.10, 0.5, 0.90, 0.99], 
-                                                 colors, styles):
-                        ax.plot(percentile_results[p], stress_levels,
-                               color=color, linestyle=style, linewidth=2,
-                               label=f'P{int(p*100)}')
-                    
-                    ax.set_xscale('log')
-                    ax.set_xlabel('Number of Cycles (N)', fontsize=12)
-                    ax.set_ylabel('Stress Range (Δσ)', fontsize=12)
-                    ax.set_title('Fatigue Life Percentile Curves', 
-                                fontsize=14, fontweight='bold')
-                    ax.legend(loc='best')
-                    ax.grid(True, alpha=0.3)
-                    
-                    st.pyplot(fig)
-                    plt.close()
+                progress_text = st.empty()
+                progress_bar = st.progress(0)
+                
+                progress_text.text(f"🔄 Computing percentile curves ({param_samples} samples)...")
+                progress_bar.progress(20)
+                
+                config = {
+                    'percentiles': [0.01, 0.10, 0.5, 0.90, 0.99],
+                    'stress_min': stress_min,
+                    'stress_max': stress_max,
+                    'stress_points': stress_points
+                }
+                
+                progress_bar.progress(40)
+                stress_levels, percentile_results = compute_percentiles(
+                    trace, config, param_samples
+                )
+                
+                progress_text.text("✓ Percentiles computed! Generating plot...")
+                progress_bar.progress(80)
+                
+                fig, ax = plt.subplots(figsize=(12, 8))
+                
+                # Plot data
+                ax.scatter(data['N'], data['Deltasigma'], 
+                          alpha=0.5, s=30, label='Data', color='gray')
+                
+                # Plot percentiles
+                colors = ['red', 'orange', 'green', 'orange', 'red']
+                styles = ['--', '-.', '-', '-.', '--']
+                
+                for (p, color, style) in zip([0.01, 0.10, 0.5, 0.90, 0.99], 
+                                             colors, styles):
+                    ax.plot(percentile_results[p], stress_levels,
+                           color=color, linestyle=style, linewidth=2,
+                           label=f'P{int(p*100)}')
+                
+                ax.set_xscale('log')
+                ax.set_xlabel('Number of Cycles (N)', fontsize=12)
+                ax.set_ylabel('Stress Range (Δσ)', fontsize=12)
+                ax.set_title('Fatigue Life Percentile Curves', 
+                            fontsize=14, fontweight='bold')
+                ax.legend(loc='best')
+                ax.grid(True, alpha=0.3)
+                
+                progress_bar.progress(100)
+                progress_text.empty()
+                progress_bar.empty()
+                
+                st.pyplot(fig)
+                plt.close()
+                
+                st.success(f"✓ Percentile curves computed from {param_samples} posterior samples")
     
     # TAB 4: ABOUT
     with tab4:
