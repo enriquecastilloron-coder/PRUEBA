@@ -265,7 +265,7 @@ def bayesian_inference(N, Deltasigma, config, mle_results):
         r = pt.log(Deltasigma / Deltasigma0_prior)
         Y = pt.log(N) - lambda_prior
         mu_Y = -delta_prior / r
-        sigma_Y = 1.0 / (beta_prior * pt.abs_(r))
+        sigma_Y = 1.0 / (beta_prior * pm.math.abs(r))
         
         # Likelihood
         Y_obs = pm.Gumbel('Y_obs', mu=mu_Y, beta=sigma_Y, observed=Y)

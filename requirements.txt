@@ -1,9 +1,9 @@
 streamlit>=1.28.0
-numpy>=1.24.0
+numpy>=1.24.0,<2.0.0
 pandas>=2.0.0
 matplotlib>=3.7.0
-pymc>=5.10.0
+pymc>=5.10.0,<5.17.0
 arviz>=0.17.0
 scipy>=1.11.0
-pytensor>=2.18.0
+pytensor>=2.18.0,<2.25.0
 openpyxl>=3.1.0
