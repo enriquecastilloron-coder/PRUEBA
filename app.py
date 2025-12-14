@@ -307,60 +307,77 @@ def bayesian_inference(N, Deltasigma, config, mle_results):
     return trace, model
 
 def compute_percentiles(trace, config, n_samples=1000):
-    """Compute percentile curves from posterior samples - Weibull with 5 parameters"""
+    """
+    Compute percentile curves from posterior samples
+    EXACTAMENTE como en el notebook original de Enrique
+    """
     
-    # Extract samples - 5 parameters
+    # Extract posterior samples
     N0_samples = trace.posterior['N0'].values.flatten()
     Deltasigma0_samples = trace.posterior['Deltasigma0'].values.flatten()
     beta_samples = trace.posterior['beta'].values.flatten()
     lambda_samples = trace.posterior['lambda_param'].values.flatten()
     delta_samples = trace.posterior['delta'].values.flatten()
     
-    # Sample from posterior
     n_posterior = len(N0_samples)
-    indices = np.random.choice(n_posterior, size=n_samples, replace=False)
     
-    # Stress levels
+    # Configuration
     stress_min = config.get('stress_min', 0.3)
     stress_max = config.get('stress_max', 1.0)
-    stress_points = config.get('stress_points', 100)
-    stress_levels = np.linspace(stress_min, stress_max, stress_points)
+    n_stress_points = config.get('stress_points', 50)
+    percentiles_base = config.get('percentiles', [0.01, 0.10, 0.5, 0.90, 0.99])
     
-    # Percentiles to compute
-    percentiles = config.get('percentiles', [0.01, 0.10, 0.5, 0.90, 0.99])
+    # Stress range
+    stress_range = np.linspace(stress_min, stress_max, n_stress_points)
     
-    results = {p: np.zeros(stress_points) for p in percentiles}
+    # Randomly select parameter samples
+    selected_indices = np.random.choice(n_posterior, size=n_samples, replace=False)
     
-    for i, stress in enumerate(stress_levels):
-        N_samples = []
+    # Initialize storage
+    percentiles_of_percentiles = {perc: [] for perc in percentiles_base}
+    
+    # Loop over stress levels
+    for stress_idx, stress in enumerate(stress_range):
+        # Store N values for this stress level
+        N_samples_at_stress = []
         
-        for idx in indices:
-            N0 = N0_samples[idx]
-            Deltasigma0 = Deltasigma0_samples[idx]
-            beta = beta_samples[idx]
-            lambda_val = lambda_samples[idx]
-            delta = delta_samples[idx]
+        # Loop over parameter samples
+        for sample_idx in selected_indices:
+            N0 = N0_samples[sample_idx]
+            Delta0 = Deltasigma0_samples[sample_idx]
+            beta = beta_samples[sample_idx]
+            lambda_param = lambda_samples[sample_idx]
+            delta = delta_samples[sample_idx]
             
-            # Dimensionless variables
-            r = np.log(stress / Deltasigma0)
+            # Calculate r
+            r = np.log(stress / Delta0)
             
             # Weibull parameters
-            mu_Y = (-lambda_val - delta) / r
-            sigma_Y = delta / (beta * np.abs(r) + 1e-8)
+            mu_Y = (-lambda_param - delta) / r
+            sigma_Y = delta / (beta * abs(r))
             
-            # Sample from Gumbel (Weibull for minima in standardized form)
-            z_sample = np.random.gumbel(0, 1)  # Standard Gumbel
-            log_N_dimensionless = mu_Y + sigma_Y * z_sample
+            # Generate Gumbel random variable (Weibull for minima)
+            u = np.random.uniform(0, 1)
+            z = np.log(-np.log(1 - u))  # Inverse CDF
             
-            # Transform back to N
-            N_sample = N0 * np.exp(log_N_dimensionless)
-            N_samples.append(N_sample)
+            Y = mu_Y + sigma_Y * z
+            N = N0 * np.exp(Y)
+            
+            N_samples_at_stress.append(N)
+        
+        # Convert to array
+        N_samples_at_stress = np.array(N_samples_at_stress)
         
         # Compute percentiles
-        for p in percentiles:
-            results[p][i] = np.percentile(N_samples, p * 100)
+        for perc_base in percentiles_base:
+            N_perc = np.percentile(N_samples_at_stress, perc_base * 100)
+            percentiles_of_percentiles[perc_base].append(N_perc)
     
-    return stress_levels, results
+    # Convert lists to arrays
+    for perc in percentiles_base:
+        percentiles_of_percentiles[perc] = np.array(percentiles_of_percentiles[perc])
+    
+    return stress_range, percentiles_of_percentiles
 
 # ============================================================================
 # STREAMLIT APP
@@ -702,36 +719,47 @@ def main():
                 progress_text.text(f"🔄 Computing percentiles for {stress_points} stress levels...")
                 progress_bar.progress(40)
                 
+                # Create progress container for real-time updates
+                progress_detail = st.empty()
+                
                 stress_levels, percentile_results = compute_percentiles(
                     trace, config, param_samples
                 )
                 
                 progress_text.text("✓ Percentiles computed! Generating plot...")
                 progress_bar.progress(80)
+                progress_detail.empty()
                 
-                fig, ax = plt.subplots(figsize=(12, 8))
+                fig, ax = plt.subplots(figsize=(14, 8))
                 
-                # Plot data
-                ax.scatter(data['N'], data['Deltasigma'], 
-                          alpha=0.5, s=30, label='Data', color='gray', zorder=5)
+                # Plot observed data with better styling
+                ax.scatter(data['N'], data['Deltasigma'],
+                          c='black', s=80, alpha=0.9,
+                          label='Observed data', zorder=100,
+                          marker='o', edgecolors='white', linewidths=1.5)
                 
-                # Plot percentiles
-                colors = ['red', 'orange', 'green', 'orange', 'red']
-                styles = ['--', '-.', '-', '-.', '--']
+                # Plot percentile curves - COLORES DEL NOTEBOOK ORIGINAL
+                colors = ['#8B0000', '#FF8C00', '#228B22', '#FF8C00', '#8B0000']  # Rojo, naranja, verde, naranja, rojo
+                labels = ['P1', 'P10', 'P50', 'P90', 'P99']
                 
-                for (p, color, style) in zip([0.01, 0.10, 0.5, 0.90, 0.99], 
-                                             colors, styles):
-                    ax.plot(percentile_results[p], stress_levels,
-                           color=color, linestyle=style, linewidth=2,
-                           label=f'P{int(p*100)}', zorder=3)
+                for (perc, color, label) in zip([0.01, 0.10, 0.5, 0.90, 0.99], colors, labels):
+                    ax.plot(percentile_results[perc], stress_levels,
+                           color=color, linewidth=2.5, label=label,
+                           linestyle='-', alpha=0.8, zorder=50)
                 
                 ax.set_xscale('log')
-                ax.set_xlabel('Number of Cycles (N)', fontsize=12, fontweight='bold')
-                ax.set_ylabel('Stress Range (Δσ)', fontsize=12, fontweight='bold')
-                ax.set_title('Fatigue Life Percentile Curves with Uncertainty Bands', 
+                ax.set_xlabel('Cycles to Failure (N)', fontsize=13, fontweight='bold')
+                ax.set_ylabel('Stress (Δσ)', fontsize=13, fontweight='bold')
+                ax.set_title('Fatigue Life - Percentile Curves with Uncertainty',
                             fontsize=14, fontweight='bold')
-                ax.legend(loc='best', fontsize=10)
-                ax.grid(True, alpha=0.3)
+                ax.legend(loc='upper right', fontsize=11, framealpha=0.9)
+                ax.grid(True, alpha=0.3, which='both')
+                
+                # Set limits to show all data
+                ax.set_xlim([min(data['N']) * 0.5, max(data['N']) * 2])
+                ax.set_ylim([min(stress_levels) * 0.95, max(stress_levels) * 1.05])
+                
+                plt.tight_layout()
                 
                 progress_bar.progress(100)
                 
