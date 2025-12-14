@@ -306,78 +306,103 @@ def bayesian_inference(N, Deltasigma, config, mle_results):
     
     return trace, model
 
+def compute_percentile_single(stress, N0, Delta0, beta, lambda_p, delta, prob):
+    """
+    Compute N_p for given stress and failure probability (Weibull).
+    EXACTAMENTE como en el notebook original.
+    """
+    if stress <= 0 or N0 <= 0 or Delta0 <= 0 or beta <= 0 or delta <= 0:
+        return np.nan
+    if prob <= 0 or prob >= 1:
+        return np.nan
+    
+    try:
+        r = np.log(stress / Delta0)
+        if abs(r) < 1e-10:
+            return np.nan
+        
+        mu_Y = (-lambda_p - delta) / r
+        sigma_Y = delta / (beta * abs(r))
+        
+        # Weibull quantile for minima (Gumbel parametrization)
+        z_p = np.log(-np.log(1 - prob))
+        Y_p = mu_Y + sigma_Y * z_p
+        N_p = N0 * np.exp(Y_p)
+        
+        if not np.isfinite(N_p) or N_p <= 0:
+            return np.nan
+        
+        if N_p < 1e-6 or N_p > 1e10:
+            return np.nan
+        
+        return N_p
+    except:
+        return np.nan
+
 def compute_percentiles(trace, config, n_samples=1000):
     """
-    Compute percentile curves from posterior samples
-    EXACTAMENTE como en el notebook original de Enrique
+    Compute percentiles of percentiles
+    EXACTAMENTE como en el notebook original
     """
     
     # Extract posterior samples
     N0_samples = trace.posterior['N0'].values.flatten()
-    Deltasigma0_samples = trace.posterior['Deltasigma0'].values.flatten()
+    Delta0_samples = trace.posterior['Deltasigma0'].values.flatten()
     beta_samples = trace.posterior['beta'].values.flatten()
     lambda_samples = trace.posterior['lambda_param'].values.flatten()
     delta_samples = trace.posterior['delta'].values.flatten()
     
-    n_posterior = len(N0_samples)
+    total_samples = len(N0_samples)
     
-    # Configuration
+    # Configuration - VALORES EXACTOS DEL NOTEBOOK
+    n_stress_points = config.get('stress_points', 50)
     stress_min = config.get('stress_min', 0.3)
     stress_max = config.get('stress_max', 1.0)
-    n_stress_points = config.get('stress_points', 50)
-    percentiles_base = config.get('percentiles', [0.01, 0.10, 0.5, 0.90, 0.99])
+    
+    # PERCENTILES EXACTOS DEL NOTEBOOK
+    percentiles_base = [0.01, 0.15, 0.50, 0.85, 0.99]
+    percentiles_sub = [0.01, 0.15, 0.50, 0.85, 0.99]
     
     # Stress range
     stress_range = np.linspace(stress_min, stress_max, n_stress_points)
     
-    # Randomly select parameter samples
-    selected_indices = np.random.choice(n_posterior, size=n_samples, replace=False)
+    # Sample indices
+    sample_indices = np.random.choice(total_samples, size=min(n_samples, total_samples), replace=False)
     
-    # Initialize storage
-    percentiles_of_percentiles = {perc: [] for perc in percentiles_base}
+    # Storage for percentiles of percentiles
+    percentiles_of_percentiles = {}
     
-    # Loop over stress levels
-    for stress_idx, stress in enumerate(stress_range):
-        # Store N values for this stress level
-        N_samples_at_stress = []
+    # Loop over base percentiles
+    for perc_base_idx, perc_base in enumerate(percentiles_base):
+        percentile_matrix = np.zeros((n_stress_points, len(sample_indices)))
         
-        # Loop over parameter samples
-        for sample_idx in selected_indices:
-            N0 = N0_samples[sample_idx]
-            Delta0 = Deltasigma0_samples[sample_idx]
-            beta = beta_samples[sample_idx]
-            lambda_param = lambda_samples[sample_idx]
-            delta = delta_samples[sample_idx]
-            
-            # Calculate r
-            r = np.log(stress / Delta0)
-            
-            # Weibull parameters
-            mu_Y = (-lambda_param - delta) / r
-            sigma_Y = delta / (beta * abs(r))
-            
-            # Generate Gumbel random variable (Weibull for minima)
-            u = np.random.uniform(0, 1)
-            z = np.log(-np.log(1 - u))  # Inverse CDF
-            
-            Y = mu_Y + sigma_Y * z
-            N = N0 * np.exp(Y)
-            
-            N_samples_at_stress.append(N)
+        # Loop over stress points
+        for i, stress in enumerate(stress_range):
+            # Loop over parameter samples
+            for j, idx in enumerate(sample_indices):
+                N0_s = N0_samples[idx]
+                Delta0_s = Delta0_samples[idx]
+                beta_s = beta_samples[idx]
+                lambda_s = lambda_samples[idx]
+                delta_s = delta_samples[idx]
+                
+                N_p = compute_percentile_single(stress, N0_s, Delta0_s, beta_s, lambda_s, delta_s, perc_base)
+                
+                if not np.isnan(N_p):
+                    percentile_matrix[i, j] = N_p
+                else:
+                    percentile_matrix[i, j] = np.nan
         
-        # Convert to array
-        N_samples_at_stress = np.array(N_samples_at_stress)
+        # Sort each row
+        percentile_matrix_sorted = np.sort(percentile_matrix, axis=1)
         
-        # Compute percentiles
-        for perc_base in percentiles_base:
-            N_perc = np.percentile(N_samples_at_stress, perc_base * 100)
-            percentiles_of_percentiles[perc_base].append(N_perc)
+        # Extract sub-percentiles
+        percentile_indices = [int(p * (len(sample_indices) - 1)) for p in percentiles_sub]
+        perc_of_perc_curves = percentile_matrix_sorted[:, percentile_indices]
+        
+        percentiles_of_percentiles[perc_base] = perc_of_perc_curves
     
-    # Convert lists to arrays
-    for perc in percentiles_base:
-        percentiles_of_percentiles[perc] = np.array(percentiles_of_percentiles[perc])
-    
-    return stress_range, percentiles_of_percentiles
+    return stress_range, percentiles_of_percentiles, percentiles_base, percentiles_sub
 
 # ============================================================================
 # STREAMLIT APP
@@ -430,7 +455,7 @@ def main():
         st.subheader("Percentile Settings")
         stress_min = st.number_input("Min stress", 0.1, 1.0, 0.3, 0.05)
         stress_max = st.number_input("Max stress", 0.1, 1.0, 1.0, 0.05)
-        stress_points = st.slider("Stress points", 50, 200, 100, 10)
+        stress_points = st.slider("Stress points", 20, 200, 50, 10)  # DEFAULT 50
         param_samples = st.slider("Parameter samples", 500, 2000, 1000, 100)
     
     # Main content - Tabs
@@ -710,7 +735,6 @@ def main():
                 progress_bar.progress(20)
                 
                 config = {
-                    'percentiles': [0.01, 0.10, 0.5, 0.90, 0.99],
                     'stress_min': stress_min,
                     'stress_max': stress_max,
                     'stress_points': stress_points
@@ -719,44 +743,82 @@ def main():
                 progress_text.text(f"🔄 Computing percentiles for {stress_points} stress levels...")
                 progress_bar.progress(40)
                 
-                # Create progress container for real-time updates
-                progress_detail = st.empty()
-                
-                stress_levels, percentile_results = compute_percentiles(
+                # Compute percentiles - RETORNA 4 VALORES
+                stress_levels, percentiles_of_percentiles, percentiles_base, percentiles_sub = compute_percentiles(
                     trace, config, param_samples
                 )
                 
                 progress_text.text("✓ Percentiles computed! Generating plot...")
                 progress_bar.progress(80)
-                progress_detail.empty()
                 
-                fig, ax = plt.subplots(figsize=(14, 8))
+                # GRÁFICO EXACTO DEL NOTEBOOK
+                fig, ax = plt.subplots(figsize=(18, 11), facecolor='white')
+                ax.set_facecolor('white')
                 
-                # Plot observed data with better styling
-                ax.scatter(data['N'], data['Deltasigma'],
-                          c='black', s=80, alpha=0.9,
-                          label='Observed data', zorder=100,
-                          marker='o', edgecolors='white', linewidths=1.5)
+                # Colors from notebook
+                colors_base = ['#8B0000', '#FF8C00', '#228B22', '#4169E1', '#8B008B']
+                colors_shaded = ['#FFB6B9', '#FFCC80', '#A5D6A7', '#90CAF9', '#CE93D8']
                 
-                # Plot percentile curves - COLORES DEL NOTEBOOK ORIGINAL
-                colors = ['#8B0000', '#FF8C00', '#228B22', '#FF8C00', '#8B0000']  # Rojo, naranja, verde, naranja, rojo
-                labels = ['P1', 'P10', 'P50', 'P90', 'P99']
+                perc_names = [f'P{int(p*100)}' for p in percentiles_base]
                 
-                for (perc, color, label) in zip([0.01, 0.10, 0.5, 0.90, 0.99], colors, labels):
-                    ax.plot(percentile_results[perc], stress_levels,
-                           color=color, linewidth=2.5, label=label,
-                           linestyle='-', alpha=0.8, zorder=50)
+                # FIRST: Plot shaded regions
+                for base_idx, (perc_base, perc_name) in enumerate(zip(percentiles_base, perc_names)):
+                    curves = percentiles_of_percentiles[perc_base]
+                    
+                    curve_p_min = curves[:, 0]  # First sub-percentile
+                    curve_p_max = curves[:, -1]  # Last sub-percentile
+                    
+                    valid_mask = (~np.isnan(curve_p_min)) & (~np.isnan(curve_p_max))
+                    
+                    if np.sum(valid_mask) > 3:
+                        color_shaded = colors_shaded[base_idx % len(colors_shaded)]
+                        ax.fill_betweenx(stress_levels[valid_mask],
+                                curve_p_min[valid_mask],
+                                curve_p_max[valid_mask],
+                                color=color_shaded,
+                                alpha=0.85,
+                                label=f'{perc_name} uncertainty band',
+                                zorder=base_idx + 1)
                 
+                # SECOND: Plot median curves - THICK
+                median_idx = len(percentiles_sub) // 2
+                for base_idx, (perc_base, perc_name) in enumerate(zip(percentiles_base, perc_names)):
+                    curves = percentiles_of_percentiles[perc_base]
+                    color_base = colors_base[base_idx % len(colors_base)]
+                    
+                    curve_median = curves[:, median_idx]
+                    
+                    valid_mask = ~np.isnan(curve_median)
+                    
+                    if np.sum(valid_mask) > 3:
+                        ax.plot(curve_median[valid_mask], stress_levels[valid_mask],
+                               color=color_base, linewidth=3.5,
+                               label=f'{perc_name} (median curve)',
+                               zorder=50 + base_idx)
+                
+                # THIRD: Plot observed data on TOP
+                ax.scatter(data['N'], data['Deltasigma'], c='black', s=80,
+                          alpha=0.9, label='Observed data', zorder=100, marker='o',
+                          edgecolors='white', linewidths=1.5)
+                
+                # Set limits
+                cycles_min_plot = min(data['N']) * 0.1
+                cycles_max_plot = max(data['N']) * 10.0
+                
+                ax.set_xlim([cycles_min_plot, cycles_max_plot])
+                ax.set_xlabel('Cycles to Failure (N)', fontsize=15, fontweight='bold')
+                ax.set_ylabel('Stress (Δσ)', fontsize=15, fontweight='bold')
                 ax.set_xscale('log')
-                ax.set_xlabel('Cycles to Failure (N)', fontsize=13, fontweight='bold')
-                ax.set_ylabel('Stress (Δσ)', fontsize=13, fontweight='bold')
-                ax.set_title('Fatigue Life - Percentile Curves with Uncertainty',
-                            fontsize=14, fontweight='bold')
-                ax.legend(loc='upper right', fontsize=11, framealpha=0.9)
-                ax.grid(True, alpha=0.3, which='both')
+                ax.set_title('Percentiles of Percentiles with Uncertainty Bands\nBayesian Weibull Model - Castillo-Canteli Formulation',
+                            fontsize=15, fontweight='bold', pad=20)
                 
-                # Set limits to show all data
-                ax.set_xlim([min(data['N']) * 0.5, max(data['N']) * 2])
+                # Legend
+                ax.legend(loc='upper right', fontsize=10, framealpha=0.98, ncol=2,
+                         columnspacing=1.0, handlelength=2.5,
+                         title='Base Percentiles & Uncertainty Bands',
+                         title_fontsize=11)
+                
+                ax.grid(True, alpha=0.3, which='both', linestyle='-', linewidth=0.5)
                 ax.set_ylim([min(stress_levels) * 0.95, max(stress_levels) * 1.05])
                 
                 plt.tight_layout()
