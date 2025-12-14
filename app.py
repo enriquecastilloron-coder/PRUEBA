@@ -459,15 +459,41 @@ def main():
             })
             st.dataframe(df_preview, use_container_width=True)
             
-            # S-N Plot
-            st.subheader("S-N Diagram")
-            fig, ax = plt.subplots(figsize=(10, 6))
-            ax.scatter(data['N'], data['Deltasigma'], alpha=0.6, s=50)
+            # Data Visualization - Two plots
+            st.subheader("Data Visualization")
+            
+            fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+            
+            # Plot 1: S-N Diagram (log scale)
+            ax = axes[0]
+            unique_stresses = np.unique(data['Deltasigma'])
+            colors_plot = plt.cm.rainbow(np.linspace(0, 1, len(unique_stresses)))
+            
+            for i, stress_level in enumerate(unique_stresses):
+                mask = np.array(data['Deltasigma']) == stress_level
+                cycles_at_stress = np.array(data['N'])[mask]
+                ax.scatter(cycles_at_stress, [stress_level]*np.sum(mask),
+                          alpha=0.7, s=50, label=f'{stress_level:.3f}',
+                          color=colors_plot[i], edgecolors='black', linewidths=0.5)
+            
+            ax.set_xlabel('Cycles to Failure (N)', fontsize=12, fontweight='bold')
+            ax.set_ylabel('Stress (Δσ)', fontsize=12, fontweight='bold')
             ax.set_xscale('log')
-            ax.set_xlabel('Number of Cycles (N)', fontsize=12)
-            ax.set_ylabel('Stress Range (Δσ)', fontsize=12)
-            ax.set_title('S-N Diagram - Raw Data', fontsize=14, fontweight='bold')
+            ax.set_title('S-N Data - Weibull Model', fontsize=13, fontweight='bold')
+            if len(unique_stresses) <= 10:
+                ax.legend(fontsize=9, loc='upper right', title='Stress levels')
+            ax.grid(True, alpha=0.3, which='both')
+            
+            # Plot 2: Log-Log plot
+            ax = axes[1]
+            ax.scatter(np.log(data['N']), np.log(data['Deltasigma']), 
+                      alpha=0.6, s=40, color='darkblue', edgecolors='black', linewidths=0.5)
+            ax.set_xlabel('ln(Cycles)', fontsize=12, fontweight='bold')
+            ax.set_ylabel('ln(Stress)', fontsize=12, fontweight='bold')
+            ax.set_title('Log-Log Plot', fontsize=13, fontweight='bold')
             ax.grid(True, alpha=0.3)
+            
+            plt.tight_layout()
             st.pyplot(fig)
             plt.close()
     
@@ -557,8 +583,22 @@ def main():
                     # Progress indicators
                     progress_text = st.empty()
                     progress_bar = st.progress(0)
+                    status_box = st.empty()
                     
-                    progress_text.text(f"🔄 Initializing MCMC ({mcmc_chains} chains, {mcmc_draws} draws)...")
+                    progress_text.text(f"🔄 Initializing MCMC sampler...")
+                    progress_bar.progress(5)
+                    
+                    with status_box.container():
+                        st.info(f"""
+                        **MCMC Configuration:**
+                        - Chains: {mcmc_chains}
+                        - Warmup samples: {mcmc_warmup} per chain
+                        - Draw samples: {mcmc_draws} per chain
+                        - Total samples: {mcmc_chains * (mcmc_warmup + mcmc_draws)}
+                        - Target accept: {target_accept}
+                        """)
+                    
+                    progress_text.text(f"🔄 Sampling {mcmc_chains} chains...")
                     progress_bar.progress(10)
                     
                     # Run MCMC
@@ -579,9 +619,20 @@ def main():
                     # Clear progress indicators
                     progress_text.empty()
                     progress_bar.empty()
+                    status_box.empty()
                     
                     st.success("✓ MCMC sampling completed!")
-                    st.info(f"📊 Sampled {mcmc_chains} chains × {mcmc_draws} draws = {mcmc_chains * mcmc_draws} total samples")
+                    
+                    # Show sampling statistics
+                    total_samples = mcmc_chains * mcmc_draws
+                    warmup_total = mcmc_chains * mcmc_warmup
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Posterior samples", f"{total_samples:,}")
+                    with col2:
+                        st.metric("Warmup samples", f"{warmup_total:,}")
+                    with col3:
+                        st.metric("Total iterations", f"{mcmc_chains * (mcmc_warmup + mcmc_draws):,}")
             
             if st.session_state.mcmc_done:
                 st.markdown('<div class="success-box">✓ Bayesian inference complete</div>', 
@@ -627,8 +678,18 @@ def main():
             if st.button("Compute Percentile Curves", type="primary"):
                 progress_text = st.empty()
                 progress_bar = st.progress(0)
+                status_box = st.empty()
                 
-                progress_text.text(f"🔄 Computing percentile curves ({param_samples} samples)...")
+                with status_box.container():
+                    st.info(f"""
+                    **Percentile Computation:**
+                    - Posterior samples: {param_samples}
+                    - Stress points: {stress_points}
+                    - Stress range: [{stress_min:.2f}, {stress_max:.2f}]
+                    - Percentiles: P1, P10, P50, P90, P99
+                    """)
+                
+                progress_text.text(f"🔄 Sampling from posterior ({param_samples} samples)...")
                 progress_bar.progress(20)
                 
                 config = {
@@ -638,7 +699,9 @@ def main():
                     'stress_points': stress_points
                 }
                 
+                progress_text.text(f"🔄 Computing percentiles for {stress_points} stress levels...")
                 progress_bar.progress(40)
+                
                 stress_levels, percentile_results = compute_percentiles(
                     trace, config, param_samples
                 )
@@ -650,7 +713,7 @@ def main():
                 
                 # Plot data
                 ax.scatter(data['N'], data['Deltasigma'], 
-                          alpha=0.5, s=30, label='Data', color='gray')
+                          alpha=0.5, s=30, label='Data', color='gray', zorder=5)
                 
                 # Plot percentiles
                 colors = ['red', 'orange', 'green', 'orange', 'red']
@@ -660,24 +723,35 @@ def main():
                                              colors, styles):
                     ax.plot(percentile_results[p], stress_levels,
                            color=color, linestyle=style, linewidth=2,
-                           label=f'P{int(p*100)}')
+                           label=f'P{int(p*100)}', zorder=3)
                 
                 ax.set_xscale('log')
-                ax.set_xlabel('Number of Cycles (N)', fontsize=12)
-                ax.set_ylabel('Stress Range (Δσ)', fontsize=12)
-                ax.set_title('Fatigue Life Percentile Curves', 
+                ax.set_xlabel('Number of Cycles (N)', fontsize=12, fontweight='bold')
+                ax.set_ylabel('Stress Range (Δσ)', fontsize=12, fontweight='bold')
+                ax.set_title('Fatigue Life Percentile Curves with Uncertainty Bands', 
                             fontsize=14, fontweight='bold')
-                ax.legend(loc='best')
+                ax.legend(loc='best', fontsize=10)
                 ax.grid(True, alpha=0.3)
                 
                 progress_bar.progress(100)
+                
+                # Clear progress
                 progress_text.empty()
                 progress_bar.empty()
+                status_box.empty()
                 
                 st.pyplot(fig)
                 plt.close()
                 
-                st.success(f"✓ Percentile curves computed from {param_samples} posterior samples")
+                # Show computation statistics
+                total_evaluations = param_samples * stress_points
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.metric("Total evaluations", f"{total_evaluations:,}")
+                with col2:
+                    st.metric("Percentile curves", "5 (P1, P10, P50, P90, P99)")
+                
+                st.success("✓ Percentile curves generated successfully!")
     
     # TAB 4: ABOUT
     with tab4:
