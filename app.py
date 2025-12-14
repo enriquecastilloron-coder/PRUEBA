@@ -180,48 +180,52 @@ def get_holmen_data():
 # ============================================================================
 
 def mle_estimation(N, Deltasigma, config):
-    """Maximum Likelihood Estimation - Weibull distribution for minima"""
+    """Maximum Likelihood Estimation - Weibull distribution with 5 parameters"""
     
     def negative_log_likelihood(params):
-        lambda_val, Deltasigma0, beta, delta = params
+        N0, Deltasigma0, beta, lambda_param, delta = params
         
-        if beta <= 0 or delta <= 0:
+        if N0 <= 0 or Deltasigma0 <= 0 or beta <= 0 or delta <= 0:
             return 1e10
         
-        r = np.log(Deltasigma / Deltasigma0)
-        Y = np.log(N) - lambda_val
-        mu_Y = -delta / r
-        alpha = beta * np.abs(r)  # Weibull shape parameter
+        # Dimensionless variables
+        log_N_dimensionless = np.log(N) - np.log(N0)
+        r = np.log(Deltasigma) - np.log(Deltasigma0)
         
-        if np.any(alpha <= 0):
+        # Weibull parameters
+        mu_Y = (-lambda_param - delta) / r
+        sigma_Y = delta / (beta * np.abs(r) + 1e-8)
+        
+        if np.any(sigma_Y <= 0):
             return 1e10
         
-        # Weibull log-likelihood for minima
-        Y_shifted = Y - mu_Y
+        # Standardized variable
+        z = (log_N_dimensionless - mu_Y) / (sigma_Y + 1e-8)
         
-        if np.any(Y_shifted <= 0):
-            return 1e10
+        # Log-likelihood (Weibull for minima, Gumbel parametrization)
+        log_lik = -np.log(sigma_Y + 1e-8) + z - np.exp(z)
         
-        log_lik = -np.sum(
-            np.log(alpha) - alpha * np.log(Y_shifted) + (Y_shifted)**(alpha) - 1
-        )
-        
-        return log_lik
+        return -np.sum(log_lik)
     
     # Initial guess
+    N_min = np.min(N)
+    stress_min = np.min(Deltasigma)
+    
     x0 = [
-        (config['minlambda'] + config['maxlambda']) / 2,
-        (config['minDeltasigma0'] + config['maxDeltasigma0']) / 2,
-        (config['minbeta'] + config['maxbeta']) / 2,
-        (config['mindelta'] + config['maxdelta']) / 2
+        N_min * 0.5,  # N0
+        (config['minDeltasigma0'] + config['maxDeltasigma0']) / 2,  # Deltasigma0
+        (config['minbeta'] + config['maxbeta']) / 2,  # beta
+        (config['minlambda'] + config['maxlambda']) / 2,  # lambda
+        (config['mindelta'] + config['maxdelta']) / 2  # delta
     ]
     
     # Bounds
     bounds = [
-        (config['minlambda'], config['maxlambda']),
-        (config['minDeltasigma0'], config['maxDeltasigma0']),
-        (config['minbeta'], config['maxbeta']),
-        (config['mindelta'], config['maxdelta'])
+        (config.get('minN0', 0.001), N_min),  # N0
+        (config['minDeltasigma0'], config['maxDeltasigma0']),  # Deltasigma0
+        (config['minbeta'], config['maxbeta']),  # beta
+        (config['minlambda'], config['maxlambda']),  # lambda
+        (config['mindelta'], config['maxdelta'])  # delta
     ]
     
     # Optimize
@@ -234,24 +238,27 @@ def mle_estimation(N, Deltasigma, config):
     )
     
     return {
-        'lambda': result.x[0],
+        'N0': result.x[0],
         'Deltasigma0': result.x[1],
         'beta': result.x[2],
-        'delta': result.x[3],
+        'lambda': result.x[3],
+        'delta': result.x[4],
         'success': result.success,
         'nll': result.fun
     }
 
 def bayesian_inference(N, Deltasigma, config, mle_results):
-    """Bayesian inference with PyMC - Weibull distribution for fatigue life"""
+    """Bayesian inference with PyMC - Weibull distribution with 5 parameters"""
     
     M = len(N)
+    N_min = np.min(N)
+    stress_min = np.min(Deltasigma)
     
     with pm.Model() as model:
-        # Priors based on MLE with wider uncertainty
-        lambda_prior = pm.Uniform('lambda_val', 
-                                  lower=config['minlambda'], 
-                                  upper=config['maxlambda'])
+        # Priors - 5 parameters
+        N0_prior = pm.Uniform('N0', 
+                             lower=config.get('minN0', 0.001), 
+                             upper=N_min)
         
         Deltasigma0_prior = pm.Uniform('Deltasigma0',
                                        lower=config['minDeltasigma0'],
@@ -261,26 +268,30 @@ def bayesian_inference(N, Deltasigma, config, mle_results):
                                lower=config['minbeta'],
                                upper=config['maxbeta'])
         
+        lambda_prior = pm.Uniform('lambda_param',
+                                 lower=config['minlambda'],
+                                 upper=config['maxlambda'])
+        
         delta_prior = pm.Uniform('delta',
                                 lower=config['mindelta'],
                                 upper=config['maxdelta'])
         
-        # Model - Weibull for minima
-        r = pt.log(Deltasigma / Deltasigma0_prior)
-        Y = pt.log(N) - lambda_prior
+        # Transform to dimensionless log-space
+        log_N_dimensionless = pt.log(N) - pt.log(N0_prior)
+        r = pt.log(Deltasigma) - pt.log(Deltasigma0_prior)
         
-        # Weibull parameters
-        # Location parameter (threshold)
-        mu_weibull = -delta_prior / r
-        # Shape parameter (beta in Weibull notation)
-        alpha_weibull = beta_prior * pm.math.abs(r)
+        # Weibull parameters for minima
+        mu_Y = (-lambda_prior - delta_prior) / r
+        sigma_Y = delta_prior / (beta_prior * pm.math.abs(r) + 1e-8)
         
-        # Likelihood: Weibull distribution for minima
-        # Y ~ Weibull(alpha, mu) where alpha is shape and mu is location
-        Y_obs = pm.Weibull('Y_obs', 
-                          alpha=alpha_weibull, 
-                          beta=1.0,  # scale parameter = 1 in standardized form
-                          observed=Y - mu_weibull)  # shifted to zero location
+        # Standardized variable
+        z = (log_N_dimensionless - mu_Y) / (sigma_Y + 1e-8)
+        
+        # Log-likelihood (Weibull for minima, Gumbel parametrization)
+        log_lik = -pt.log(sigma_Y + 1e-8) + z - pt.exp(z)
+        
+        # Total likelihood
+        likelihood = pm.Potential('likelihood', pt.sum(log_lik))
         
         # Sample
         trace = pm.sample(
@@ -296,16 +307,17 @@ def bayesian_inference(N, Deltasigma, config, mle_results):
     return trace, model
 
 def compute_percentiles(trace, config, n_samples=1000):
-    """Compute percentile curves from posterior samples - Weibull distribution"""
+    """Compute percentile curves from posterior samples - Weibull with 5 parameters"""
     
-    # Extract samples
-    lambda_samples = trace.posterior['lambda_val'].values.flatten()
+    # Extract samples - 5 parameters
+    N0_samples = trace.posterior['N0'].values.flatten()
     Deltasigma0_samples = trace.posterior['Deltasigma0'].values.flatten()
     beta_samples = trace.posterior['beta'].values.flatten()
+    lambda_samples = trace.posterior['lambda_param'].values.flatten()
     delta_samples = trace.posterior['delta'].values.flatten()
     
     # Sample from posterior
-    n_posterior = len(lambda_samples)
+    n_posterior = len(N0_samples)
     indices = np.random.choice(n_posterior, size=n_samples, replace=False)
     
     # Stress levels
@@ -323,20 +335,25 @@ def compute_percentiles(trace, config, n_samples=1000):
         N_samples = []
         
         for idx in indices:
-            lambda_val = lambda_samples[idx]
+            N0 = N0_samples[idx]
             Deltasigma0 = Deltasigma0_samples[idx]
             beta = beta_samples[idx]
+            lambda_val = lambda_samples[idx]
             delta = delta_samples[idx]
             
+            # Dimensionless variables
             r = np.log(stress / Deltasigma0)
-            mu_Y = -delta / r
-            alpha = beta * np.abs(r)  # Weibull shape parameter
             
-            # Sample from Weibull distribution for minima
-            # Using inverse CDF: Y = mu_Y + (-log(U))^(1/alpha) where U ~ Uniform(0,1)
-            u = np.random.uniform(0, 1)
-            Y_sample = mu_Y + (-np.log(u))**(1/alpha)
-            N_sample = np.exp(Y_sample + lambda_val)
+            # Weibull parameters
+            mu_Y = (-lambda_val - delta) / r
+            sigma_Y = delta / (beta * np.abs(r) + 1e-8)
+            
+            # Sample from Gumbel (Weibull for minima in standardized form)
+            z_sample = np.random.gumbel(0, 1)  # Standard Gumbel
+            log_N_dimensionless = mu_Y + sigma_Y * z_sample
+            
+            # Transform back to N
+            N_sample = N0 * np.exp(log_N_dimensionless)
             N_samples.append(N_sample)
         
         # Compute percentiles
@@ -504,16 +521,17 @@ def main():
             if st.session_state.mle_done:
                 mle = st.session_state.mle_results
                 st.markdown('<div class="info-box">', unsafe_allow_html=True)
-                col1, col2 = st.columns(2)
+                st.markdown("**Estimated Parameters (5 total):**")
+                col1, col2, col3 = st.columns(3)
                 with col1:
-                    st.metric("λ (lambda)", f"{mle['lambda']:.4f}")
+                    st.metric("N₀", f"{mle['N0']:.2f}")
                     st.metric("β (beta)", f"{mle['beta']:.4f}")
                 with col2:
                     st.metric("Δσ₀", f"{mle['Deltasigma0']:.4f}")
                     st.metric("δ (delta)", f"{mle['delta']:.4f}")
+                with col3:
+                    st.metric("λ (lambda)", f"{mle['lambda']:.4f}")
                 st.markdown('</div>', unsafe_allow_html=True)
-                
-                st.info("ℹ️ **Nota**: Este modelo usa 4 parámetros (λ, Δσ₀, β, δ). N₀ se puede calcular como N₀ = exp(λ) si se necesita.")
             
             # Step 2: Bayesian
             st.subheader("Step 2: Bayesian Inference (MCMC)")
@@ -621,36 +639,46 @@ def main():
         
         This application performs fatigue life analysis using:
         
-        #### **Model**
+        #### **Model - 5 Parameters**
         - **Castillo-Canteli dimensionless formulation**
         - **Weibull distribution for minima** - Pure Weibull model
         - Physically justified for lower-bounded problems (N > 0)
-        - Note: Gumbel is the limiting case when β → ∞, but this app uses Weibull for all β values
+        - Uses Gumbel parametrization for numerical stability
+        
+        #### **Model Equations**
+        ```
+        log_N_dimensionless = log(N) - log(N₀)
+        r = log(Δσ) - log(Δσ₀)
+        μ_Y = (-λ - δ) / r
+        σ_Y = δ / (β|r|)
+        z = (log_N_dimensionless - μ_Y) / σ_Y
+        z ~ Gumbel(0, 1)  [Weibull for minima]
+        ```
         
         #### **Why Weibull?**
         - Fatigue life is inherently a minimum value problem
         - Weibull naturally models the weakest link behavior
-        - More flexible than Gumbel (includes it as special case)
         - You control the analysis - no automatic simplifications
         
         #### **Analysis Pipeline**
         1. **Maximum Likelihood Estimation (MLE)**
-           - Initial parameter estimation using Weibull likelihood
+           - Estimates all 5 parameters simultaneously
            - Uses differential evolution optimization
         
         2. **Bayesian Inference (MCMC)**
-           - PyMC probabilistic programming with Weibull distribution
+           - PyMC probabilistic programming with Weibull
            - NUTS sampler for posterior sampling
-           - Quantifies parameter uncertainty
+           - Quantifies uncertainty in all 5 parameters
         
         3. **Percentile Prediction**
-           - Generates S-N curves with uncertainty bands using Weibull
+           - Generates S-N curves with uncertainty bands
            - Multiple percentile levels (P1, P10, P50, P90, P99)
         
-        #### **Parameters**
-        - **λ (lambda)**: Location parameter (log-scale)
+        #### **5 Parameters**
+        - **N₀**: Reference number of cycles
         - **Δσ₀**: Reference stress level
-        - **β (beta)**: Shape parameter (Weibull shape - controls distribution tail)
+        - **β (beta)**: Shape parameter (controls distribution tail)
+        - **λ (lambda)**: Location parameter (log-scale)
         - **δ (delta)**: Dimensionless damage parameter
         
         #### **Data Format**
@@ -663,7 +691,7 @@ def main():
         
         ---
         
-        **Version 2.0 - Pure Weibull Model** | Built with Streamlit, PyMC, and ArviZ
+        **Version 2.0 - 5-Parameter Weibull Model** | Built with Streamlit, PyMC, and ArviZ
         """)
 
 if __name__ == "__main__":
