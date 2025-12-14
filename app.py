@@ -179,78 +179,117 @@ def get_holmen_data():
 # CORE ANALYSIS FUNCTIONS
 # ============================================================================
 
+def weibull_log_likelihood(params, stress, cycles):
+    """
+    Weibull log-likelihood for fatigue data.
+    Castillo-Canteli dimensionless formulation.
+    EXACTAMENTE como en el notebook original.
+    
+    Model for minima (lower bounded data):
+    log(N) ~ Weibull with location-scale depending on stress
+    
+    Parameters:
+    -----------
+    params : array [N0, Delta0, beta, lambda_param, delta]
+        N0: reference number of cycles
+        Delta0: reference stress (endurance limit)
+        beta: shape parameter (Weibull)
+        lambda_param: location parameter
+        delta: scale parameter
+    """
+    N0, Delta0, beta, lambda_param, delta = params
+    
+    # Validations
+    if N0 <= 0 or Delta0 <= 0 or beta <= 0 or delta <= 0:
+        return -np.inf
+    
+    # Dimensionless transformation
+    log_N_dimensionless = np.log(cycles) - np.log(N0)
+    r = np.log(stress) - np.log(Delta0)
+    
+    # Check for valid r values
+    if np.any(np.abs(r) < 1e-10):
+        return -np.inf
+    
+    # Weibull parameters for minima
+    # Location parameter
+    mu_Y = (-lambda_param - delta) / r
+    # Scale parameter
+    sigma_Y = delta / (beta * np.abs(r))
+    
+    # Check valid sigma
+    if np.any(sigma_Y <= 0):
+        return -np.inf
+    
+    # Standardized variable for Weibull (Gumbel for minima parametrization)
+    z = (log_N_dimensionless - mu_Y) / sigma_Y
+    
+    # Weibull log-likelihood for minima
+    # CDF: F(y) = 1 - exp(-exp(z)) where z = (y - mu)/sigma
+    # PDF: f(y) = (1/sigma) * exp(z - exp(z))
+    
+    log_lik = -np.log(sigma_Y) + z - np.exp(z)
+    
+    # Check for invalid values
+    if not np.all(np.isfinite(log_lik)):
+        return -np.inf
+    
+    return np.sum(log_lik)
+
+def negative_log_likelihood_func(params, stress, cycles):
+    """Negative log-likelihood for minimization."""
+    return -weibull_log_likelihood(params, stress, cycles)
+
 def mle_estimation(N, Deltasigma, config):
-    """Maximum Likelihood Estimation - Weibull distribution with 5 parameters
-    EXACTAMENTE como en el notebook original"""
+    """Maximum Likelihood Estimation - EXACTAMENTE como notebook original"""
     
-    def negative_log_likelihood(params):
-        N0, Deltasigma0, beta, lambda_param, delta = params
-        
-        # Validations
-        if N0 <= 0 or Deltasigma0 <= 0 or beta <= 0 or delta <= 0:
-            return np.inf
-        
-        # Dimensionless transformation
-        log_N_dimensionless = np.log(N) - np.log(N0)
-        r = np.log(Deltasigma) - np.log(Deltasigma0)
-        
-        # Check for valid r values
-        if np.any(np.abs(r) < 1e-10):
-            return np.inf
-        
-        # Weibull parameters for minima
-        mu_Y = (-lambda_param - delta) / r
-        sigma_Y = delta / (beta * np.abs(r))
-        
-        # Check valid sigma
-        if np.any(sigma_Y <= 0):
-            return np.inf
-        
-        # Standardized variable
-        z = (log_N_dimensionless - mu_Y) / sigma_Y
-        
-        # Weibull log-likelihood for minima (Gumbel parametrization)
-        log_lik = -np.log(sigma_Y) + z - np.exp(z)
-        
-        return -np.sum(log_lik)
-    
-    # Initial guess
     N_min = np.min(N)
+    stress_min = np.min(Deltasigma)
     
-    x0 = [
-        N_min * 0.5,  # N0
-        (config['minDeltasigma0'] + config['maxDeltasigma0']) / 2,  # Deltasigma0
-        (config['minbeta'] + config['maxbeta']) / 2,  # beta
-        (config['minlambda'] + config['maxlambda']) / 2,  # lambda
-        (config['mindelta'] + config['maxdelta']) / 2  # delta
-    ]
+    # Initial guess based on physical reasoning
+    N0_init = N_min * 0.5
+    Delta0_init = stress_min * 0.7
+    beta_init = 3.0
+    lambda_init = -8.0
+    delta_init = 2.0
     
-    # Bounds
+    initial_params = np.array([N0_init, Delta0_init, beta_init, lambda_init, delta_init])
+    
+    # Parameter bounds for optimization
     bounds = [
-        (config.get('minN0', 0.001), N_min),  # N0
-        (config['minDeltasigma0'], config['maxDeltasigma0']),  # Deltasigma0
-        (config['minbeta'], config['maxbeta']),  # beta
-        (config['minlambda'], config['maxlambda']),  # lambda
-        (config['mindelta'], config['maxdelta'])  # delta
+        (0.001, N_min * 0.9),                               # N0
+        (stress_min * 0.4, stress_min * 0.99),              # Delta0
+        (0.5, 15.0),                                        # beta
+        (-12.0, -4.0),                                      # lambda
+        (0.5, 5.0)                                          # delta
     ]
     
-    # Optimize
+    # Run global optimization
     result = differential_evolution(
-        negative_log_likelihood,
-        bounds,
+        negative_log_likelihood_func,
+        bounds=bounds,
+        args=(Deltasigma, N),
         seed=42,
         maxiter=1000,
-        workers=1
+        popsize=30,
+        tol=1e-7,
+        atol=1e-7,
+        workers=1,
+        updating='deferred',
+        polish=True
     )
     
+    mle_params = result.x
+    
     return {
-        'N0': result.x[0],
-        'Deltasigma0': result.x[1],
-        'beta': result.x[2],
-        'lambda': result.x[3],
-        'delta': result.x[4],
+        'N0': mle_params[0],
+        'Deltasigma0': mle_params[1],
+        'beta': mle_params[2],
+        'lambda': mle_params[3],
+        'delta': mle_params[4],
         'success': result.success,
-        'nll': result.fun
+        'nll': result.fun,
+        'log_likelihood': -result.fun
     }
 
 def bayesian_inference(N, Deltasigma, config, mle_results):
@@ -312,7 +351,7 @@ def bayesian_inference(N, Deltasigma, config, mle_results):
     
     return trace, model
 
-def compute_percentile_single(stress, N0, Delta0, beta, lambda_p, delta, prob):
+def compute_percentile(stress, N0, Delta0, beta, lambda_p, delta, prob):
     """
     Compute N_p for given stress and failure probability (Weibull).
     EXACTAMENTE como en el notebook original.
@@ -392,7 +431,7 @@ def compute_percentiles(trace, config, n_samples=1000):
                 lambda_s = lambda_samples[idx]
                 delta_s = delta_samples[idx]
                 
-                N_p = compute_percentile_single(stress, N0_s, Delta0_s, beta_s, lambda_s, delta_s, perc_base)
+                N_p = compute_percentile(stress, N0_s, Delta0_s, beta_s, lambda_s, delta_s, perc_base)
                 
                 if not np.isnan(N_p):
                     percentile_matrix[i, j] = N_p
@@ -773,9 +812,25 @@ def main():
             
             # Trace plots
             st.subheader("MCMC Diagnostics - Trace Plots")
-            fig = az.plot_trace(trace, compact=True, figsize=(12, 8))
-            st.pyplot(fig[0][0].figure)
+            fig_trace = az.plot_trace(trace, compact=True, figsize=(12, 8))
+            
+            # Guardar para descarga
+            import io
+            buf_trace = io.BytesIO()
+            fig_trace[0][0].figure.savefig(buf_trace, format='png', dpi=150, bbox_inches='tight')
+            buf_trace.seek(0)
+            trace_bytes = buf_trace.getvalue()
+            
+            st.pyplot(fig_trace[0][0].figure)
             plt.close()
+            
+            st.download_button(
+                label="💾 Download Trace Plots (PNG)",
+                data=trace_bytes,
+                file_name="trace_plots.png",
+                mime="image/png",
+                key="download_trace"
+            )
             
             # Posterior distributions
             st.subheader("Posterior Distributions")
@@ -787,8 +842,23 @@ def main():
             az.plot_posterior(trace, var_names=['delta'], ax=axes[2, 0])
             axes[2, 1].axis('off')  # Hide unused subplot
             plt.tight_layout()
+            
+            # Guardar para descarga
+            buf_post = io.BytesIO()
+            fig.savefig(buf_post, format='png', dpi=150, bbox_inches='tight')
+            buf_post.seek(0)
+            post_bytes = buf_post.getvalue()
+            
             st.pyplot(fig)
             plt.close()
+            
+            st.download_button(
+                label="💾 Download Posterior Distributions (PNG)",
+                data=post_bytes,
+                file_name="posterior_distributions.png",
+                mime="image/png",
+                key="download_posterior"
+            )
             
             # Percentile curves
             st.subheader("Percentile Curves")
@@ -899,13 +969,14 @@ def main():
                 
                 plt.tight_layout()
                 
-                progress_bar.progress(100)
-                
-                # GUARDAR FIGURA PARA DESCARGA
+                # GUARDAR FIGURA EN MEMORIA ANTES de progress
                 import io
                 buf = io.BytesIO()
                 fig.savefig(buf, format='png', dpi=250, bbox_inches='tight')
                 buf.seek(0)
+                img_bytes = buf.getvalue()  # Guardar bytes antes de cerrar
+                
+                progress_bar.progress(100)
                 
                 # Clear progress
                 progress_text.empty()
@@ -913,16 +984,16 @@ def main():
                 status_box.empty()
                 
                 st.pyplot(fig)
-                
-                # BOTÓN DE DESCARGA
-                st.download_button(
-                    label="💾 Download Figure (PNG)",
-                    data=buf,
-                    file_name="percentiles_of_percentiles.png",
-                    mime="image/png"
-                )
-                
                 plt.close()
+                
+                # BOTÓN DE DESCARGA - USA img_bytes guardados
+                st.download_button(
+                    label="💾 Download Percentiles Figure (PNG)",
+                    data=img_bytes,
+                    file_name="percentiles_of_percentiles.png",
+                    mime="image/png",
+                    key="download_percentiles"
+                )
                 
                 # Show computation statistics
                 total_evaluations = param_samples * stress_points
