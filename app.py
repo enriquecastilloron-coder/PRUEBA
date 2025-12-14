@@ -453,13 +453,26 @@ def main():
         st.markdown("---")
         
         st.subheader("Percentile Settings")
-        stress_min = st.number_input("Min stress", 0.1, 1.0, 0.3, 0.05)
-        stress_max = st.number_input("Max stress", 0.1, 1.0, 1.0, 0.05)
+        
+        # Calcular límites automáticamente si hay datos cargados
+        if st.session_state.data_loaded:
+            data_temp = st.session_state.data
+            auto_stress_min = max(min(data_temp['Deltasigma']) - 0.03, 0.01)
+            auto_stress_max = max(data_temp['Deltasigma']) + 0.03
+            
+            stress_min = st.number_input("Min stress", 0.01, 2.0, auto_stress_min, 0.01,
+                                        help="Auto-calculated from data. You can adjust.")
+            stress_max = st.number_input("Max stress", 0.01, 2.0, auto_stress_max, 0.01,
+                                        help="Auto-calculated from data. You can adjust.")
+        else:
+            stress_min = st.number_input("Min stress", 0.01, 2.0, 0.3, 0.05)
+            stress_max = st.number_input("Max stress", 0.01, 2.0, 1.0, 0.05)
+            
         stress_points = st.slider("Stress points", 20, 200, 50, 10)  # DEFAULT 50
         param_samples = st.slider("Parameter samples", 500, 2000, 1000, 100)
     
     # Main content - Tabs
-    tab1, tab2, tab3, tab4 = st.tabs(["📁 Data", "🔬 Analysis", "📈 Results", "ℹ️ About"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["📁 Data", "🔬 Analysis", "📈 Results", "🧬 Synthetic Data", "ℹ️ About"])
     
     # TAB 1: DATA
     with tab1:
@@ -675,6 +688,59 @@ def main():
                         st.metric("Warmup samples", f"{warmup_total:,}")
                     with col3:
                         st.metric("Total iterations", f"{mcmc_chains * (mcmc_warmup + mcmc_draws):,}")
+                    
+                    # AÑADIR: Mostrar medianas posteriores
+                    st.markdown("---")
+                    st.subheader("📊 Posterior Parameter Estimates")
+                    
+                    posterior = trace.posterior
+                    
+                    st.markdown("**Posterior Medians (Bayesian Estimates):**")
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("N₀ (median)", f"{posterior['N0'].median().values:.6f}")
+                        st.metric("β (median)", f"{posterior['beta'].median().values:.3f}")
+                    with col2:
+                        st.metric("Δσ₀ (median)", f"{posterior['Deltasigma0'].median().values:.6f}")
+                        st.metric("δ (median)", f"{posterior['delta'].median().values:.3f}")
+                    with col3:
+                        st.metric("λ (median)", f"{posterior['lambda_param'].median().values:.3f}")
+                    
+                    # Diagnósticos de convergencia
+                    st.markdown("---")
+                    st.subheader("🔍 Convergence Diagnostics")
+                    
+                    summary = az.summary(trace, hdi_prob=0.95)
+                    
+                    # Check R-hat
+                    rhat_vals = summary['r_hat'].values
+                    all_rhat_good = np.all(rhat_vals < 1.01)
+                    
+                    # Check ESS
+                    ess_vals = summary['ess_bulk'].values
+                    all_ess_good = np.all(ess_vals > 1000)
+                    
+                    # Divergences
+                    try:
+                        divergences = trace.sample_stats['diverging'].values
+                        n_divergences = np.sum(divergences)
+                    except:
+                        n_divergences = 0
+                    
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        status = "✅ Good" if all_rhat_good else "⚠️ Check"
+                        st.metric("R-hat < 1.01", status)
+                    with col2:
+                        status = "✅ Good" if all_ess_good else "⚠️ Low"
+                        st.metric("ESS > 1000", status)
+                    with col3:
+                        status = "✅" if n_divergences == 0 else f"⚠️ {n_divergences}"
+                        st.metric("Divergences", status)
+                    
+                    if n_divergences > 0:
+                        div_rate = n_divergences / total_samples * 100
+                        st.warning(f"⚠️ Divergence rate: {div_rate:.2f}% - Consider increasing target_accept")
             
             if st.session_state.mcmc_done:
                 st.markdown('<div class="success-box">✓ Bayesian inference complete</div>', 
@@ -825,12 +891,27 @@ def main():
                 
                 progress_bar.progress(100)
                 
+                # GUARDAR FIGURA PARA DESCARGA
+                import io
+                buf = io.BytesIO()
+                fig.savefig(buf, format='png', dpi=250, bbox_inches='tight')
+                buf.seek(0)
+                
                 # Clear progress
                 progress_text.empty()
                 progress_bar.empty()
                 status_box.empty()
                 
                 st.pyplot(fig)
+                
+                # BOTÓN DE DESCARGA
+                st.download_button(
+                    label="💾 Download Figure (PNG)",
+                    data=buf,
+                    file_name="percentiles_of_percentiles.png",
+                    mime="image/png"
+                )
+                
                 plt.close()
                 
                 # Show computation statistics
@@ -839,12 +920,109 @@ def main():
                 with col1:
                     st.metric("Total evaluations", f"{total_evaluations:,}")
                 with col2:
-                    st.metric("Percentile curves", "5 (P1, P10, P50, P90, P99)")
+                    st.metric("Percentile curves", f"{len(percentiles_base)} base × {len(percentiles_sub)} sub = {len(percentiles_base) * len(percentiles_sub)}")
                 
                 st.success("✓ Percentile curves generated successfully!")
     
-    # TAB 4: ABOUT
+    # TAB 4: SYNTHETIC DATA
     with tab4:
+        st.header("🧬 Synthetic Data Generation")
+        
+        if not st.session_state.mcmc_done:
+            st.warning("⚠️ Please complete the Bayesian analysis first (Analysis tab)")
+        else:
+            st.markdown("""
+            Generate synthetic datasets using posterior parameter samples from your Bayesian analysis.
+            Each dataset uses a random sample from the posterior distribution.
+            """)
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                n_obs = st.number_input("Observations per dataset", 10, 1000, 75, 10)
+            with col2:
+                n_datasets = st.number_input("Number of datasets", 1, 100, 5, 1)
+            
+            if st.button("Generate Synthetic Datasets", type="primary"):
+                with st.spinner("Generating synthetic data..."):
+                    trace = st.session_state.trace
+                    data = st.session_state.data
+                    
+                    # Extract posterior samples
+                    posterior = trace.posterior
+                    N0_samples = posterior['N0'].values.flatten()
+                    Delta0_samples = posterior['Deltasigma0'].values.flatten()
+                    beta_samples = posterior['beta'].values.flatten()
+                    lambda_samples = posterior['lambda_param'].values.flatten()
+                    delta_samples = posterior['delta'].values.flatten()
+                    
+                    # Select random posterior samples
+                    n_available = len(N0_samples)
+                    n_to_generate = min(n_datasets, n_available)
+                    selected_indices = np.random.choice(n_available, size=n_to_generate, replace=False)
+                    
+                    synthetic_datasets = []
+                    
+                    for idx, sample_idx in enumerate(selected_indices):
+                        # Get parameters
+                        N0 = N0_samples[sample_idx]
+                        Delta0 = Delta0_samples[sample_idx]
+                        beta = beta_samples[sample_idx]
+                        lambda_param = lambda_samples[sample_idx]
+                        delta = delta_samples[sample_idx]
+                        
+                        # Generate stress levels
+                        stress_synth = np.random.uniform(
+                            low=min(data['Deltasigma']),
+                            high=max(data['Deltasigma']),
+                            size=n_obs
+                        )
+                        
+                        # Generate cycles
+                        cycles_synth = np.zeros(n_obs)
+                        for i in range(n_obs):
+                            stress = stress_synth[i]
+                            r = np.log(stress / Delta0)
+                            mu_Y = (-lambda_param - delta) / r
+                            sigma_Y = delta / (beta * abs(r))
+                            
+                            # Generate random Gumbel
+                            u = np.random.uniform(0, 1)
+                            z = np.log(-np.log(1 - u))
+                            Y = mu_Y + sigma_Y * z
+                            N = N0 * np.exp(Y)
+                            cycles_synth[i] = N
+                        
+                        # Create dataframe
+                        df_synth = pd.DataFrame({
+                            'N': cycles_synth,
+                            'Deltasigma': stress_synth
+                        }).sort_values('Deltasigma').reset_index(drop=True)
+                        
+                        synthetic_datasets.append({
+                            'data': df_synth,
+                            'params': {'N0': N0, 'Delta0': Delta0, 'beta': beta, 
+                                      'lambda': lambda_param, 'delta': delta}
+                        })
+                    
+                    st.success(f"✓ Generated {n_to_generate} synthetic datasets!")
+                    
+                    # Show first dataset as preview
+                    st.subheader("Preview: Dataset 1")
+                    st.dataframe(synthetic_datasets[0]['data'].head(20))
+                    
+                    # Create CSV files for download
+                    for idx, dataset in enumerate(synthetic_datasets):
+                        csv = dataset['data'].to_csv(index=False)
+                        st.download_button(
+                            label=f"💾 Download Dataset {idx+1} (CSV)",
+                            data=csv,
+                            file_name=f"synthetic_data_{idx+1:03d}.csv",
+                            mime="text/csv",
+                            key=f"download_synth_{idx}"
+                        )
+    
+    # TAB 5: ABOUT
+    with tab5:
         st.header("About This Application")
         
         st.markdown("""
