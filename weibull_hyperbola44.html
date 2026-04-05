@@ -1,0 +1,3382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Weibull–Hyperbola Model</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+/* ═══════════════════════════════════════════════════
+   DESIGN TOKENS
+═══════════════════════════════════════════════════ */
+:root {
+  --bg:         #fdf6e3;
+  --surface:    #fffbf0;
+  --surface2:   #f5edce;
+  --border:     #ddd0a8;
+  --border2:    #b8a47a;
+  --text:       #2a2010;
+  --text-muted: #6b5a30;
+  --text-dim:   #b8a47a;
+  --accent:     #b07a00;
+  --accent2:    #8a5e00;
+  --green:      #1a7f37;
+  --blue:       #0969da;
+  --red:        #cf2626;
+  --warn:       #9a6700;
+  --mono:       'IBM Plex Mono', monospace;
+  --sans:       'IBM Plex Sans', sans-serif;
+  --radius:     6px;
+  --radius-lg:  10px;
+  --shadow:     0 4px 24px rgba(0,0,0,0.12);
+}
+
+/* ═══════════════════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-weight: 400;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* ═══════════════════════════════════════════════════
+   LAYOUT
+═══════════════════════════════════════════════════ */
+.app-wrapper {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 20px 60px;
+}
+
+.app-header {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 28px;
+}
+.app-header h1 {
+  font-family: var(--mono);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+}
+.app-header .badge {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  padding: 2px 8px;
+  border-radius: 20px;
+  letter-spacing: 0.05em;
+}
+
+/* Sections */
+.section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+}
+.section-header:hover { background: #ecddb8; }
+.section-title {
+  font-family: var(--mono);
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.section-chevron {
+  margin-left: auto;
+  color: var(--text-dim);
+  transition: transform 0.2s;
+  font-size: 0.8rem;
+}
+.section.collapsed .section-chevron { transform: rotate(-90deg); }
+.section.collapsed .section-body { display: none; }
+.section-body { padding: 16px; }
+.section-icon {
+  width: 18px; height: 18px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.85rem;
+}
+
+/* ═══════════════════════════════════════════════════
+   FORM CONTROLS
+═══════════════════════════════════════════════════ */
+.field-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 5px;
+}
+.field-label1 {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 5px;
+}
+.field-label sub, .field-label sup {
+  font-size: 0.7em;
+}
+input[type="number"], input[type="text"], select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.95rem;
+  padding: 7px 10px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s;
+  -moz-appearance: textfield;
+}
+input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+input[type="number"]:focus, select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(240,165,0,0.15);
+}
+select { cursor: pointer; }
+select option { background: var(--surface); }
+
+.form-grid {
+  display: grid;
+  gap: 12px;
+}
+.form-grid-2 { grid-template-columns: 1fr 1fr; }
+.form-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+.form-grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+.form-grid-5 { grid-template-columns: repeat(5, 1fr); }
+@media (max-width: 640px) {
+  .form-grid-3, .form-grid-4, .form-grid-5 { grid-template-columns: 1fr 1fr; }
+  .form-grid-2 { grid-template-columns: 1fr; }
+}
+
+/* Dynamic w-params area */
+#w-params-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+#w-params-grid .field-group {
+  flex: 1 1 140px;
+  min-width: 110px;
+}
+
+/* ═══════════════════════════════════════════════════
+   CHECKBOXES & RADIOS
+═══════════════════════════════════════════════════ */
+.checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px 12px;
+}
+@media (max-width: 480px) { .checkbox-grid { grid-template-columns: repeat(2,1fr); } }
+
+.cb-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.cb-item:hover { border-color: var(--border2); background: var(--surface2); }
+.cb-item input[type="checkbox"] { display: none; }
+.cb-box {
+  width: 14px; height: 14px;
+  border: 1.5px solid var(--border2);
+  border-radius: 3px;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+.cb-item input:checked ~ .cb-box {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.cb-check { color: #000; font-size: 0.65rem; display: none; }
+.cb-item input:checked ~ .cb-box .cb-check { display: block; }
+.cb-label { font-family: var(--mono); font-size: 0.9rem; font-weight: 600; }
+
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.radio-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.radio-item:hover { border-color: var(--border2); }
+.radio-item input[type="radio"] { display: none; }
+.radio-dot {
+  width: 14px; height: 14px;
+  border: 1.5px solid var(--border2);
+  border-radius: 50%;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: border-color 0.15s;
+}
+.radio-dot::after {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.radio-item input:checked ~ .radio-dot {
+  border-color: var(--accent);
+}
+.radio-item input:checked ~ .radio-dot::after { opacity: 1; }
+.radio-label { font-size: 0.92rem; }
+.radio-sublabel { font-size: 0.82rem; color: var(--text-muted); }
+
+/* Toggle switch */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.toggle {
+  position: relative; width: 34px; height: 18px;
+  display: inline-flex; cursor: pointer; flex-shrink: 0;
+}
+.toggle input { display: none; }
+.toggle-track {
+  width: 100%; height: 100%;
+  background: var(--border2);
+  border-radius: 9px;
+  transition: background 0.2s;
+}
+.toggle input:checked ~ .toggle-track { background: var(--accent); }
+.toggle-thumb {
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s;
+  pointer-events: none;
+}
+.toggle input:checked ~ .toggle-track ~ .toggle-thumb { transform: translateX(16px); }
+.toggle-label { font-size: 0.82rem; }
+
+/* Coord toggle buttons */
+.toggle-buttons {
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.toggle-buttons button {
+  flex: 1;
+  padding: 7px 14px;
+  background: var(--bg);
+  border: none;
+  color: var(--text-muted);
+  font-family: var(--mono);
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  border-right: 1px solid var(--border);
+}
+.toggle-buttons button:last-child { border-right: none; }
+.toggle-buttons button.active {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+.toggle-buttons button:hover:not(.active) { background: var(--surface2); color: var(--text); }
+
+/* ═══════════════════════════════════════════════════
+   RANGE / SLIDER
+═══════════════════════════════════════════════════ */
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+input[type="range"] {
+  flex: 1;
+  -webkit-appearance: none;
+  height: 4px;
+  background: var(--border2);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+}
+.slider-val {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--accent);
+  min-width: 24px;
+  text-align: right;
+}
+
+/* ═══════════════════════════════════════════════════
+   BUTTONS
+═══════════════════════════════════════════════════ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  font-family: var(--sans);
+  font-size: 0.92rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s, box-shadow 0.15s;
+  white-space: nowrap;
+}
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+.btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn-primary:hover:not(:disabled) { background: var(--accent2); }
+.btn-success { background: var(--green); color: #fff; border-color: var(--green); }
+.btn-success:hover:not(:disabled) { background: #14682e; }
+.btn-info    { background: var(--blue);  color: #fff; border-color: var(--blue); }
+.btn-info:hover:not(:disabled) { background: #0756b3; }
+.btn-warn    { background: var(--warn);  color: #fff; border-color: var(--warn); }
+.btn-warn:hover:not(:disabled) { background: #7a5200; }
+.btn-ghost   { background: transparent; color: var(--text-muted); border-color: var(--border); }
+.btn-ghost:hover:not(:disabled) { border-color: var(--border2); color: var(--text); }
+
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+/* ═══════════════════════════════════════════════════
+   PROGRESS BAR
+═══════════════════════════════════════════════════ */
+.progress-wrap {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  height: 8px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.progress-bar-inner {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), var(--warn));
+  border-radius: var(--radius);
+  transition: width 0.3s ease;
+  width: 0%;
+}
+.progress-label {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 5px;
+  min-height: 1.2em;
+}
+
+/* ═══════════════════════════════════════════════════
+   CONSOLE / LOG
+═══════════════════════════════════════════════════ */
+.console {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: var(--mono);
+  font-size: 0.86rem;
+  padding: 10px 14px;
+  max-height: 260px;
+  overflow-y: auto;
+  line-height: 1.7;
+}
+.console .log-line { color: var(--text-muted); }
+.console .log-ok   { color: var(--green); }
+.console .log-warn { color: var(--warn); }
+.console .log-err  { color: var(--red); }
+.console .log-info { color: var(--blue); }
+.console .log-accent { color: var(--accent); font-weight: 600; }
+
+/* ═══════════════════════════════════════════════════
+   DATA TABLE
+═══════════════════════════════════════════════════ */
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  font-family: var(--mono);
+}
+thead tr { background: var(--surface2); }
+th {
+  padding: 9px 12px;
+  text-align: right;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+th:first-child { text-align: left; }
+td {
+  padding: 7px 12px;
+  text-align: right;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+td:first-child { text-align: left; }
+tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: rgba(0,0,0,0.03); }
+.row-best td { background: rgba(63,185,80,0.07) !important; }
+.row-best td:first-child { color: var(--green); font-weight: 600; }
+
+.table-pagination {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0 6px;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  font-family: var(--mono);
+}
+.table-pagination button {
+  padding: 4px 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.table-pagination button:hover:not(:disabled) { border-color: var(--accent); }
+.table-pagination button:disabled { opacity: 0.35; cursor: not-allowed; }
+.table-pagination .page-info { flex: 1; text-align: center; }
+
+/* ═══════════════════════════════════════════════════
+   CHART SCROLL PANEL
+═══════════════════════════════════════════════════ */
+.charts-scroll-outer {
+  position: relative;
+}
+.charts-scroll-panel {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 8px 4px 16px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+.charts-scroll-panel::-webkit-scrollbar { height: 7px; }
+.charts-scroll-panel::-webkit-scrollbar-track { background: var(--surface2); border-radius: 4px; }
+.charts-scroll-panel::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+.chart-card {
+  flex: 0 0 520px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px;
+  scroll-snap-align: start;
+}
+.chart-card h4 {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+}
+/* Canvas wrapper: fixed height so Chart.js renders at full resolution */
+.chart-canvas-wrap {
+  position: relative;
+  width: 100%;
+  height: 460px;
+}
+.chart-canvas-wrap canvas {
+  display: block;
+}
+/* Sticky opacity slider bar above the scroll panel */
+.opacity-sticky-bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
+.opacity-sticky-bar .field-label {
+  white-space: nowrap;
+  margin-bottom: 0;
+  min-width: 220px;
+}
+.opacity-sticky-bar input[type="range"] {
+  flex: 1;
+}
+.opacity-sticky-bar .slider-val {
+  min-width: 32px;
+}
+
+/* ═══════════════════════════════════════════════════
+   RESULTS CARD (best model highlight)
+═══════════════════════════════════════════════════ */
+.result-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  background: rgba(63,185,80,0.1);
+  border: 1px solid rgba(63,185,80,0.3);
+  border-radius: var(--radius);
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  color: var(--green);
+  margin-bottom: 14px;
+}
+
+/* ═══════════════════════════════════════════════════
+   DIVIDER
+═══════════════════════════════════════════════════ */
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 16px 0;
+}
+
+/* ═══════════════════════════════════════════════════
+   FILE INPUT
+═══════════════════════════════════════════════════ */
+.file-drop {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px;
+  border: 2px dashed var(--border2);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  background: var(--bg);
+  text-align: center;
+}
+.file-drop:hover, .file-drop.drag-over {
+  border-color: var(--accent);
+  background: rgba(240,165,0,0.04);
+}
+.file-drop input { display: none; }
+.file-drop-icon { font-size: 1.8rem; opacity: 0.5; }
+.file-drop-text { font-size: 0.82rem; color: var(--text-muted); }
+.file-drop-hint { font-size: 0.72rem; color: var(--text-dim); font-family: var(--mono); }
+
+/* ═══════════════════════════════════════════════════
+   TOOLTIP / HELP
+═══════════════════════════════════════════════════ */
+.help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px; height: 15px;
+  border-radius: 50%;
+  background: var(--border2);
+  color: var(--text-muted);
+  font-size: 0.65rem;
+  cursor: help;
+  flex-shrink: 0;
+  vertical-align: middle;
+  margin-left: 4px;
+  position: relative;
+}
+.help:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 0.72rem;
+  padding: 5px 9px;
+  border-radius: var(--radius);
+  white-space: nowrap;
+  z-index: 99;
+  pointer-events: none;
+  box-shadow: var(--shadow);
+}
+
+/* ═══════════════════════════════════════════════════
+   MISC UTILITIES
+═══════════════════════════════════════════════════ */
+.gap-8  { gap: 8px; }
+.gap-12 { gap: 12px; }
+.mt-8   { margin-top: 8px; }
+.mt-12  { margin-top: 12px; }
+.mt-16  { margin-top: 16px; }
+.flex   { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.text-muted  { color: var(--text-muted); }
+.text-accent { color: var(--accent); }
+.text-green  { color: var(--green); }
+.text-mono   { font-family: var(--mono); }
+.text-sm     { font-size: 0.78rem; }
+.text-xs     { font-size: 0.72rem; }
+.fw-600      { font-weight: 600; }
+.w-full      { width: 100%; }
+.hidden      { display: none !important; }
+
+/* ═══════════════════════════════════════════════════
+   PRINT / PDF
+═══════════════════════════════════════════════════ */
+@media print {
+  body { background: #fff !important; color: #000 !important; font-size: 11pt; }
+  .app-wrapper { max-width: 100%; padding: 10px; }
+  .section-header { background: #f0f0f0 !important; border-bottom: 1px solid #ccc !important; }
+  .section.collapsed .section-body { display: block !important; }
+  .btn-row, .btn, #sec-log, .table-pagination,
+  .file-drop, .progress-wrap, .progress-label,
+  input[type="range"], .toggle { display: none !important; }
+  .tab-nav { display: none !important; }
+  .tab-panel { display: block !important; }
+  .hidden { display: block !important; }
+  .charts-scroll-panel canvas { max-width: 100% !important; }
+  .charts-scroll-panel { flex-wrap: wrap; overflow: visible; }
+  .chart-card { flex: 0 0 100%; }
+  table { font-size: 9pt; }
+  .console { max-height: none; font-size: 9pt; }
+  * { box-shadow: none !important; }
+}
+
+.tab-nav {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+  gap: 0;
+}
+.tab-btn {
+  padding: 8px 16px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+  font-family: var(--mono);
+  font-size: 0.86rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+</style>
+</head>
+<body>
+<div class="app-wrapper">
+
+  <!-- HEADER -->
+  <div class="app-header">
+    <h1>Weibull–Hyperbola Model</h1>
+    <span class="badge">v8</span>
+    <div style="display:flex;align-items:center;gap:10px;margin-left:auto;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <label style="font-size:0.78rem;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;color:var(--text-muted);font-family:var(--mono);white-space:nowrap;">Case / Title</label>
+        <input type="text" id="caseTitle" value=""
+          style="width:180px;font-family:var(--mono);font-size:0.9rem;padding:5px 10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);color:var(--text);outline:none;"
+          title="Used as filename prefix for all exports"/>
+      </div>
+      <div id="statusIndicator" title="Ready"
+        style="width:14px;height:14px;border-radius:50%;background:var(--green);box-shadow:0 0 6px rgba(26,127,55,0.7);flex-shrink:0;transition:background 0.3s,box-shadow 0.3s;"></div>
+    </div>
+  </div>
+
+<div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
+  <button class="btn btn-ghost" id="btnExpandAll" onclick="
+    const ids = ['sec-model','sec-sim','sec-extrema','sec-fit','sec-log'];
+    const anyCollapsed = ids.some(id => document.getElementById(id).classList.contains('collapsed'));
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      anyCollapsed ? el.classList.remove('collapsed') : el.classList.add('collapsed');
+    });
+    this.textContent = anyCollapsed ? '⊟ Collapse all' : '⊞ Expand all';
+  ">⊞ Expand all</button>
+</div>
+
+  <!-- ══════════════════════════════════════
+       SECTION 1 · Model & Parameters
+  ═══════════════════════════════════════ -->
+  <div class="section collapsed" id="sec-model">
+    <div class="section-header" onclick="toggleSection('sec-model')">
+      <span class="section-icon">⚙</span>
+      <span class="section-title">Model &amp; Parameters</span>
+      <span class="section-chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <div class="form-grid form-grid-2">
+        <div>
+          <label class="field-label">Model (for simulation and estimation)</label>
+          <select id="modelSelector" onchange="onModelChange()">
+            <option value="M0">M0 — w₁, w₁₂, w₁₃, w₁₂₃</option>
+            <option value="M1">M1 — w₁, w₁₂, w₁₃</option>
+            <option value="M2">M2 — w₁, w₁₃, w₁₂₃</option>
+            <option value="M3">M3 — w₁, w₁₂, w₁₂₃</option>
+            <option value="M4">M4 — w₁, w₁₂₃</option>
+            <option value="M5">M5 — w₁, w₁₃</option>
+            <option value="M6">M6 — w₁, w₁₂</option>
+            <option value="M7">M7 — w₁</option>
+            <option value="All">All models</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label">Coordinate display</label>
+          <div class="toggle-buttons" id="coordToggle">
+            <button onclick="setCoord('transformed',this)">π₂ vs π₃</button>
+            <button class="active" onclick="setCoord('original',this)">σ<sub>M</sub> vs N</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Free w-parameters (dynamic) -->
+      <label class="field-label">Free parameters (w)</label>
+      <div id="w-params-grid"></div>
+
+      <div class="divider"></div>
+
+      <!-- Weibull + References -->
+      <div class="form-grid form-grid-3 mt-8">
+        <div class="field-group">
+          <label class="field-label1">λ</label>
+          <input type="number" id="p_lambda" value="0.5" step="0.05"/>
+        </div>
+        <div class="field-group">
+          <label class="field-label1">δ</label>
+          <input type="number" id="p_delta" value="0.3" step="0.05" min="0.0001"/>
+        </div>
+        <div class="field-group">
+          <label class="field-label1">β</label>
+          <input type="number" id="p_beta" value="2.5" step="0.1" min="1.05" max="20"/>
+        </div>
+        <div class="field-group">
+          <label class="field-label1">σ<sub>M0</sub></label>
+            <span class="help" data-tip="Reference amplitude stress (must be < min σ_M in data)">?</span>
+          </label>
+          <input type="number" id="p_sigmaM0" value="40" step="10" min="0.001"/>
+        </div>
+        <div class="field-group">
+          <label class="field-label">N<sub>0</sub>
+            <span class="help" data-tip="Reference cycle count (must be < min N in data)">?</span>
+          </label>
+          <input type="number" id="p_N0" value="1000" step="1000" min="1"/>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       SECTION 2 · Simulation settings
+  ═══════════════════════════════════════ -->
+  <div class="section collapsed" id="sec-sim">
+    <div class="section-header" onclick="toggleSection('sec-sim')">
+      <span class="section-icon">🎲</span>
+      <span class="section-title">Simulation Settings</span>
+      <span class="section-chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <div class="form-grid form-grid-4">
+        <div class="field-group">
+          <label class="field-label1">σ<sub>M,min</sub></label>
+          <input type="number" id="sigmaM_min" value="50" step="10"/>
+        </div>
+        <div class="field-group">
+          <label class="field-label1">σ<sub>M,max</sub></label>
+          <input type="number" id="sigmaM_max" value="200" step="10"/>
+        </div>
+        <div class="field-group">
+          <label class="field-label1">σ<sub>m,min</sub></label>
+          <input type="number" id="sigmam_min" value="10" step="5"/>
+        </div>
+        <div class="field-group">
+          <label class="field-label1">σ<sub>m,max</sub></label>
+          <input type="number" id="sigmam_max" value="150" step="10"/>
+        </div>
+        <div class="field-group">
+          <label class="field-label">N points</label>
+          <input type="number" id="n_points" value="1000" step="50" min="10"/>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Runout threshold</label>
+          <input type="number" id="runout_thr" value="10000000" step="1000000"/>
+        </div>
+        <div class="field-group flex items-center" style="padding-top:18px;">
+          <label class="toggle">
+            <input type="checkbox" id="useCensoring" checked/>
+            <span class="toggle-track"></span>
+            <span class="toggle-thumb"></span>
+          </label>
+          <span class="toggle-label" style="margin-left:8px;">Apply runout censoring</span>
+        </div>
+        <div class="field-group flex items-center" style="padding-top:18px;">
+          <label class="toggle">
+            <input type="checkbox" id="simAfterFit"/>
+            <span class="toggle-track"></span>
+            <span class="toggle-thumb"></span>
+          </label>
+          <span class="toggle-label" style="margin-left:8px;">Include simulated data</span>
+
+
+
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="doSimulate()">▶ Simulate Data</button>
+        <button class="btn btn-success" onclick="doPlotSim()">📈 Plot Curves (sim.)</button>
+      </div>
+    </div>
+  </div>
+
+
+<!-- ══════════════════════════════════════
+     SECTION · Data extrema (auto)
+══════════════════════════════════════ -->
+<div class="section collapsed" id="sec-extrema">
+  <div class="section-header" onclick="toggleSection('sec-extrema')">
+    <span class="section-icon">📊</span>
+    <span class="section-title">Data extrema</span>
+    <span class="section-chevron">▼</span>
+  </div>
+
+  <div class="section-body">
+
+    <div class="form-grid form-grid-3">
+
+      <div class="field-group">
+        <label class="field-label1">σ<sub>m,min</sub></label>
+        <input type="text" id="ext_sigmam_min" readonly>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label1">σ<sub>m,max</sub></label>
+        <input type="text" id="ext_sigmam_max" readonly>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label1">σ<sub>M,min</sub></label>
+        <input type="text" id="ext_sigmaM_min" readonly>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label1">σ<sub>M,max</sub></label>
+        <input type="text" id="ext_sigmaM_max" readonly>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label1">N<sub>min</sub></label>
+        <input type="text" id="ext_N_min" readonly>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label1">N<sub>max</sub></label>
+        <input type="text" id="ext_N_max" readonly>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+
+  <!-- ══════════════════════════════════════
+       SECTION 3 · Fitting & Estimation
+  ═══════════════════════════════════════ -->
+  <div class="section collapsed" id="sec-fit">
+    <div class="section-header" onclick="toggleSection('sec-fit')">
+      <span class="section-icon">📐</span>
+      <span class="section-title">Fitting &amp; Estimation</span>
+      <span class="section-chevron">▼</span>
+    </div>
+    <div class="section-body">
+
+      <!-- Model checkboxes -->
+      <label class="field-label" style="margin-bottom:10px;">Models to fit</label>
+      <div class="checkbox-grid" id="modelCheckboxes"></div>
+
+      <div class="divider"></div>
+
+      <!-- Method radios -->
+      <label class="field-label" style="margin-bottom:8px;">Estimation method</label>
+      <div class="radio-group">
+        <label class="radio-item">
+          <input type="radio" name="estMethod" value="1" checked/>
+          <span class="radio-dot"></span>
+          <span>
+            <span class="radio-label fw-600">Option 1 — Independent per model</span><br/>
+            <span class="radio-sublabel">Each model independently estimates σ<sub>M0</sub> and N₀ via grid search</span>
+          </span>
+        </label>
+        <label class="radio-item">
+          <input type="radio" name="estMethod" value="2"/>
+          <span class="radio-dot"></span>
+          <span>
+            <span class="radio-label fw-600">Option 2 — Joint estimation (original)</span><br/>
+            <span class="radio-sublabel">Single σ<sub>M0</sub>/N₀ pair found via joint grid search, then all models re-fitted</span>
+          </span>
+        </label>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Grid config -->
+      <label class="field-label" style="margin-bottom:10px;">Grid search configuration</label>
+      <div class="form-grid form-grid-3">
+        <div>
+          <label class="field-label">Grid points (n)</label>
+          <div class="slider-row">
+            <input type="range" id="nGrid" min="3" max="20" value="3" oninput="updateSlider('nGrid','nGridVal')"/>
+            <span class="slider-val" id="nGridVal">3</span>
+          </div>
+        </div>
+        <div>
+          <label class="field-label">Grid restarts</label>
+          <div class="slider-row">
+            <input type="range" id="nRestGrid" min="1" max="15" value="3" oninput="updateSlider('nRestGrid','nRestGridVal')"/>
+            <span class="slider-val" id="nRestGridVal">3</span>
+          </div>
+        </div>
+        <div>
+          <label class="field-label">Refinement restarts</label>
+          <div class="slider-row">
+            <input type="range" id="nRestRefine" min="3" max="30" value="5" oninput="updateSlider('nRestRefine','nRestRefineVal')"/>
+            <span class="slider-val" id="nRestRefineVal">5</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- File load + action buttons -->
+      <label class="file-drop" id="fileDrop" for="csvFileInput">
+        <input type="file" id="csvFileInput" accept=".csv,.txt" onchange="onFileSelected(event)"/>
+        <span class="file-drop-icon">📂</span>
+        <span class="file-drop-text">Drop CSV file here or click to browse</span>
+        <span class="file-drop-hint">Required columns: sigmam, sigmaM, N</span>
+      </label>
+
+<div class="btn-row mt-12">
+  <button class="btn btn-warn" onclick="doEstimateRefs()" id="btnEstimate">
+    🔍 Estimate σ<sub>M0</sub> &amp; N₀
+  </button>
+  <button class="btn btn-ghost" onclick="doFitManual()" id="btnFitManual">
+    ⚡ Fit (manual σ<sub>M<sub>0</sub></sub>, N<sub>0</sub>)
+  </button>
+  <!-- NUEVO BOTÓN -->
+  <button class="btn btn-warn" id="resetAndLoadBtn">
+    ⚠️ Reiniciar y cargar fichero
+  </button>
+</div>
+
+      <!-- Progress -->
+      <div class="mt-8">
+        <div class="progress-wrap"><div class="progress-bar-inner" id="progressBar"></div></div>
+        <div class="progress-label" id="progressLabel"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       SECTION 4 · Results
+  ═══════════════════════════════════════ -->
+  <div class="section hidden" id="sec-results">
+    <div class="section-header" onclick="toggleSection('sec-results')">
+      <span class="section-icon">★</span>
+      <span class="section-title">Results</span>
+      <span class="section-chevron">▼</span>
+    </div>
+    <div class="section-body">
+      <div id="resultBadge" class="result-badge hidden"></div>
+
+      <div class="tab-nav">
+        <button class="tab-btn active" onclick="showTab('tab-data')">Data</button>
+        <button class="tab-btn" onclick="showTab('tab-models')">Model Comparison</button>
+        <button class="tab-btn" onclick="showTab('tab-curves')">Percentile Curves</button>
+        <button class="tab-btn" onclick="showTab('tab-simdata')">Simulated Data</button>
+        <button class="tab-btn" onclick="showTab('tab-export');renderExportFigurePreviews()">Export</button>
+      </div>
+
+      <div class="tab-panel active" id="tab-data">
+        <div id="dataTableContainer"></div>
+      </div>
+      <div class="tab-panel" id="tab-models">
+        <div id="modelTableContainer"></div>
+      </div>
+      <div class="tab-panel" id="tab-curves">
+
+<div class="charts-scroll-outer">
+
+  <!-- Barra sticky con la deslizadera de opacidad -->
+  <div class="opacity-sticky-bar">
+    <label class="field-label" for="opacitySlope">Opacity decay with distance in σ<sub>m</sub></label>
+    <input
+      type="range"
+      id="opacitySlope"
+      min="0"
+      max="20"
+      step="0.1"
+      value="0"
+      oninput="updateSlider('opacitySlope','opacitySlopeVal'); updateAllCharts();"
+    >
+    <span class="slider-val" id="opacitySlopeVal">0</span>
+  </div>
+
+  <!-- Panel horizontal scrollable con las figuras -->
+  <div class="charts-scroll-panel" id="chartsContainer"></div>
+
+</div>
+      </div>
+            <div class="tab-panel" id="tab-simdata">
+        <div id="simTableContainer"></div>
+      </div>
+      <div class="tab-panel" id="tab-export">
+        <div class="btn-row">
+          <button class="btn btn-ghost" onclick="exportCSV('data')">⬇ Data CSV</button>
+          <button class="btn btn-ghost" onclick="exportCSV('models')">⬇ Models CSV</button>
+          <button class="btn btn-ghost" onclick="exportLatex('data')">⬇ Data LaTeX</button>
+          <button class="btn btn-ghost" onclick="exportLatex('models')">⬇ Models LaTeX</button>
+          <button class="btn btn-ghost" onclick="exportCSV('simdata')">⬇ Simulated CSV</button>
+          <button class="btn btn-info" onclick="exportAllFiguresPDF()">🖨 Export Figures (PDF)</button>
+          <button class="btn btn-ghost" onclick="exportAllFiguresPNG()">🖼 Export Figures (PNG)</button>
+        </div>
+        <div class="mt-12" id="exportFigureList"></div>
+        <div class="mt-12">
+          <pre id="latexPreview" class="console" style="white-space:pre-wrap; font-size:0.7rem; color:var(--text-muted);"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOG CONSOLE (always visible) -->
+  <div class="section collapsed" id="sec-log" style="margin-top:16px;">
+    <div class="section-header" onclick="toggleSection('sec-log')">
+      <span class="section-icon">▸</span>
+      <span class="section-title">Console Log</span>
+      <span class="section-chevron">▼</span>
+    </div>
+    <div class="section-body" style="padding:10px 16px;">
+      <div class="console" id="consoleLog"></div>
+    </div>
+  </div>
+
+</div><!-- /app-wrapper -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════════════════════ -->
+<script>
+"use strict";
+
+// ═══════════════════════════════════════════════════════════
+// MODEL DEFINITIONS
+// ═══════════════════════════════════════════════════════════
+const MODEL_FREE = {
+  M0: ['w1','w12','w13','w123'],
+  M1: ['w1','w12','w13'],
+  M2: ['w1','w13','w123'],
+  M3: ['w1','w12','w123'],
+  M4: ['w1','w123'],
+  M5: ['w1','w13'],
+  M6: ['w1','w12'],
+  M7: ['w1'],
+};
+const ALL_W = ['w1','w12','w13','w123'];
+
+const MODEL_DEFAULTS = {
+  M0: {w1:0.5, w12:-0.2, w13:0.3, w123:-0.1},
+  M1: {w1:0.5, w12:-0.2, w13:0.3, w123:0.0},
+  M2: {w1:0.5, w12:0.0,  w13:0.3, w123:-0.1},
+  M3: {w1:0.5, w12:-0.2, w13:0.0, w123:-0.1},
+  M4: {w1:0.5, w12:0.0,  w13:0.0, w123:-0.1},
+  M5: {w1:0.5, w12:0.0,  w13:0.3, w123:0.0},
+  M6: {w1:0.5, w12:-0.2, w13:0.0, w123:0.0},
+  M7: {w1:0.5, w12:0.0,  w13:0.0, w123:0.0},
+};
+
+// ═══════════════════════════════════════════════════════════
+// GLOBAL STATE
+// ═══════════════════════════════════════════════════════════
+let state = {
+  rawDf: null,            // [{sigmam, sigmaM, N, runout}, ...]
+  fittedResults: [],      // array of result objects
+  best: null,             // best result object
+  simDf: null,            // simulated data
+  pi1: null, pi2: null, pi3: null, cens: null,
+  coordSystem: 'original',
+  charts: [],
+  scatterMeta: [],
+};
+
+// ═══════════════════════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════════════════════
+// ─── Status indicator ─────────────────────────────────────
+function setBusy() {
+  const el = document.getElementById('statusIndicator');
+  if (el) { el.style.background='var(--red)'; el.style.boxShadow='0 0 6px rgba(207,38,38,0.8)'; el.title='Computing...'; }
+}
+function setReady() {
+  const el = document.getElementById('statusIndicator');
+  if (el) { el.style.background='var(--green)'; el.style.boxShadow='0 0 6px rgba(26,127,55,0.7)'; el.title='Ready'; }
+}
+
+function toggleSection(id) {
+  document.getElementById(id).classList.toggle('collapsed');
+}
+function showTab(id) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  // Try to activate the corresponding button safely
+  try { if (event && event.target) event.target.classList.add('active'); } catch(e) {}
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    if (b.getAttribute('onclick') && b.getAttribute('onclick').includes("'"+id+"'")) b.classList.add('active');
+  });
+}
+function setCoord(val, btn) {
+  state.coordSystem = val;
+  document.querySelectorAll('#coordToggle button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function updateSlider(id, valId) {
+  document.getElementById(valId).textContent = document.getElementById(id).value;
+}
+
+function updateAllCharts(){
+  const opacitySlope = parseFloat(document.getElementById("opacitySlope").value);
+  state.scatterMeta.forEach(({ chartIdx, dsIdx, baseColor, baseAlpha, dists, dMedian }) => {
+    const chart = state.charts[chartIdx];
+    if (!chart) return;
+    const ds = chart.data.datasets[dsIdx];
+    if (!ds) return;
+    // Normalizar por la mediana: exp(-slope * d/dMedian)
+    // Así slope=max siempre hace que el 50% sea casi invisible, independiente del rango
+    const scale = dMedian > 0 ? dMedian : 1;
+    ds.backgroundColor = dists.map(d => {
+      const a = Math.exp(-opacitySlope * d / scale);
+      return `rgba(${baseColor},${(a * baseAlpha).toFixed(3)})`;
+    });
+    // Keep borderColor in sync with backgroundColor so borders vanish with opacity
+    ds.borderWidth = 0;
+    ds.borderColor = ds.backgroundColor;
+    chart.update('none');
+  });
+}
+
+
+// ─── showTabByName helper ─────────────────────────────────
+function showTabByName(panelId) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  const panel = document.getElementById(panelId);
+  if (panel) panel.classList.add('active');
+  // Activate corresponding button
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    if (b.getAttribute('onclick') && b.getAttribute('onclick').includes(panelId)) b.classList.add('active');
+  });
+}
+
+// ─── Console log ─────────────────────────────────────────
+function log(msg, cls='log-line') {
+  const c = document.getElementById('consoleLog');
+  const d = document.createElement('div');
+  d.className = cls;
+  d.textContent = msg;
+  c.appendChild(d);
+  c.scrollTop = c.scrollHeight;
+}
+function logOk(m)   { log('✔ ' + m, 'log-ok'); }
+function logWarn(m) { log('⚠ ' + m, 'log-warn'); }
+function logErr(m)  { log('✖ ' + m, 'log-err'); }
+function logInfo(m) { log('  ' + m, 'log-info'); }
+function logAccent(m){ log(m, 'log-accent'); }
+function clearLog() { document.getElementById('consoleLog').innerHTML = ''; }
+
+// ─── Progress ────────────────────────────────────────────
+function setProgress(done, total, msg) {
+  const pct = total > 0 ? (done / total * 100) : 0;
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = msg || '';
+}
+
+// ─── Dynamic w-param fields ──────────────────────────────
+function onModelChange() {
+  const model = document.getElementById('modelSelector').value;
+  if (model === 'All') {
+    // Mark all checkboxes
+    Object.keys(MODEL_FREE).forEach(m => {
+      const el = document.getElementById('cb_'+m);
+      if (el) el.checked = true;
+    });
+    // Show M0 params as default for 'All'
+    buildWParams('M0', MODEL_DEFAULTS['M0']);
+  } else {
+    // Mark only the selected model's checkbox, uncheck others
+    Object.keys(MODEL_FREE).forEach(m => {
+      const el = document.getElementById('cb_'+m);
+      if (el) el.checked = (m === model);
+    });
+    buildWParams(model, MODEL_DEFAULTS[model]);
+    // Update case title if it matches a model pattern
+    const caseEl = document.getElementById('caseTitle');
+    if (caseEl && /^Case_M\d$/.test(caseEl.value)) {
+      caseEl.value = 'Case_' + model;
+    }
+  }
+}
+function buildWParams(model, vals) {
+  const free = MODEL_FREE[model];
+  const grid = document.getElementById('w-params-grid');
+  grid.innerHTML = '';
+  free.forEach(p => {
+    const d = document.createElement('div');
+    d.className = 'field-group';
+    const name = p.replace('w1','w₁').replace('2','₂').replace('3','₃');
+    d.innerHTML = `<label class="field-label">${name}</label>
+      <input type="number" id="wp_${p}" value="${(vals && vals[p] !== undefined ? vals[p] : 0).toFixed(4)}" step="0.05"/>`;
+    grid.appendChild(d);
+  });
+}
+function getWParams() {
+  const model = document.getElementById('modelSelector').value;
+  const res = {};
+  ALL_W.forEach(p => {
+    const el = document.getElementById('wp_'+p);
+    res[p] = el ? parseFloat(el.value) || 0.0 : 0.0;
+  });
+  return res;
+}
+
+// ─── Model checkboxes ─────────────────────────────────────
+function buildModelCheckboxes() {
+  const g = document.getElementById('modelCheckboxes');
+  g.innerHTML = '';
+  Object.keys(MODEL_FREE).forEach(m => {
+    const label = document.createElement('label');
+    label.className = 'cb-item';
+    label.innerHTML = `<input type="checkbox" id="cb_${m}" checked/>
+      <span class="cb-box"><span class="cb-check">✓</span></span>
+      <span class="cb-label">${m}</span>`;
+    g.appendChild(label);
+  });
+}
+function getSelectedModels() {
+  const sel = Object.keys(MODEL_FREE).filter(m => {
+    const el = document.getElementById('cb_'+m);
+    return el && el.checked;
+  });
+  return sel.length ? sel : Object.keys(MODEL_FREE);
+}
+
+
+
+// ═══════════════════════════════════════════════════════════
+// DATA EXTREMA
+// ═══════════════════════════════════════════════════════════
+function updateExtrema(df) {
+
+  if (!df || df.length === 0) return;
+
+  const sigmam = df.map(r => r.sigmam);
+  const sigmaM = df.map(r => r.sigmaM);
+  const N      = df.map(r => r.N);
+
+  const min = arr => Math.min(...arr);
+  const max = arr => Math.max(...arr);
+
+  document.getElementById('ext_sigmam_min').value = min(sigmam).toPrecision(6);
+  document.getElementById('ext_sigmam_max').value = max(sigmam).toPrecision(6);
+
+  document.getElementById('ext_sigmaM_min').value = min(sigmaM).toPrecision(6);
+  document.getElementById('ext_sigmaM_max').value = max(sigmaM).toPrecision(6);
+
+  document.getElementById('ext_N_min').value = min(N).toExponential(4);
+  document.getElementById('ext_N_max').value = max(N).toExponential(4);
+
+  document.getElementById('sigmaM_min').value = min(sigmaM);
+  document.getElementById('sigmaM_max').value = max(sigmaM);
+
+  document.getElementById('sigmam_min').value = min(sigmam);
+  document.getElementById('sigmam_max').value = max(sigmam);
+
+}
+
+// ─── Get form values ─────────────────────────────────────
+function getRefParams() {
+  return {
+    sigma_M0: parseFloat(document.getElementById('p_sigmaM0').value),
+    N0:       parseFloat(document.getElementById('p_N0').value),
+  };
+}
+function getWeibullParams() {
+  return {
+    lambda: parseFloat(document.getElementById('p_lambda').value),
+    delta:  parseFloat(document.getElementById('p_delta').value),
+    beta:   parseFloat(document.getElementById('p_beta').value),
+  };
+}
+
+// ─── Apply best to widgets ────────────────────────────────
+function applyBestToWidgets(best, rawDf) {
+  // model selector
+  document.getElementById('modelSelector').value = best.model;
+  // rebuild w fields with estimated values
+  const wVals = { w1: best.w1, w12: best.w12, w13: best.w13, w123: best.w123 };
+  buildWParams(best.model, wVals);
+  // Weibull
+  document.getElementById('p_lambda').value = best.lambda.toFixed(6);
+  document.getElementById('p_delta').value  = best.delta.toFixed(6);
+  document.getElementById('p_beta').value   = best.beta.toFixed(6);
+  // References
+  if (isFinite(best.sigma_M0)) document.getElementById('p_sigmaM0').value = best.sigma_M0.toFixed(6);
+  if (isFinite(best.N0))       document.getElementById('p_N0').value = best.N0.toFixed(6);
+  // Simulation ranges from data
+  if (rawDf && rawDf.length > 0) {
+    const sigmaMs = rawDf.map(r => r.sigmaM);
+    const sigmaMs_ = rawDf.map(r => r.sigmam);
+    document.getElementById('sigmaM_min').value = Math.min(...sigmaMs).toFixed(4);
+    document.getElementById('sigmaM_max').value = Math.max(...sigmaMs).toFixed(4);
+    document.getElementById('sigmam_min').value = Math.min(...sigmaMs_).toFixed(4);
+    document.getElementById('sigmam_max').value = Math.max(...sigmaMs_).toFixed(4);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// MATH CORE — ALL FUNCTIONS TRANSLATED FROM PYTHON
+// ═══════════════════════════════════════════════════════════
+
+function computeV(pi1, pi2, pi3, w1, w12, w13, w123) {
+  const n = pi1.length;
+  const V = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    V[i] = w1*pi1[i] + w12*pi1[i]*pi2[i] + w13*pi1[i]*pi3[i]
+          + pi2[i]*pi3[i] + w123*pi1[i]*pi2[i]*pi3[i];
+  }
+  return V;
+}
+
+function unpackW(model, wFree) {
+  const freeNames = MODEL_FREE[model];
+  const map = {};
+  freeNames.forEach((n,i) => map[n] = wFree[i]);
+  return ALL_W.map(k => map[k] !== undefined ? map[k] : 0.0);
+}
+
+function weibullLoglik(V, cens, lam, delta, beta) {
+  const minV = Math.min(...V);
+  if (lam >= minV - 1e-6) return -Infinity;
+  let ll = 0;
+  for (let i = 0; i < V.length; i++) {
+    const z = Math.max((V[i] - lam) / delta, 1e-8);
+    const zbeta = Math.min(Math.pow(z, beta), 1e100);
+    if (cens[i] === 0) {
+      ll += Math.log(beta) - Math.log(delta) + (beta-1)*Math.log(z) - zbeta;
+    } else {
+      ll += -zbeta;
+    }
+  }
+  return ll;
+}
+
+// ─── OLS initialisation ──────────────────────────────────
+function olsEstimate(pi1, pi2, pi3) {
+  const n = pi1.length;
+  // X cols: [pi1, pi1*pi2, pi1*pi3, pi1*pi2*pi3]   Y = -pi2*pi3
+  const X = [], Y = [];
+  for (let i = 0; i < n; i++) {
+    X.push([pi1[i], pi1[i]*pi2[i], pi1[i]*pi3[i], pi1[i]*pi2[i]*pi3[i]]);
+    Y.push(-pi2[i]*pi3[i]);
+  }
+  // Normal equations with ridge 1e-6
+  const ridge = 1e-6;
+  const A = mat4zero(), b4 = [0,0,0,0];
+  for (let i = 0; i < n; i++) {
+    for (let r = 0; r < 4; r++) {
+      b4[r] += X[i][r] * Y[i];
+      for (let c = 0; c < 4; c++) A[r][c] += X[i][r]*X[i][c];
+    }
+  }
+  for (let k = 0; k < 4; k++) A[k][k] += ridge;
+  const w = solveLinear4(A, b4);
+  return w; // [w1, w12, w13, w123]
+}
+function mat4zero() { return [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]]; }
+function solveLinear4(A, b) {
+  // Gaussian elimination
+  const M = A.map((r,i) => [...r, b[i]]);
+  for (let col = 0; col < 4; col++) {
+    let pivot = col;
+    for (let r = col+1; r < 4; r++) if (Math.abs(M[r][col]) > Math.abs(M[pivot][col])) pivot = r;
+    [M[col], M[pivot]] = [M[pivot], M[col]];
+    const d = M[col][col];
+    if (Math.abs(d) < 1e-14) continue;
+    for (let j = col; j <= 4; j++) M[col][j] /= d;
+    for (let r = 0; r < 4; r++) {
+      if (r === col) continue;
+      const f = M[r][col];
+      for (let j = col; j <= 4; j++) M[r][j] -= f * M[col][j];
+    }
+  }
+  return M.map(r => r[4]);
+}
+
+// ─── L-BFGS-B minimiser (sufficient-decrease Wolfe line search) ──────────
+// Lightweight pure-JS implementation adequate for small (< 20) param vectors
+function lbfgsb(f, x0, bounds, opts={}) {
+  const maxIter = opts.maxIter || 2000;
+  const m       = opts.m       || 10;    // history size
+  const ftol    = opts.ftol    || 1e-10;
+  const gtol    = opts.gtol    || 1e-7;
+  const eps     = 1e-7;
+
+  let x = Float64Array.from(x0);
+  const n = x.length;
+  let fx = f(x);
+
+  // Project onto bounds
+  function project(v) {
+    const r = new Float64Array(v);
+    if (bounds) {
+      for (let i = 0; i < n; i++) {
+        if (bounds[i]) {
+          if (bounds[i][0] !== null && r[i] < bounds[i][0]) r[i] = bounds[i][0];
+          if (bounds[i][1] !== null && r[i] > bounds[i][1]) r[i] = bounds[i][1];
+        }
+      }
+    }
+    return r;
+  }
+
+  // Finite-difference gradient
+  function grad(v) {
+    const g = new Float64Array(n);
+    for (let i = 0; i < n; i++) {
+      const xp = new Float64Array(v); xp[i] += eps;
+      const xm = new Float64Array(v); xm[i] -= eps;
+      g[i] = (f(xp) - f(xm)) / (2*eps);
+    }
+    return g;
+  }
+
+  x = project(x);
+  let gx = grad(x);
+
+  const sHist = [], yHist = [], rhoHist = [];
+
+  for (let iter = 0; iter < maxIter; iter++) {
+    // L-BFGS two-loop recursion
+    let q = new Float64Array(gx);
+    const alphas = [];
+    for (let i = sHist.length-1; i >= 0; i--) {
+      const s = sHist[i], y = yHist[i], rho = rhoHist[i];
+      const a = rho * dot(s, q);
+      alphas.unshift(a);
+      for (let j = 0; j < n; j++) q[j] -= a * y[j];
+    }
+    // Scale by H0
+    let r = new Float64Array(q);
+    if (sHist.length > 0) {
+      const s = sHist[sHist.length-1], y = yHist[yHist.length-1];
+      const scale = dot(s,y) / dot(y,y);
+      for (let j = 0; j < n; j++) r[j] *= scale;
+    }
+    for (let i = 0; i < sHist.length; i++) {
+      const s = sHist[i], y = yHist[i], rho = rhoHist[i];
+      const b = rho * dot(y, r);
+      for (let j = 0; j < n; j++) r[j] += s[j] * (alphas[i] - b);
+    }
+    // r is the descent direction (negate for descent)
+    const d = r.map(v => -v);
+
+    // Projected line search (Armijo)
+    let step = 1.0;
+    const c1 = 1e-4;
+    const gd = dot(gx, d);
+    let newX, newF;
+    let lsOk = false;
+    for (let ls = 0; ls < 40; ls++) {
+      newX = project(x.map((v,i) => v + step*d[i]));
+      newF = f(newX);
+      if (newF <= fx + c1*step*gd) { lsOk = true; break; }
+      step *= 0.5;
+    }
+    if (!lsOk) break;
+
+    const newG = grad(newX);
+    const s = newX.map((v,i) => v - x[i]);
+    const y = newG.map((v,i) => v - gx[i]);
+    const sy = dot(s,y);
+
+    if (sy > 1e-15) {
+      sHist.push(Float64Array.from(s));
+      yHist.push(Float64Array.from(y));
+      rhoHist.push(1/sy);
+      if (sHist.length > m) { sHist.shift(); yHist.shift(); rhoHist.shift(); }
+    }
+
+    const fDiff = Math.abs(fx - newF);
+    x = newX; fx = newF; gx = newG;
+
+    const gNorm = Math.sqrt(gx.reduce((s,v)=>s+v*v,0));
+    if (fDiff < ftol && gNorm < gtol) break;
+  }
+  return { x, fx };
+}
+function dot(a,b) { let s=0; for(let i=0;i<a.length;i++) s+=a[i]*b[i]; return s; }
+
+// ─── Seeded PRNG (xoshiro128** like) for reproducibility ─
+function makeRng(seed) {
+  let s0=seed|0, s1=(seed^0xdeadbeef)|0, s2=(seed*1234567)|0, s3=(seed+0xabcdef)|0;
+  return function() {
+    let t = s1 << 9;
+    let r = s0 * 5; r = ((r<<7)|(r>>>25)) * 9;
+    s2 ^= s0; s3 ^= s1; s1 ^= s2; s0 ^= s3; s2 ^= t;
+    s3 = (s3<<11)|(s3>>>21);
+    return (r >>> 0) / 4294967296;
+  };
+}
+
+// ─── fit_model ───────────────────────────────────────────
+function fitModel(model, pi1, pi2, pi3, cens, opts={}) {
+  const nRestarts  = opts.nRestarts  || 15;
+  const ridgeLambda= opts.ridgeLambda|| 0.01;
+  const freeNames  = MODEL_FREE[model];
+  const nW         = freeNames.length;
+
+  // OLS init
+  const wOls = olsEstimate(pi1, pi2, pi3);
+  const fullW = {w1:wOls[0], w12:wOls[1], w13:wOls[2], w123:wOls[3]};
+  const wFree0 = freeNames.map(k => fullW[k]);
+
+  const Vols = computeV(pi1, pi2, pi3, wOls[0], wOls[1], wOls[2], wOls[3]);
+  const minVols = Math.min(...Vols);
+  const stdVols = std(Vols);
+  const lam0   = minVols - 0.2;
+  const delta0 = Math.max(stdVols, 0.2) + 1e-6;
+  const beta0  = 2.0;
+
+  const x0base = [...wFree0, lam0, delta0, beta0];
+  const bounds = [
+    ...freeNames.map(() => [null, null]),
+    [null, null], [1e-4, null], [1.05, 20.0]
+  ];
+
+  function nll(params) {
+    const wf = params.slice(0, nW);
+    const lam = params[nW], delta = params[nW+1], beta = params[nW+2];
+    const [w1,w12,w13,w123] = unpackW(model, wf);
+    const V = computeV(pi1, pi2, pi3, w1, w12, w13, w123);
+    const minV = Math.min(...V);
+    const margin = minV - lam;
+    const barrier = margin < 1e-6 ? 1e4 * (1e-6 - margin)**2 : 0;
+
+    // Physical-branch constraint: for every data point the denominator of the
+    // hyperbola  π₂ = numer / denom  must be positive (same branch for all).
+    //   denom_i = π3ᵢ + w12·π1ᵢ + w123·π1ᵢ·π3ᵢ
+    // A quadratic barrier penalises any violation proportionally to how far
+    // the point is on the wrong side.
+    let branchPenalty = 0;
+    for (let i = 0; i < pi1.length; i++) {
+      const d = pi3[i] + w12*pi1[i] + w123*pi1[i]*pi3[i];
+      const DEN_MIN = 0.05;
+      if (d < DEN_MIN)
+        branchPenalty += (DEN_MIN - d)**2;
+    }
+    branchPenalty *= 1e4;
+
+    let loglik = 0;
+    for (let i = 0; i < V.length; i++) {
+      const z = Math.max((V[i]-lam)/delta, 1e-8);
+      const zbeta = Math.min(z**beta, 1e100);
+      loglik += cens[i]===0
+        ? Math.log(beta)-Math.log(delta)+(beta-1)*Math.log(z)-zbeta
+        : -zbeta;
+    }
+    const ridge = ridgeLambda*(w1**2+w12**2+w13**2+w123**2);
+    return -loglik + barrier + branchPenalty + ridge;
+  }
+
+  const rng = makeRng(42);
+  let bestFx = Infinity, bestX = Float64Array.from(x0base);
+
+  for (let restart = 0; restart < nRestarts; restart++) {
+    let x0;
+    if (restart === 0) {
+      x0 = [...x0base];
+    } else {
+      x0 = x0base.map((v,i) => {
+        const scale = Math.max(0.05*Math.abs(v), 0.05);
+        return v + (rng()*2-1)*scale;
+      });
+      x0[nW+1] = Math.max(x0[nW+1], 1e-3);
+      x0[nW+2] = Math.min(Math.max(x0[nW+2], 1.1), 19.9);
+    }
+    const res = lbfgsb(nll, x0, bounds, {maxIter:1500, ftol:1e-9, gtol:1e-6});
+    if (res.fx < bestFx) { bestFx = res.fx; bestX = res.x; }
+  }
+
+  const wFreeOpt = Array.from(bestX.slice(0, nW));
+  const lamOpt = bestX[nW], deltaOpt = bestX[nW+1], betaOpt = bestX[nW+2];
+  const [w1,w12,w13,w123] = unpackW(model, wFreeOpt);
+  const Vopt = computeV(pi1, pi2, pi3, w1, w12, w13, w123);
+  const loglikPure = weibullLoglik(Array.from(Vopt), cens, lamOpt, deltaOpt, betaOpt);
+  const n = pi1.length;
+  const k = nW + 3;
+  const aic = isFinite(loglikPure) ? 2*k - 2*loglikPure : Infinity;
+  const bic = isFinite(loglikPure) ? k*Math.log(n) - 2*loglikPure : Infinity;
+
+  return { model, w1, w12, w13, w123,
+           lambda:lamOpt, delta:deltaOpt, beta:betaOpt,
+           loglik:loglikPure, AIC:aic, BIC:bic, nParams:k };
+}
+
+// ─── transform_fatigue_data ──────────────────────────────
+function transformFatigueData(df, sigma_M0, N0, runoutThr) {
+  const n = df.length;
+  const pi1 = new Float64Array(n), pi2 = new Float64Array(n),
+        pi3 = new Float64Array(n), cens = new Int32Array(n);
+  for (let i = 0; i < n; i++) {
+    pi1[i] = df[i].sigmam / df[i].sigmaM;
+    pi2[i] = df[i].sigmaM / sigma_M0 - 1;
+    pi3[i] = Math.log10(df[i].N / N0);
+    cens[i] = df[i].runout !== undefined ? df[i].runout : (df[i].N >= runoutThr ? 1 : 0);
+  }
+  return {pi1, pi2, pi3, cens};
+}
+
+function filterFinite(pi1, pi2, pi3, cens) {
+  const mask = [], idx = [];
+  for (let i = 0; i < pi1.length; i++) {
+    if (isFinite(pi2[i]) && isFinite(pi3[i])) idx.push(i);
+  }
+  const f = a => Float64Array.from(idx.map(i => a[i]));
+  const fi = a => Int32Array.from(idx.map(i => a[i]));
+  return {pi1:f(pi1), pi2:f(pi2), pi3:f(pi3), cens:fi(cens)};
+}
+
+// ─── Grid search helpers ─────────────────────────────────
+function logspace(lo, hi, n) {
+  const arr = [];
+  for (let i = 0; i < n; i++) arr.push(Math.pow(10, lo + i*(hi-lo)/(n-1)));
+  return arr;
+}
+function std(arr) {
+  const mu = arr.reduce((s,v)=>s+v,0)/arr.length;
+  return Math.sqrt(arr.reduce((s,v)=>s+(v-mu)**2,0)/arr.length);
+}
+
+// ─── estimate_references_one_model (Option 1) ────────────
+async function estimateOneModel(model, df, opts, progressCb) {
+  const {runoutThr, nGrid, nRestGrid, nRestRefine} = opts;
+  const S_sigma = Math.min(...df.map(r => r.sigmaM));
+  const S_N     = Math.min(...df.map(r => r.N));
+
+  const fracs = logspace(Math.log10(0.50), Math.log10(0.95), nGrid);
+  const gridS = fracs.map(f => f*S_sigma);
+  const gridN = fracs.map(f => f*S_N);
+
+  let bestAIC = Infinity, bestS = gridS[0], bestN = gridN[0], bestResult = null;
+  const gridTotal = nGrid*nGrid;
+  let done = 0;
+
+  for (let si = 0; si < nGrid; si++) {
+    for (let ni = 0; ni < nGrid; ni++) {
+      done++;
+      progressCb && progressCb(done, gridTotal, `[${model}] Grid ${done}/${gridTotal}  σ_M0=${gridS[si].toFixed(3)}  N₀=${gridN[ni].toFixed(3)}`);
+      await yieldToUI();
+
+      const {pi1,pi2,pi3,cens} = filterFinite(...Object.values(transformFatigueData(df, gridS[si], gridN[ni], runoutThr)));
+      if (pi1.length < 10) continue;
+      try {
+        const res = fitModel(model, pi1, pi2, pi3, Array.from(cens), {nRestarts:nRestGrid});
+        if (res.AIC < bestAIC) { bestAIC = res.AIC; bestS = gridS[si]; bestN = gridN[ni]; bestResult = res; }
+      } catch(e) {}
+    }
+  }
+  if (!bestResult) return null;
+
+  // Refinement
+  const freeNames = MODEL_FREE[model];
+  const nW = freeNames.length;
+  const wInit = freeNames.map(k => bestResult[k]);
+  const x0ref = [bestS, bestN, ...wInit, bestResult.lambda, bestResult.delta, bestResult.beta];
+
+  const boundsRef = [
+    [1e-3, S_sigma*(1-1e-6)], [1e-3, S_N*(1-1e-6)],
+    ...freeNames.map(() => [null,null]),
+    [null,null], [1e-4,null], [1.05,20.0]
+  ];
+
+  function nllJoint(params) {
+    const sM0 = params[0], n0 = params[1];
+    const wf  = params.slice(2, 2+nW);
+    const lam = params[2+nW], delta = params[3+nW], beta = params[4+nW];
+    const pi2_ = df.map(r => r.sigmaM/sM0 - 1);
+    const pi3_ = df.map(r => Math.log10(r.N/n0));
+    const pi1_ = df.map(r => r.sigmam/r.sigmaM);
+    const cens_= df.map(r => r.runout !== undefined ? r.runout : (r.N>=runoutThr?1:0));
+    const idx = pi2_.map((_,i) => i).filter(i => isFinite(pi2_[i]) && isFinite(pi3_[i]));
+    if (idx.length < 5) return 1e10;
+    const p1 = Float64Array.from(idx.map(i=>pi1_[i]));
+    const p2 = Float64Array.from(idx.map(i=>pi2_[i]));
+    const p3 = Float64Array.from(idx.map(i=>pi3_[i]));
+    const ce = idx.map(i=>cens_[i]);
+    const [w1,w12,w13,w123] = unpackW(model, wf);
+    const V = computeV(p1,p2,p3,w1,w12,w13,w123);
+    const minV = Math.min(...V);
+    const margin = minV - lam;
+    const barrier = margin < 1e-6 ? 1e4*(1e-6-margin)**2 : 0;
+
+    // Physical-branch constraint: denom_i = π3ᵢ + w12·π1ᵢ + w123·π1ᵢ·π3ᵢ > 0 ∀i
+    let branchPenalty = 0;
+    for (let i = 0; i < p1.length; i++) {
+      const d = p3[i] + w12*p1[i] + w123*p1[i]*p3[i];
+      const DEN_MIN = 0.05;
+      if (d < DEN_MIN)
+        branchPenalty += (DEN_MIN - d)**2;
+    }
+    branchPenalty *= 1e4;
+
+    let ll = 0;
+    for (let i = 0; i < V.length; i++) {
+      const z = Math.max((V[i]-lam)/delta, 1e-8);
+      const zb = Math.min(z**beta, 1e100);
+      ll += ce[i]===0 ? Math.log(beta)-Math.log(delta)+(beta-1)*Math.log(z)-zb : -zb;
+    }
+    const ridge = 0.01*(w1**2+w12**2+w13**2+w123**2);
+    return -ll + barrier + branchPenalty + ridge;
+  }
+
+  const rng = makeRng(0);
+  let bestFx = Infinity, bestXr = Float64Array.from(x0ref);
+  for (let restart = 0; restart < nRestRefine; restart++) {
+    let x0;
+    if (restart === 0) {
+      x0 = [...x0ref];
+    } else {
+      x0 = x0ref.map(v => v + (rng()*2-1)*Math.max(0.05*Math.abs(v),0.05));
+      x0[0] = Math.min(Math.max(x0[0], 1e-3), S_sigma*0.999);
+      x0[1] = Math.min(Math.max(x0[1], 1e-3), S_N*0.999);
+      x0[2+nW+1] = Math.max(x0[2+nW+1], 1e-3);
+      x0[2+nW+2] = Math.min(Math.max(x0[2+nW+2], 1.1), 19.9);
+    }
+    const res = lbfgsb(nllJoint, x0, boundsRef, {maxIter:2000, ftol:1e-10, gtol:1e-7});
+    if (res.fx < bestFx) { bestFx = res.fx; bestXr = res.x; }
+  }
+
+  const sigma_M0_hat = bestXr[0], N0_hat = bestXr[1];
+  const wFreeHat = Array.from(bestXr.slice(2, 2+nW));
+  const lamH = bestXr[2+nW], deltaH = bestXr[3+nW], betaH = bestXr[4+nW];
+  const [w1,w12,w13,w123] = unpackW(model, wFreeHat);
+
+  const t = filterFinite(...Object.values(transformFatigueData(df, sigma_M0_hat, N0_hat, runoutThr)));
+  const Vhat = computeV(t.pi1, t.pi2, t.pi3, w1, w12, w13, w123);
+  const llHat = weibullLoglik(Array.from(Vhat), Array.from(t.cens), lamH, deltaH, betaH);
+  const nObs = t.pi1.length;
+  const kTotal = nW + 3 + 2;
+  const aicHat = isFinite(llHat) ? 2*kTotal - 2*llHat : Infinity;
+  const bicHat = isFinite(llHat) ? kTotal*Math.log(nObs) - 2*llHat : Infinity;
+
+  return {
+    model, sigma_M0: sigma_M0_hat, N0: N0_hat,
+    w1, w12, w13, w123, lambda: lamH, delta: deltaH, beta: betaH,
+    loglik: llHat, AIC: aicHat, BIC: bicHat, nParams: kTotal,
+    pi1: t.pi1, pi2: t.pi2, pi3: t.pi3, cens: Array.from(t.cens),
+  };
+}
+
+// ─── estimate_references (Option 2) ─────────────────────
+async function estimateReferences(df, opts, progressCb) {
+  const {runoutThr, nGrid, nRestGrid, nRestRefine, modelList} = opts;
+  const S_sigma = Math.min(...df.map(r => r.sigmaM));
+  const S_N     = Math.min(...df.map(r => r.N));
+
+  const fracs = logspace(Math.log10(0.50), Math.log10(0.95), nGrid);
+  const gridS = fracs.map(f => f*S_sigma);
+  const gridN = fracs.map(f => f*S_N);
+
+  let bestAIC = Infinity, bestS = gridS[0], bestN = gridN[0], bestResult = null;
+  const total = nGrid*nGrid; let done = 0;
+
+  for (let si = 0; si < nGrid; si++) {
+    for (let ni = 0; ni < nGrid; ni++) {
+      done++;
+      progressCb && progressCb(done, total, `Grid ${done}/${total}  σ_M0=${gridS[si].toFixed(3)}`);
+      await yieldToUI();
+      const {pi1,pi2,pi3,cens} = filterFinite(...Object.values(transformFatigueData(df, gridS[si], gridN[ni], runoutThr)));
+      if (pi1.length < 10) continue;
+      for (const mod of modelList) {
+        try {
+          const res = fitModel(mod, pi1, pi2, pi3, Array.from(cens), {nRestarts:nRestGrid});
+          if (res.AIC < bestAIC) { bestAIC=res.AIC; bestS=gridS[si]; bestN=gridN[ni]; bestResult=res; }
+        } catch(e) {}
+      }
+    }
+  }
+
+  progressCb && progressCb(total, total, `Grid done. Best σ_M0=${bestS.toFixed(4)}  N₀=${bestN.toFixed(4)}  AIC=${bestAIC.toFixed(2)}`);
+
+  // re-fit all models at best (bestS, bestN)
+  const {pi1,pi2,pi3,cens} = filterFinite(...Object.values(transformFatigueData(df, bestS, bestN, runoutThr)));
+  const allResults = [];
+  for (const mod of modelList) {
+    try {
+      const res = fitModel(mod, pi1, pi2, pi3, Array.from(cens));
+      res.sigma_M0 = bestS; res.N0 = bestN;
+      res.pi1=pi1; res.pi2=pi2; res.pi3=pi3; res.cens=Array.from(cens);
+      allResults.push(res);
+    } catch(e) {}
+  }
+  allResults.sort((a,b) => a.AIC - b.AIC);
+  return allResults;
+}
+
+// ═══════════════════════════════════════════════════════════
+// SIMULATION — physical branch guaranteed (v8)
+// ═══════════════════════════════════════════════════════════
+const SIM_MAX_PI3 = 6;   // límite superior de π₃ = log₁₀(N/N₀); N > N₀·10⁸ se considera inviable
+
+function simulateData(model, wParams, weibullP, refP, sigmaM_range, sigmam_range, nPoints, runoutThr) {
+  const {w1=0, w12=0, w13=0, w123=0} = wParams;
+  const {lambda:lam, delta, beta} = weibullP;
+  const {sigma_M0, N0} = refP;
+
+  const rows = [];
+  let attempts = 0;
+  const maxAttempts = nPoints * 300;
+
+  // Ensure σ_M > σ_M0 from sampling (π₂ > 0 always)
+  const sigmaM_min_safe = Math.max(sigmaM_range[0], sigma_M0 * 1.001);
+  if (sigmaM_min_safe >= sigmaM_range[1]) {
+    logErr(`σ_M0 (${sigma_M0.toFixed(4)}) ≥ σ_M,max (${sigmaM_range[1]}): simulation impossible. Reduce σ_M0 or increase σ_M,max.`);
+    return [];
+  }
+  const sigmaM_range_safe = [sigmaM_min_safe, sigmaM_range[1]];
+
+  while (rows.length < nPoints && attempts < maxAttempts) {
+    attempts++;
+
+    const sigmaM = sigmaM_range_safe[0] + Math.random() * (sigmaM_range_safe[1] - sigmaM_range_safe[0]);
+    const sigmam  = sigmam_range[0]      + Math.random() * (sigmam_range[1]      - sigmam_range[0]);
+
+    // R1: physical fatigue condition
+    if (sigmam >= sigmaM) continue;
+
+    const pi1 = sigmam / sigmaM;
+    const pi2 = sigmaM / sigma_M0 - 1;
+
+    // R2: π₂ > 0  (σ_M > σ_M0, physical quadrant)
+    if (pi2 <= 0) continue;
+
+    // Sample V from the Weibull distribution
+    const U = Math.random();
+    const V = lam + delta * Math.pow(-Math.log(1 - U), 1 / beta);
+
+    // Solve for π₃ from the hyperbola equation
+    const numer = V - w1 * pi1 - w12 * pi1 * pi2;
+    const denom = w13 * pi1 + pi2 + w123 * pi1 * pi2;
+
+    // R3: positive denominator → correct physical branch
+    const DEN_MIN = 0.05;
+    if (denom <= DEN_MIN) continue;
+
+    const pi3 = numer / denom;
+
+    // R4: π₃ > 0  (N > N₀)
+    if (!isFinite(pi3) || pi3 <= 0) continue;
+
+    // R5: π₃ ≤ SIM_MAX_PI3  (N physically reasonable)
+    if (pi3 > SIM_MAX_PI3) continue;
+
+    const N = N0 * Math.pow(10, pi3);
+    const runout = runoutThr !== null ? (N >= runoutThr ? 1 : 0) : 0;
+    rows.push({sigmam, sigmaM, N, runout});
+  }
+
+  // Rejection rate report (always, not only on failure)
+  const rejected = attempts - rows.length;
+  const rejRate  = attempts > 0 ? (rejected / attempts * 100).toFixed(1) : '0.0';
+  if (rows.length < nPoints) {
+    logWarn(`Only ${rows.length}/${nPoints} valid points after ${attempts} attempts (rejection rate: ${rejRate}%).`);
+    logWarn('Consider reviewing the σ_M, σ_m ranges or the w parameters.');
+  } else {
+    logOk(`Simulation completed: ${rows.length} points on the physical branch.`);
+    logInfo(`Rejection rate: ${rejRate}% (${attempts} attempts).${parseFloat(rejRate) > 80 ? ' ⚠ High — check parameters.' : ''}`);
+  }
+  return rows;
+}
+
+async function yieldToUI() {
+  return new Promise(r => setTimeout(r, 0));
+}
+
+// ═══════════════════════════════════════════════════════════
+// CSV PARSING
+// ═══════════════════════════════════════════════════════════
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g,''));
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    if (!lines[i].trim()) continue;
+    const vals = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g,''));
+    const row = {};
+    headers.forEach((h,j) => row[h] = parseFloat(vals[j]));
+    rows.push(row);
+  }
+  // Validate / add runout
+  const required = ['sigmam','sigmaM','N'];
+  if (!required.every(c => headers.includes(c))) {
+    throw new Error(`CSV must contain columns: ${required.join(', ')}`);
+  }
+  const runoutThr = parseFloat(document.getElementById('runout_thr').value);
+  return rows
+    .filter(r => r.sigmam < r.sigmaM)
+    .map(r => ({
+      ...r,
+      runout: r.runout !== undefined ? r.runout : (r.N >= runoutThr ? 1 : 0),
+    }));
+}
+
+// ═══════════════════════════════════════════════════════════
+// PAGINATED TABLE
+// ═══════════════════════════════════════════════════════════
+function makePaginatedTable(container, df, cols, fmts, title) {
+  if (!df || df.length === 0) { container.innerHTML = '<p class="text-muted text-sm">No data.</p>'; return; }
+  const rowsPerPage = 10;
+  let page = 0;
+  const totalPages = Math.max(1, Math.ceil(df.length/rowsPerPage));
+
+  function render() {
+    const start = page*rowsPerPage;
+    const end   = Math.min(start+rowsPerPage, df.length);
+    let html = `<div style="font-family:var(--mono);font-size:0.72rem;color:var(--text-muted);margin-bottom:6px;">${title||''}</div>`;
+    html += `<div class="table-wrap"><table><thead><tr>`;
+    cols.forEach((c,i) => html += `<th>${c}</th>`);
+    html += `</tr></thead><tbody>`;
+    for (let i = start; i < end; i++) {
+      const r = df[i];
+      html += `<tr${r._best ? ' class="row-best"':''}>`;
+      cols.forEach((c,ci) => {
+        const key = Object.keys(r)[ci] || c;
+        const val = r[Object.keys(r)[ci]];
+        html += `<td>${formatCell(val, fmts ? fmts[ci] : null)}</td>`;
+      });
+      html += `</tr>`;
+    }
+    html += `</tbody></table></div>`;
+    html += `<div class="table-pagination">
+      <button id="pg_prev_${container.id}" onclick="page_cb_${container.id}(-1)" ${page===0?'disabled':''}>◀ Prev</button>
+      <span class="page-info">Page ${page+1} / ${totalPages} &nbsp; (rows ${start+1}–${end} of ${df.length})</span>
+      <button id="pg_next_${container.id}" onclick="page_cb_${container.id}(1)" ${page===totalPages-1?'disabled':''}>Next ▶</button>
+    </div>`;
+    container.innerHTML = html;
+  }
+  window[`page_cb_${container.id}`] = function(dir) {
+    page = Math.max(0, Math.min(totalPages-1, page+dir));
+    render();
+  };
+  render();
+}
+
+function formatCell(val, fmt) {
+  if (val === undefined || val === null || val === '') return '—';
+  if (fmt === 'sci')  return typeof val === 'number' ? val.toExponential(4) : val;
+  if (fmt === 'int')  return typeof val === 'number' ? Math.round(val).toString() : val;
+  if (fmt === '4f')   return typeof val === 'number' ? val.toFixed(4) : val;
+  if (fmt === '2f')   return typeof val === 'number' ? val.toFixed(2) : val;
+  if (fmt === '6g')   return typeof val === 'number' ? +val.toPrecision(6)+'' : val;
+  if (fmt === 'str')  return String(val);
+  return typeof val === 'number' ? +val.toPrecision(6)+'' : val;
+}
+
+// ═══════════════════════════════════════════════════════════
+// PLOT CURVES
+// ═══════════════════════════════════════════════════════════
+const PERCENTILE_COLORS = [
+  '#4fc3f7','#81d4fa','#aed581','#fff176','#ffb74d','#ef9a9a','#ce93d8'
+];
+
+function destroyCharts() {
+  state.charts.forEach(c => c.destroy());
+  state.charts = [];
+  state.scatterMeta = [];
+}
+
+// ─── Hyperbola centre (asymptotes) for a given pi1 slice ──────────────────
+// The hyperbola for percentile p at fixed pi1 is:
+//   V_p = w1·π1 + w12·π1·π2 + w13·π1·π3 + π2·π3 + w123·π1·π2·π3
+// Rearranging as  π2 = f(π3):
+//   π2 = (V_p - w1·π1 - w13·π1·π3) / (π3 + w12·π1 + w123·π1·π3)
+//       = (A - w13·π1·π3) / ((1 + w123·π1)·π3 + w12·π1)
+// where A = V_p - w1·π1.
+//
+// This is a rational function (π2 as a function of π3) whose vertical asymptote
+// is at the zero of the denominator:
+//   π3_asym = -w12·π1 / (1 + w123·π1)      [if 1+w123·π1 ≠ 0]
+//
+// And whose horizontal asymptote (π3 → ±∞) is:
+//   π2_asym = -w13·π1 / (1 + w123·π1)
+//
+// The centre of the hyperbola is (π3_asym, π2_asym).
+// The physical branch must satisfy π3 > 0 AND π2 > 0, i.e. the branch must
+// lie strictly in the first quadrant.  If the centre has π3_asym >= 0 or
+// π2_asym >= 0 the first-quadrant branch may not exist (or is degenerate).
+//
+// Returns { pi3Asym, pi2Asym } in transformed (π) coordinates.
+function hyperbolaAsymptotes(best, pi1val) {
+  const { w1, w12, w13, w123 } = best;
+  const denom_coeff = 1 + w123 * pi1val;   // coefficient of π3 in denom
+  let pi3Asym, pi2Asym;
+  if (Math.abs(denom_coeff) < 1e-12) {
+    // degenerate: denominator independent of π3  → no vertical asymptote in π3
+    // treat as "asymptote at -∞"
+    pi3Asym = -Infinity;
+    pi2Asym = -Infinity;
+  } else {
+    pi3Asym = -w12 * pi1val / denom_coeff;
+    pi2Asym = -w13 * pi1val / denom_coeff;
+  }
+  return { pi3Asym, pi2Asym };
+}
+
+function plotCurves(best, pi1, pi2, pi3, sigma_M0, N0, coordSystem, rawPi1 = null, rawPi2 = null, rawPi3 = null) {
+  destroyCharts();
+  const container = document.getElementById('chartsContainer');
+  container.innerHTML = '';
+
+  // ======================================================
+  // BLOQUE ESTRICTO TOTAL: solo π₁ donde TODAS las curvas percentiles son válidas
+  // ======================================================
+  let observedPi1 = Array.from(pi1);
+  if (rawPi1 && rawPi1.length > 0) {
+      observedPi1 = Array.from(rawPi1);
+  }
+
+  const sortedPi1 = [...new Set(observedPi1)].sort((a, b) => a - b);
+
+  // Función de validación estricta: TODOS los percentiles deben dar π₂ > 0
+  function isPi1Valid(pi1val) {
+      const { pi3Asym } = hyperbolaAsymptotes(best, pi1val);
+      const pi3Start = Math.max(0, pi3Asym) + 1e-6;
+
+      const denom0 = pi3Start + best.w12 * pi1val + best.w123 * pi1val * pi3Start;
+      if (Math.abs(denom0) < 1e-9) return false;
+
+      const percentiles = [0.01, 0.05, 0.25, 0.50, 0.75, 0.95, 0.99];
+      for (const p of percentiles) {
+          const Vp_val = best.lambda + best.delta * Math.pow(-Math.log(1 - p), 1 / best.beta);
+          const numer0 = Vp_val - best.w1 * pi1val - best.w13 * pi1val * pi3Start;
+          if (numer0 / denom0 <= 0.01) {   // margen de seguridad pequeño pero estricto
+              return false;
+          }
+      }
+      return true;
+  }
+
+  const validPi1 = sortedPi1.filter(isPi1Valid);
+
+  let pi1Vals;
+
+  if (validPi1.length >= 2) {
+      const pi1_min_valid = Math.min(...validPi1);
+      const pi1_max_valid = Math.max(...validPi1);
+
+      const nSlicesDesired = 6;
+      pi1Vals = Array.from({length: nSlicesDesired}, (_, i) => {
+          return pi1_min_valid + i * (pi1_max_valid - pi1_min_valid) / (nSlicesDesired - 1);
+      });
+
+      logInfo(`✅ Rango estrictamente válido encontrado: [${pi1_min_valid.toFixed(4)} … ${pi1_max_valid.toFixed(4)}] → ${pi1Vals.length} slices (todas con 7/7 curvas)`);
+
+  } else if (validPi1.length === 1) {
+      const center = validPi1[0];
+      pi1Vals = [center - 0.04, center - 0.015, center, center + 0.03];
+      logWarn(`Solo un R estrictamente válido (${center.toFixed(4)}). Generando rango estrecho.`);
+
+  } else {
+      logWarn('Ningún R del dataset permite TODAS las curvas percentiles. Usando fallback seguro positivo.');
+      pi1Vals = [0.05, 0.15, 0.30, 0.50];
+  }
+
+  const nSlices = pi1Vals.length;
+  const bandwidth = nSlices > 1 ? (pi1Vals[1] - pi1Vals[0]) / 2 : 0.1;
+
+  const percentiles = [0.01, 0.05, 0.25, 0.50, 0.75, 0.95, 0.99];
+  const Vp = {};
+  percentiles.forEach(p => {
+    Vp[p] = best.lambda + best.delta * Math.pow(-Math.log(1-p), 1/best.beta);
+  });
+
+  // axis data (el resto de la función es idéntico al original)
+  let xData, yData, xLabel, yLabel, xIsLog;
+  if (coordSystem === 'transformed') {
+    xData = Array.from(pi3); yData = Array.from(pi2);
+    xLabel = 'π₃'; yLabel = 'π₂'; xIsLog = false;
+  } else {
+    xData = Array.from(pi3).map(v => N0 * Math.pow(10, v));
+    yData = Array.from(pi2).map(v => sigma_M0 * (v + 1));
+    xLabel = 'N (cycles)'; yLabel = 'σ_M (MPa)'; xIsLog = true;
+  }
+
+  const xAsymptote = xIsLog ? N0 : 0;
+  const yAsymptote = xIsLog ? sigma_M0 : 0;
+
+  const xMinData = Math.min(...xData.filter(isFinite));
+  const xMaxData = Math.max(...xData.filter(isFinite));
+  const yMinData = Math.min(...yData.filter(isFinite));
+  const yMaxData = Math.max(...yData.filter(isFinite));
+
+  const padFrac = 0.15;
+  let xMin, xMax;
+  if (xIsLog) {
+    const lxMin = Math.log10(xMinData), lxMax = Math.log10(xMaxData);
+    const lxAsym = Math.log10(xAsymptote);
+    const lxPad = (lxMax - lxMin) * padFrac;
+    const lxMinPad = lxMin - lxPad;
+    xMin = Math.pow(10, Math.max(lxMinPad, lxAsym + (lxMin - lxAsym) * 0.05));
+    xMax = Math.pow(10, lxMax + lxPad);
+  } else {
+    const xPad = (xMaxData - xMinData) * padFrac;
+    xMin = Math.max(xMinData - xPad, xAsymptote + (xMinData - xAsymptote) * 0.05);
+    xMax = xMaxData + xPad;
+  }
+  const yPad = (yMaxData - yMinData) * padFrac;
+  const yMinPad = yMinData - yPad;
+  const yMin = Math.max(yMinPad, yAsymptote + (yMinData - yAsymptote) * 0.05);
+  const yMax = yMaxData + yPad;
+
+  const pi3MaxData = Math.max(...Array.from(pi3).filter(isFinite));
+
+  // Dibujar solo los π₁ estrictamente válidos
+  pi1Vals.forEach((pi1val, si) => {
+
+    const { pi3Asym, pi2Asym } = hyperbolaAsymptotes(best, pi1val);
+
+    const N_asym      = N0 * Math.pow(10, Math.max(pi3Asym, 0));
+    const sigmaM_asym = sigma_M0 * (pi2Asym + 1);
+
+    if (coordSystem === 'transformed') {
+      logInfo(`π₁=${pi1val.toFixed(3)}: π₃-asym=${isFinite(pi3Asym)?pi3Asym.toFixed(4):'−∞'}  π₂-asym=${isFinite(pi2Asym)?pi2Asym.toFixed(4):'−∞'}`);
+    } else {
+      const naStr  = isFinite(pi3Asym) && pi3Asym > 0 ? `N_asym=${N_asym.toExponential(3)}` : 'N_asym<N₀';
+      const smStr  = isFinite(pi2Asym) && pi2Asym > 0 ? `σ_M_asym=${sigmaM_asym.toFixed(4)}` : 'σ_M_asym<σ_M₀';
+      logInfo(`π₁=${pi1val.toFixed(3)}: ${naStr}  ${smStr}  (π₃-asym=${isFinite(pi3Asym)?pi3Asym.toFixed(4):'−∞'}  π₂-asym=${isFinite(pi2Asym)?pi2Asym.toFixed(4):'−∞'})`);
+    }
+
+    const pi3Start = Math.max(0, pi3Asym) + 1e-6;
+    const pi3End   = pi3MaxData * 1.30;
+
+    const nGrid = 300;
+    const pi3grid = Array.from({length: nGrid}, (_,i) =>
+      pi3Start + i * (pi3End - pi3Start) / (nGrid - 1)
+    );
+    const xGrid = coordSystem === 'transformed'
+      ? pi3grid
+      : pi3grid.map(v => N0 * Math.pow(10, v));
+
+    const sliceLabel = coordSystem === 'transformed'
+      ? `π₁ = ${pi1val.toFixed(3)}`
+      : `R = ${pi1val.toFixed(4)}`;
+
+    // Aquí ya sabemos que todas las curvas pasan → no debería haber skips
+    const curveResults = percentiles.map((p, pi) => {
+      const pts = [];
+      let prevPi2 = null;
+
+      for (let gi = 0; gi < nGrid; gi++) {
+        const pg3 = pi3grid[gi];
+        const denom = pg3 + best.w12*pi1val + best.w123*pi1val*pg3;
+        const numer = Vp[p] - best.w1*pi1val - best.w13*pi1val*pg3;
+
+        if (Math.abs(denom) < 1e-9) { prevPi2 = null; continue; }
+
+        const pi2c = numer / denom;
+        if (pi2c <= 0) { prevPi2 = null; continue; }
+
+        if (prevPi2 !== null && Math.abs(pi2c - prevPi2) > 5 * Math.abs(prevPi2 + 1e-6)) {
+          pts.push({x: NaN, y: NaN});
+        }
+        prevPi2 = pi2c;
+
+        const xc = coordSystem === 'transformed' ? pg3 : N0 * Math.pow(10, pg3);
+        const yc = coordSystem === 'transformed' ? pi2c : sigma_M0 * (pi2c + 1);
+
+        if (!isFinite(xc) || !isFinite(yc)) continue;
+        if (xc < xMin * 0.5 || xc > xMax * 2) continue;
+        if (yc < yMin * 0.5 || yc > yMax * 2) continue;
+
+        pts.push({x: xc, y: yc});
+      }
+
+      if (pts.length === 0) {
+        return { ds: null, skipped: true, reason: `p=${p.toFixed(2)}: outside window`, p };
+      }
+
+      return {
+        ds: {
+          type: 'line',
+          label: `p=${p.toFixed(2)}`,
+          data: pts,
+          borderColor: PERCENTILE_COLORS[pi],
+          borderWidth: 1.5,
+          pointRadius: 0,
+          fill: false,
+          tension: 0,
+          spanGaps: false,
+          order: 2,
+        },
+        skipped: false, reason: null, p
+      };
+    });
+
+    const curveDSets  = curveResults.filter(r => !r.skipped).map(r => r.ds);
+    const skippedList = curveResults.filter(r => r.skipped);
+
+    // Con el filtro estricto no debería haber skips, pero lo mantenemos por si acaso
+    skippedList.forEach(r => logWarn(`  Slice ${sliceLabel} — ${r.reason}`));
+
+    // ... (el resto del código de creación de tarjeta y gráfico es idéntico) ...
+    const card = document.createElement('div');
+    card.className = 'chart-card';
+    const axesLabel = coordSystem === 'transformed' ? 'π₂ vs π₃' : 'σ_M vs N';
+
+    let asymSubtitle;
+    if (coordSystem === 'transformed') {
+      asymSubtitle = `π₃-asym = ${isFinite(pi3Asym) ? pi3Asym.toFixed(4) : '−∞'},  π₂-asym = ${isFinite(pi2Asym) ? pi2Asym.toFixed(4) : '−∞'}`;
+    } else {
+      const naStr  = isFinite(pi3Asym) && pi3Asym > 0 ? `N<sub>asym</sub> = ${N_asym.toExponential(3)}` : 'N<sub>asym</sub> &lt; N₀';
+      const smStr  = isFinite(pi2Asym) && pi2Asym > 0 ? `σ<sub>M,asym</sub> = ${sigmaM_asym.toFixed(4)}` : 'σ<sub>M,asym</sub> &lt; σ<sub>M0</sub>';
+      asymSubtitle = `${naStr} &nbsp;|&nbsp; ${smStr}`;
+    }
+
+    const title = coordSystem === 'transformed'
+      ? `Percentile curves [${axesLabel}] — ${sliceLabel}`
+      : `Percentile curves — ${sliceLabel}`;
+
+    let skippedHtml = '';
+    if (skippedList.length > 0) {
+      const rows = skippedList.map(r =>
+        `<tr><td style="color:var(--warn);font-weight:600;white-space:nowrap;padding-right:10px;">p = ${r.p.toFixed(2)}</td><td style="color:var(--text-muted);">${r.reason.replace(/^p=[0-9.]+:\s*/,'')}</td></tr>`
+      ).join('');
+      skippedHtml = `<details style="margin-top:6px;font-family:var(--mono);font-size:0.74rem;"><summary style="cursor:pointer;color:var(--warn);font-weight:600;outline:none;">⚠ ${skippedList.length} curve${skippedList.length>1?'s':''} not drawn</summary><table style="margin-top:6px;border-collapse:collapse;width:100%;">${rows}</table></details>`;
+    }
+
+    card.innerHTML = `
+      <h4>${title}</h4>
+      <div style="font-family:var(--mono);font-size:0.74rem;color:var(--text-muted);margin-bottom:4px;">
+        Asymptotes: ${asymSubtitle}
+        &nbsp;|&nbsp; Curves shown: ${curveDSets.length}/${percentiles.length}
+      </div>
+      ${skippedHtml}
+      <div class="chart-canvas-wrap" style="margin-top:8px;"><canvas id="chart_${si}"></canvas></div>`;
+    container.appendChild(card);
+
+    // Scatter (el resto es igual al código original)
+
+/* distancia física en σm */
+
+const opacitySlope =
+  parseFloat(
+    document.getElementById("opacitySlope")?.value || 0
+  );
+
+const sigmamVals =
+  pi1.map(v => sigma_M0*Math.exp(v));
+
+const sigmamSlice =
+  sigma_M0*Math.exp(pi1val);
+
+const dist =
+  pi1.map(v =>
+    Math.abs(v - pi1val)
+  );
+
+    const scatterData = xData.map((x,i) => ({x, y:yData[i], d:dist[i]}));
+
+    let rawScatterData = null;
+    if (rawPi1 && rawPi1.length > 0) {
+      let rawXData, rawYData;
+      if (coordSystem === 'transformed') {
+        rawXData = Array.from(rawPi3);
+        rawYData = Array.from(rawPi2);
+      } else {
+        rawXData = Array.from(rawPi3).map(v => N0 * Math.pow(10, v));
+        rawYData = Array.from(rawPi2).map(v => sigma_M0 * (v + 1));
+      }
+const rawSigmam =
+  rawPi1.map(v =>
+    sigma_M0*Math.exp(v)
+  );
+
+const rawDist =
+  rawPi1.map(v =>
+    Math.abs(v - pi1val)
+  );
+
+      rawScatterData = rawXData.map((x, i) => ({x, y: rawYData[i], d: rawDist[i]}));
+    }
+
+    const scatterDatasets = [];
+    if (rawScatterData) {
+      // Simulated data: blue, same exp decay as real data
+      // Initial render uses slope=0 so all points fully opaque; updateAllCharts handles decay
+      scatterDatasets.push({ type: 'scatter', label: 'Simulated', data: scatterData,    backgroundColor: `rgba(9,105,218,0.55)`, borderColor: `rgba(9,105,218,0.55)`, borderWidth: 0, pointRadius: 3, pointHoverRadius: 4, order: 3 });
+      scatterDatasets.push({ type: 'scatter', label: 'Data',      data: rawScatterData, backgroundColor: `rgba(180,20,20,0.85)`, borderColor: `rgba(180,20,20,0.85)`, borderWidth: 0, pointRadius: 4, pointHoverRadius: 5, order: 1 });
+    } else {
+      scatterDatasets.push({ type: 'scatter', label: 'Data',      data: scatterData,    backgroundColor: `rgba(200,30,30,0.85)`, borderColor: `rgba(200,30,30,0.85)`, borderWidth: 0, pointRadius: 4, pointHoverRadius: 5, order: 1 });
+    }
+    // Registrar metadatos para todos los datasets (ambos decaen con el slider)
+    const chartIdx = state.charts.length;
+    const allDs = [...curveDSets, ...scatterDatasets];
+    scatterDatasets.forEach(sds => {
+      const dsIdx = allDs.indexOf(sds);
+      let bc, ba;
+      if      (sds.label === 'Simulated') { bc = '9,105,218';  ba = 0.55; }
+      else if (rawScatterData)            { bc = '180,20,20';   ba = 0.85; }
+      else                                { bc = '200,30,30';   ba = 0.85; }
+      const dsDistances = sds.data.map(pt => pt.d);
+      const sortedD = [...dsDistances].sort((a, b) => a - b);
+      const dMedian = sortedD[Math.floor(sortedD.length / 2)] || 1;
+      state.scatterMeta.push({ chartIdx, dsIdx, baseColor: bc, baseAlpha: ba, dists: dsDistances, dMedian, isSim: sds.label === 'Simulated' });
+    });
+
+    const ctx = document.getElementById(`chart_${si}`).getContext('2d');
+    const chart = new Chart(ctx, {
+      data: { datasets: [...curveDSets, ...scatterDatasets] },
+      options: {
+        animation: false,
+        responsive: true,
+        maintainAspectRatio: false,
+        devicePixelRatio: window.devicePixelRatio || 2,
+        plugins: { legend: { labels: { color: '#57606a', font:{size:11, family:"'IBM Plex Mono', monospace"}, boxWidth:12 } } },
+        scales: {
+          x: { type: xIsLog ? 'logarithmic' : 'linear', min: xMin, max: xMax,
+               title: { display:true, text:xLabel, color:'#57606a', font:{size:11} },
+               ticks: { color:'#57606a', font:{size:10}, maxTicksLimit: 8, maxRotation: 0, minRotation: 0,
+                 callback: xIsLog ? function(value) {
+                   const log = Math.log10(value);
+                   if (Math.abs(log - Math.round(log)) < 0.01) {
+                     const exp = Math.round(log);
+                     const sups = {'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','-':'⁻'};
+                     const expStr = String(exp).split('').map(c => sups[c]||c).join('');
+                     return '10' + expStr;
+                   }
+                   return null;
+                 } : undefined },
+               grid: { color:'rgba(208,215,222,0.8)' } },
+          y: { min: yMin, max: yMax,
+               title: { display:true, text:yLabel, color:'#57606a', font:{size:11} },
+               ticks: { color:'#57606a', font:{size:10}, maxTicksLimit: 8, maxRotation: 0, minRotation: 0},
+               grid: { color:'rgba(208,215,222,0.8)' } }
+        }
+      }
+    });
+    state.charts.push(chart);
+  });
+
+  // ── Calibrar el slider ──────────────────────────────────────────────────
+  // Con distancias normalizadas por dMedian, la fórmula es exp(-slope * d/dMedian).
+  // En el punto mediano (d = dMedian): exp(-slope * 1) = exp(-slope).
+  // Para que el 50% sea casi invisible: exp(-slopeMax) ≈ 0.01 → slopeMax = 4.6
+  // Valor fijo independiente de los datos.
+  {
+    const sliderMax = 4.6;
+    const slider = document.getElementById('opacitySlope');
+    if (slider) {
+      slider.max = sliderMax.toFixed(1);
+      slider.step = '0.05';
+      if (parseFloat(slider.value) > sliderMax) {
+        slider.value = sliderMax.toFixed(1);
+        updateSlider('opacitySlope', 'opacitySlopeVal');
+      }
+    }
+  }
+  // Aplicar opacidad actual tras registrar todos los metadatos
+  updateAllCharts();
+}
+
+// ═══════════════════════════════════════════════════════════
+// MODEL COMPARISON TABLE
+// ═══════════════════════════════════════════════════════════
+function renderModelTable(results) {
+  const sorted = [...results].sort((a,b) => a.AIC - b.AIC);
+  const container = document.getElementById('modelTableContainer');
+  const cols = ['Best','Model','k','σ_M0','N₀','w₁','w₁₂','w₁₃','w₁₂₃','λ','δ','β','loglik','AIC','BIC'];
+  const keys = ['_best','model','nParams','sigma_M0','N0','w1','w12','w13','w123','lambda','delta','beta','loglik','AIC','BIC'];
+  const fmts = ['str','str','int','4f','2f','4f','4f','4f','4f','4f','4f','4f','2f','2f','2f'];
+
+  let html = `<div class="table-wrap"><table><thead><tr>`;
+  cols.forEach(c => html += `<th>${c}</th>`);
+  html += `</tr></thead><tbody>`;
+  sorted.forEach((r,i) => {
+    const isBest = i===0;
+    html += `<tr${isBest?' class="row-best"':''}>`;
+    keys.forEach((k,ki) => {
+      let val;
+      if (k==='_best') val = isBest ? '★' : '';
+      else if (k==='sigma_M0') val = r.sigma_M0 !== undefined ? r.sigma_M0 : '—';
+      else if (k==='N0') val = r.N0 !== undefined ? r.N0 : '—';
+      else val = r[k];
+      html += `<td>${formatCell(val, fmts[ki])}</td>`;
+    });
+    html += `</tr>`;
+  });
+  html += `</tbody></table></div>`;
+  container.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════
+// LATEX EXPORT
+// ═══════════════════════════════════════════════════════════
+function buildLatexModels(results) {
+  const sorted = [...results].sort((a,b) => a.AIC - b.AIC);
+  const cols = ['','Model','$k$','$\\hat\\sigma_{M0}$','$\\hat N_0$',
+    '$w_1$','$w_{12}$','$w_{13}$','$w_{123}$','$\\lambda$','$\\delta$','$\\beta$','$\\ell$','AIC','BIC'];
+  const keys = ['_best','model','nParams','sigma_M0','N0','w1','w12','w13','w123','lambda','delta','beta','loglik','AIC','BIC'];
+  const fmtL = (k,v) => {
+    if (k==='_best') return v||'';
+    if (k==='model') return String(v||'');
+    if (k==='nParams') return v !== undefined ? String(Math.round(v)) : '—';
+    if (v === undefined || v === null) return '—';
+    if (['sigma_M0','N0','w1','w12','w13','w123','lambda','delta','beta'].includes(k)) return v.toFixed(4);
+    if (['loglik','AIC','BIC'].includes(k)) return v.toFixed(2);
+    return String(v);
+  };
+  const n = cols.length;
+  let lines = [
+    '\\begin{table}[htbp]','  \\centering','  \\small',
+    '  \\caption{Estimated parameters and information criteria}',
+    '  \\label{tab:models}',
+    `  \\begin{tabular}{${'c'.repeat(n)}}`,
+    '    \\toprule',
+    '    ' + cols.join(' & ') + ' \\\\',
+    '    \\midrule',
+  ];
+  sorted.forEach((r,i) => {
+    const cells = keys.map(k => { const v = k==='_best'?(i===0?'★':''):r[k]; return fmtL(k,v); });
+    lines.push('    ' + cells.join(' & ') + ' \\\\');
+  });
+  lines.push('    \\bottomrule','  \\end{tabular}','\\end{table}');
+  return lines.join('\n');
+}
+
+function buildLatexData(df) {
+  const cols = Object.keys(df[0]);
+  const latexNames = {sigmam:'$\\sigma_m$', sigmaM:'$\\sigma_M$', N:'$N$', runout:'Runout'};
+  const fmtCell = (k,v) => {
+    if (k==='N') return v.toExponential(4);
+    if (k==='runout') return String(Math.round(v));
+    if (typeof v === 'number') return +v.toPrecision(6)+'';
+    return String(v);
+  };
+  const n = cols.length;
+  const use_long = df.length > 40;
+  let lines;
+  if (use_long) {
+    lines = [
+      `\\begin{longtable}{'r'.repeat(n)}`,
+      '  \\caption{Fatigue data} \\label{tab:datos} \\\\',
+      '  \\toprule',
+      '  ' + cols.map(c => latexNames[c]||c).join(' & ') + ' \\\\',
+      '  \\midrule','  \\endfirsthead','  \\endhead','  \\bottomrule','  \\endlastfoot',
+    ];
+    df.forEach(r => lines.push('  ' + cols.map(c=>fmtCell(c,r[c])).join(' & ') + ' \\\\'));
+    lines.push('\\end{longtable}');
+  } else {
+    lines = [
+      '\\begin{table}[htbp]','  \\centering','  \\small',
+      '  \\caption{Fatigue data}','  \\label{tab:datos}',
+      `  \\begin{tabular}{'r'.repeat(n)}`,
+      '    \\toprule',
+      '    ' + cols.map(c=>latexNames[c]||c).join(' & ') + ' \\\\',
+      '    \\midrule',
+    ];
+    df.forEach(r => lines.push('    ' + cols.map(c=>fmtCell(c,r[c])).join(' & ') + ' \\\\'));
+    lines.push('    \\bottomrule','  \\end{tabular}','\\end{table}');
+  }
+  return lines.join('\n');
+}
+
+// ═══════════════════════════════════════════════════════════
+// DOWNLOAD HELPERS
+// ═══════════════════════════════════════════════════════════
+function downloadText(content, filename) {
+  const blob = new Blob([content], {type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
+function dfToCSV(df) {
+  if (!df || df.length === 0) return '';
+  const cols = Object.keys(df[0]);
+  const header = cols.join(',');
+  const rows = df.map(r => cols.map(c => {
+    const v = r[c];
+    return typeof v === 'number' ? (c==='N' ? v.toExponential(6) : +v.toPrecision(10)+'') : String(v||'');
+  }).join(','));
+  return [header, ...rows].join('\n');
+}
+
+function exportCSV(which) {
+  const caseTitle = (document.getElementById('caseTitle').value || 'case').replace(/\s+/g,'_');
+  if (which==='data' && state.rawDf)    downloadText(dfToCSV(state.rawDf), caseTitle+'_data.csv');
+  else if (which==='models' && state.fittedResults.length) {
+    const rows = [...state.fittedResults].sort((a,b)=>a.AIC-b.AIC).map(r => ({
+      model:r.model, nParams:r.nParams,
+      sigma_M0:r.sigma_M0||'', N0:r.N0||'',
+      w1:r.w1, w12:r.w12, w13:r.w13, w123:r.w123,
+      lambda:r.lambda, delta:r.delta, beta:r.beta,
+      loglik:r.loglik, AIC:r.AIC, BIC:r.BIC,
+    }));
+    downloadText(dfToCSV(rows), caseTitle+'_parameters.csv');
+  } else if (which==='simdata' && state.simDf) downloadText(dfToCSV(state.simDf), caseTitle+'_simdata.csv');
+  else logWarn('No data available for this export.');
+}
+function exportLatex(which) {
+  const caseTitle = (document.getElementById('caseTitle').value || 'case').replace(/\s+/g,'_');
+  const prev = document.getElementById('latexPreview');
+  if (which==='models' && state.fittedResults.length) {
+    const tex = buildLatexModels(state.fittedResults);
+    prev.textContent = tex;
+    downloadText(tex, caseTitle+'_parameters.tex');
+    showTabByName('tab-export');
+  } else if (which==='data' && state.rawDf) {
+    const tex = buildLatexData(state.rawDf);
+    prev.textContent = tex;
+    downloadText(tex, caseTitle+'_data.tex');
+    showTabByName('tab-export');
+  } else logWarn('No data available for this export.');
+}
+
+// ─── Per-figure PDF export using jsPDF ───────────────────
+function getChartCanvases() {
+  const canvases = [];
+  state.charts.forEach((chart, i) => {
+    const canvas = chart.canvas;
+    const card = canvas.closest('.chart-card');
+    const title = card && card.querySelector('h4') ? card.querySelector('h4').textContent : `Figure ${i+1}`;
+    canvases.push({ chart, title, index: i });
+  });
+  return canvases;
+}
+
+function renderChartToOffscreen(chart, scale) {
+  const src = chart.canvas;
+  const W = src.width, H = src.height;
+  const off = document.createElement('canvas');
+  off.width  = W * scale;
+  off.height = H * scale;
+  const ctx = off.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, off.width, off.height);
+  ctx.drawImage(src, 0, 0, off.width, off.height);
+  return off;
+}
+
+function exportFigurePDF(chartObj, title, filename) {
+  const { jsPDF } = window.jspdf;
+  if (!jsPDF) { logErr('jsPDF not loaded.'); return; }
+
+  // Render at 3× for sharpness
+  const off = renderChartToOffscreen(chartObj, 3);
+  const imgData = off.toDataURL('image/png', 1.0);
+
+  // A4 landscape: 297 × 210 mm
+  const pageW = 297, pageH = 210;
+  const margin = 14;       // mm
+  const titleH = 8;        // mm reserved for title text
+  const availW = pageW - 2 * margin;
+  const availH = pageH - 2 * margin - titleH;
+
+  // Fit image proportionally
+  const imgW = off.width, imgH = off.height;
+  const ratio = Math.min(availW / imgW, availH / imgH);
+  const drawW = imgW * ratio;
+  const drawH = imgH * ratio;
+  const drawX = margin + (availW - drawW) / 2;
+  const drawY = margin + titleH;
+
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.setTextColor(80, 80, 80);
+  doc.text(title, pageW / 2, margin + titleH - 2, { align: 'center' });
+  doc.addImage(imgData, 'PNG', drawX, drawY, drawW, drawH, undefined, 'FAST');
+  doc.save(filename);
+}
+
+function exportAllFiguresPDF() {
+  if (!state.charts || state.charts.length === 0) {
+    logWarn('No figures to export. Plot curves first.'); return;
+  }
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    logErr('jsPDF library not available. Check your internet connection.'); return;
+  }
+  const caseTitle = (document.getElementById('caseTitle').value || 'case').replace(/\s+/g,'_');
+  const items = getChartCanvases();
+  items.forEach(({chart, title, index}, i) => {
+    const filename = `${caseTitle}_fig${i+1}.pdf`;
+    exportFigurePDF(chart, title, filename);
+  });
+  logOk(`Exported ${items.length} PDF figure(s).`);
+  renderExportFigurePreviews();
+}
+
+function exportAllFiguresPNG() {
+  if (!state.charts || state.charts.length === 0) {
+    logWarn('No figures to export. Plot curves first.'); return;
+  }
+  const caseTitle = (document.getElementById('caseTitle').value || 'case').replace(/\s+/g,'_');
+  const items = getChartCanvases();
+  items.forEach(({chart, title, index}, i) => {
+    const off = renderChartToOffscreen(chart, 3);
+    const dataUrl = off.toDataURL('image/png', 1.0);
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = `${caseTitle}_fig${i+1}.png`;
+    a.click();
+  });
+  logOk(`Exported ${items.length} PNG figure(s).`);
+  renderExportFigurePreviews();
+}
+
+function renderExportFigurePreviews() {
+  if (!state.charts || state.charts.length === 0) return;
+  const caseTitle = (document.getElementById('caseTitle').value || 'case').replace(/\s+/g,'_');
+  const container = document.getElementById('exportFigureList');
+  if (!container) return;
+
+  let html = `<div style="font-family:var(--mono);font-size:0.72rem;color:var(--text-muted);margin-bottom:10px;">
+    ${state.charts.length} figure(s) — click thumbnail to download PNG individually, or use the buttons above</div>`;
+  html += `<div style="display:flex;flex-wrap:wrap;gap:14px;">`;
+
+  state.charts.forEach((chart, i) => {
+    const off = renderChartToOffscreen(chart, 1);
+    const thumb = off.toDataURL('image/png', 0.9);
+    const off3 = renderChartToOffscreen(chart, 3);
+    const full = off3.toDataURL('image/png', 1.0);
+    const card2 = chart.canvas.closest('.chart-card');
+    const title = card2 && card2.querySelector('h4') ? card2.querySelector('h4').textContent : `Figure ${i+1}`;
+    const fname = `${caseTitle}_fig${i+1}.png`;
+
+    html += `<div style="border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--bg);
+                          max-width:300px;cursor:pointer;"
+               title="Click to download PNG"
+               onclick="(function(){var a=document.createElement('a');a.href='${full}';a.download='${fname}';a.click();})()">
+      <div style="font-size:0.68rem;color:var(--text-muted);margin-bottom:6px;font-family:var(--mono);">${fname}</div>
+      <img src="${thumb}" style="width:100%;height:auto;display:block;border-radius:4px;" alt="${title}"/>
+    </div>`;
+  });
+  html += `</div>`;
+  container.innerHTML = html;
+}
+
+
+// ═══════════════════════════════════════════════════════════
+function showResults(df, allResults, best) {
+  state.fittedResults = allResults;
+  state.best = best;
+
+  document.getElementById('sec-results').classList.remove('hidden');
+
+  // Badge
+  const badge = document.getElementById('resultBadge');
+  badge.classList.remove('hidden');
+  badge.innerHTML = `★ Best model: <strong style="color:var(--text);margin-left:4px;">${best.model}</strong>
+    &nbsp;|&nbsp; AIC = <strong>${best.AIC.toFixed(2)}</strong>
+    &nbsp;|&nbsp; BIC = <strong>${best.BIC.toFixed(2)}</strong>
+    &nbsp;|&nbsp; loglik = <strong>${best.loglik.toFixed(2)}</strong>`;
+
+  // ── Fitted model equation ──────────────────────────────────────────────────
+  // Remove previous equation box if any
+  const prevEq = document.getElementById('fittedModelEquation');
+  if (prevEq) prevEq.remove();
+
+  const coordSys = state.coordSystem;
+  const sigma_M0_val = best.sigma_M0 !== undefined ? best.sigma_M0 : parseFloat(document.getElementById('p_sigmaM0').value);
+  const N0_val       = best.N0       !== undefined ? best.N0       : parseFloat(document.getElementById('p_N0').value);
+
+  // Build the V(·) expression string
+  // Variable definitions:
+  //   π1 = R  = σ_m / σ_M           (stress ratio)
+  //   π2 = σ_M/σ_M0 − 1             (normalised amplitude stress)
+  //   π3 = log10(N/N0)               (normalised log-life)
+  //
+  // In 'transformed' mode we display them with their π-alias names:
+  //   π1 → R,   π2 → σ_M/σ_M0,   π3 → log₁₀(N/N₀)
+  // In 'original' mode we substitute the full physical expressions.
+
+  const freeVars = MODEL_FREE[best.model] || MODEL_FREE['M0'];
+
+  function fmtCoef(val) {
+    if (val === undefined || val === null) return '0.0000';
+    return val.toFixed(4);
+  }
+
+  const sm0str = sigma_M0_val.toFixed(4);
+  const n0str  = N0_val.toExponential(4);
+
+  let vExpr, eqTitle, varLine;
+
+  if (coordSys === 'transformed') {
+    // Display with π-alias names: R, σ_M/σ_M0, log₁₀(N/N₀)
+    // V = w1·R + w12·R·(σ_M/σ_M0−1) + w13·R·log₁₀(N/N₀) + (σ_M/σ_M0−1)·log₁₀(N/N₀) + w123·R·(σ_M/σ_M0−1)·log₁₀(N/N₀)
+    const A = 'R';
+    const B = '(σ_M/σ_M0 − 1)';
+    const C = 'log₁₀(N/N₀)';
+    const terms = [];
+    terms.push(`${fmtCoef(best.w1)}·${A}`);
+    if (freeVars.includes('w12'))  terms.push(`(${fmtCoef(best.w12)})·${A}·${B}`);
+    if (freeVars.includes('w13'))  terms.push(`(${fmtCoef(best.w13)})·${A}·${C}`);
+    terms.push(`${B}·${C}`);
+    if (freeVars.includes('w123')) terms.push(`(${fmtCoef(best.w123)})·${A}·${B}·${C}`);
+    vExpr  = `V(R, σ_M/σ_M0, log₁₀(N/N₀)) = ${terms.join(' + ')}`;
+    eqTitle = `Fitted model ${best.model} — π-variables`;
+    varLine = `where  R = σ_m/σ_M,  σ_M0 = ${sm0str},  N₀ = ${n0str}`;
+  } else {
+    // 'original' mode: substitute the full physical meanings
+    //   π1 = R = σ_m/σ_M
+    //   π2 − 1 = σ_M/σ_M0 − 1  → use σ_M/σ_M0
+    //   π3 = log10(N/N0)        → use log₁₀(N/N₀)
+    const A = '(σ_m/σ_M)';
+    const B = `(σ_M/${sm0str} − 1)`;
+    const C = `log₁₀(N/${n0str})`;
+    const terms = [];
+    terms.push(`${fmtCoef(best.w1)}·${A}`);
+    if (freeVars.includes('w12'))  terms.push(`(${fmtCoef(best.w12)})·${A}·${B}`);
+    if (freeVars.includes('w13'))  terms.push(`(${fmtCoef(best.w13)})·${A}·${C}`);
+    terms.push(`${B}·${C}`);
+    if (freeVars.includes('w123')) terms.push(`(${fmtCoef(best.w123)})·${A}·${B}·${C}`);
+    vExpr  = `V(σ_m, σ_M, N) = ${terms.join(' + ')}`;
+    eqTitle = `Fitted model ${best.model} — original variables  [σ_M0 = ${sm0str}, N₀ = ${n0str}]`;
+    varLine = '';
+  }
+
+  // Weibull parameters
+  const wbLine = `Weibull:  λ = ${best.lambda.toFixed(4)},  δ = ${best.delta.toFixed(4)},  β = ${best.beta.toFixed(4)}`;
+
+  const eqBox = document.createElement('div');
+  eqBox.id = 'fittedModelEquation';
+  eqBox.style.cssText = `
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius);
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    color: var(--text);
+    line-height: 1.9;
+    word-break: break-word;
+  `;
+  eqBox.innerHTML = `
+    <div style="font-size:0.72rem;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;">${eqTitle}</div>
+    <div style="color:var(--accent);font-weight:600;">${vExpr}</div>
+    ${varLine ? `<div style="color:var(--text-muted);margin-top:2px;font-size:0.78rem;">${varLine}</div>` : ''}
+    <div style="color:var(--text-muted);margin-top:4px;">${wbLine}</div>
+  `;
+  badge.insertAdjacentElement('afterend', eqBox);
+
+  // Data table
+  const cont = document.getElementById('dataTableContainer');
+  cont.id = 'dataTableContainer';
+  const cols = Object.keys(df[0]);
+  const colsWithR = ['sigmam', 'sigmaM', 'R', ...cols.filter(c => c !== 'sigmam' && c !== 'sigmaM')];
+  const fmtsWithR = colsWithR.map(c => c==='N'?'sci':c==='runout'?'int':'6g');
+  const tableRows = df.map(r => { const o = {sigmam: r.sigmam, sigmaM: r.sigmaM, R: r.sigmam/r.sigmaM}; cols.filter(c => c !== 'sigmam' && c !== 'sigmaM').forEach(c => o[c] = r[c]); return o; });
+  makePaginatedTable(cont, tableRows, colsWithR, fmtsWithR, 'Loaded fatigue data');
+
+  // Model comparison table
+  renderModelTable(allResults);
+
+  const sigma_M0 = best.sigma_M0 !== undefined ? best.sigma_M0 : parseFloat(document.getElementById('p_sigmaM0').value);
+  const N0       = best.N0       !== undefined ? best.N0       : parseFloat(document.getElementById('p_N0').value);
+
+  // If "Include simulated data" is active, generate simulation and use it for curves
+  const useSimData = document.getElementById('simAfterFit').checked;
+  if (useSimData) {
+    const model = document.getElementById('modelSelector').value;
+    const effectiveModel = model === 'All' ? best.model : model;
+    const wP   = { w1: best.w1, w12: best.w12, w13: best.w13, w123: best.w123 };
+    const wbP  = { lambda: best.lambda, delta: best.delta, beta: best.beta };
+    const refP = { sigma_M0, N0 };
+    const sigmaM_range = [
+      parseFloat(document.getElementById('sigmaM_min').value),
+      parseFloat(document.getElementById('sigmaM_max').value),
+    ];
+    const sigmam_range = [
+      parseFloat(document.getElementById('sigmam_min').value),
+      parseFloat(document.getElementById('sigmam_max').value),
+    ];
+    const nPoints   = parseInt(document.getElementById('n_points').value);
+    const useCens   = document.getElementById('useCensoring').checked;
+    const runoutThr = useCens ? parseFloat(document.getElementById('runout_thr').value) : null;
+
+    logAccent('Generating simulated data for curve display...');
+    const simDf = simulateData(effectiveModel, wP, wbP, refP, sigmaM_range, sigmam_range, nPoints, runoutThr);
+    state.simDf = simDf;
+    updateExtrema(simDf);
+
+    // Show simulated data table
+    const simCont = document.getElementById('simTableContainer');
+    const simCols = Object.keys(simDf[0]);
+    const simColsWithR = ['sigmam', 'sigmaM', 'R', ...simCols.filter(c => c !== 'sigmam' && c !== 'sigmaM')];
+    const simFmts = simColsWithR.map(c => c==='N'?'sci':c==='runout'?'int':'6g');
+    const simTableRows = simDf.map(r => { const o = {sigmam: r.sigmam, sigmaM: r.sigmaM, R: r.sigmam/r.sigmaM}; simCols.filter(c => c !== 'sigmam' && c !== 'sigmaM').forEach(c => o[c] = r[c]); return o; });
+    makePaginatedTable(simCont, simTableRows, simColsWithR, simFmts, 'Simulated data');
+
+    const t = filterFinite(...Object.values(transformFatigueData(simDf, sigma_M0, N0, runoutThr||1e20)));
+    state.pi1 = t.pi1; state.pi2 = t.pi2; state.pi3 = t.pi3; state.cens = Array.from(t.cens);
+    logOk(`Simulated ${t.pi1.length} valid points — used for curve display.`);
+
+    // Compute transformed original data to overlay in red
+    const useCens2 = document.getElementById('useCensoring').checked;
+    const runoutThr2 = useCens2 ? parseFloat(document.getElementById('runout_thr').value) : 1e20;
+    const tOrig = filterFinite(...Object.values(transformFatigueData(df, sigma_M0, N0, runoutThr2)));
+
+    plotCurves(best, t.pi1, t.pi2, t.pi3, sigma_M0, N0, state.coordSystem,
+               tOrig.pi1, tOrig.pi2, tOrig.pi3);
+  } else {
+    plotCurves(best, best.pi1, best.pi2, best.pi3, sigma_M0, N0, state.coordSystem);
+  }
+
+  // Switch to data tab
+  showTabByName('tab-data');
+  document.getElementById('sec-results').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// ═══════════════════════════════════════════════════════════
+// BUTTON CALLBACKS
+// ═══════════════════════════════════════════════════════════
+
+// ─── Load CSV ─────────────────────────────────────────────
+function onFileSelected(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      // ── Clear all previous data (real and simulated) ──────────────────────
+      state.rawDf = null;
+      state.fittedResults = [];
+      state.best = null;
+      state.simDf = null;
+      state.pi1 = null; state.pi2 = null; state.pi3 = null; state.cens = null;
+      destroyCharts();
+      document.getElementById('dataTableContainer').innerHTML = '';
+      document.getElementById('modelTableContainer').innerHTML = '';
+      document.getElementById('simTableContainer').innerHTML = '';
+      document.getElementById('chartsContainer').innerHTML = '';
+      const badge = document.getElementById('resultBadge');
+      if (badge) { badge.classList.add('hidden'); badge.innerHTML = ''; }
+      document.getElementById('sec-results').classList.add('hidden');
+
+      // ── Select 'All' in MODEL selector and check all model checkboxes ─────
+      document.getElementById('modelSelector').value = 'All';
+      Object.keys(MODEL_FREE).forEach(m => {
+        const el = document.getElementById('cb_'+m);
+        if (el) el.checked = true;
+      });
+      // Show M0 params as default when 'All'
+      buildWParams('M0', MODEL_DEFAULTS['M0']);
+
+      // ── Parse and load the new file ───────────────────────────────────────
+      const df = parseCSV(e.target.result);
+      state.rawDf = df;
+      updateExtrema(df);
+      clearLog();
+      logOk(`File loaded: ${file.name}  (${df.length} valid rows)`);
+      logInfo(`Columns: ${Object.keys(df[0]).join(', ')}`);
+      logInfo('Model selector set to "All". All model checkboxes activated.');
+      // Set caseTitle from filename (strip extension)
+      const baseName = file.name.replace(/\.[^.]+$/, '');
+      document.getElementById('caseTitle').value = baseName;
+
+      // Show data table immediately
+      document.getElementById('sec-results').classList.remove('hidden');
+      const cont = document.getElementById('dataTableContainer');
+      const cols = Object.keys(df[0]);
+      const colsWithR = ['sigmam', 'sigmaM', 'R', ...cols.filter(c => c !== 'sigmam' && c !== 'sigmaM')];
+      const fmts = colsWithR.map(c => c==='N'?'sci':c==='runout'?'int':'6g');
+      const tableRows = df.map(r => { const o = {sigmam: r.sigmam, sigmaM: r.sigmaM, R: r.sigmam/r.sigmaM}; cols.filter(c => c !== 'sigmam' && c !== 'sigmaM').forEach(c => o[c] = r[c]); return o; });
+      makePaginatedTable(cont, tableRows, colsWithR, fmts, 'Loaded fatigue data');
+      showTabByName('tab-data');
+      document.getElementById('sec-results').scrollIntoView({behavior:'smooth', block:'start'});
+    } catch(e) {
+      logErr('CSV parse error: ' + e.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ─── Simulate ─────────────────────────────────────────────
+function doSimulate() {
+  setBusy();
+  setTimeout(() => {
+  const model = document.getElementById('modelSelector').value;
+  const effectiveModel = model === 'All' ? 'M0' : model;
+  const wP = getWParams();
+  const wbP = getWeibullParams();
+  const sigmaM_range = [
+    parseFloat(document.getElementById('sigmaM_min').value),
+    parseFloat(document.getElementById('sigmaM_max').value),
+  ];
+  const sigmam_range = [
+    parseFloat(document.getElementById('sigmam_min').value),
+    parseFloat(document.getElementById('sigmam_max').value),
+  ];
+  const nPoints = parseInt(document.getElementById('n_points').value);
+  const useCens = document.getElementById('useCensoring').checked;
+  const runoutThr = useCens ? parseFloat(document.getElementById('runout_thr').value) : null;
+
+  // ── Pre-correction of references BEFORE simulating ──────
+  // σ_M0 must be strictly less than σ_M,min of the range
+  let sigma_M0 = parseFloat(document.getElementById('p_sigmaM0').value);
+  let N0       = parseFloat(document.getElementById('p_N0').value);
+  const safeMargin = 0.9;
+  if (sigma_M0 >= sigmaM_range[0]) {
+    sigma_M0 = safeMargin * sigmaM_range[0];
+    document.getElementById('p_sigmaM0').value = sigma_M0.toFixed(4);
+    logWarn(`σ_M0 auto-corrected to ${sigma_M0.toFixed(4)} (must be < σ_M,min = ${sigmaM_range[0]})`);
+  }
+  // N₀ must be less than the runout threshold if active, or simply positive
+  const runoutThrVal = parseFloat(document.getElementById('runout_thr').value);
+  if (useCens && N0 >= runoutThrVal) {
+    N0 = safeMargin * runoutThrVal;
+    document.getElementById('p_N0').value = N0.toFixed(4);
+    logWarn(`N₀ auto-corrected to ${N0.toFixed(4)} (must be < runout threshold = ${runoutThrVal})`);
+  }
+  const refP = { sigma_M0, N0 };
+
+  clearLog();
+  logAccent('Generating synthetic data...');
+  const df = simulateData(effectiveModel, wP, wbP, refP, sigmaM_range, sigmam_range, nPoints, runoutThr);
+
+  if (!df || df.length === 0) {
+    logErr('Simulation failed: no valid points were generated. Check the parameters.');
+    setReady();
+    return;
+  }
+
+  const t = filterFinite(...Object.values(transformFatigueData(df, sigma_M0, N0, runoutThr||1e20)));
+  state.pi1=t.pi1; state.pi2=t.pi2; state.pi3=t.pi3; state.cens=Array.from(t.cens);
+  state.simDf = df;
+  updateExtrema(df);
+
+  logOk(`${t.pi1.length} transformed points ready.`);
+
+  // Update caseTitle only if empty or currently set to a model name (not a user/file title)
+  const caseTitleEl = document.getElementById('caseTitle');
+  const modelNames = Object.keys(MODEL_FREE); // ['M0','M1',...,'M7']
+  const currentTitle = caseTitleEl.value.trim();
+  const isTitleAModelName = modelNames.includes(currentTitle) ||
+    modelNames.some(m => currentTitle === 'Case_' + m);
+  if (!currentTitle || isTitleAModelName) caseTitleEl.value = effectiveModel;
+
+  // Show table
+  document.getElementById('sec-results').classList.remove('hidden');
+  const cont = document.getElementById('simTableContainer');
+  cont.id = 'simTableContainer';
+  const cols = Object.keys(df[0]);
+  const colsWithR = ['sigmam', 'sigmaM', 'R', ...cols.filter(c => c !== 'sigmam' && c !== 'sigmaM')];
+  const fmts = colsWithR.map(c => c==='N'?'sci':c==='runout'?'int':'6g');
+  const tableRows = df.map(r => { const o = {sigmam: r.sigmam, sigmaM: r.sigmaM, R: r.sigmam/r.sigmaM}; cols.filter(c => c !== 'sigmam' && c !== 'sigmaM').forEach(c => o[c] = r[c]); return o; });
+  makePaginatedTable(cont, tableRows, colsWithR, fmts, 'Simulated data');
+  showTabByName('tab-simdata');
+  document.getElementById('sec-results').scrollIntoView({behavior:'smooth', block:'start'});
+  setReady();
+  }, 10);
+}
+
+// ─── Plot curves (simulation) ────────────────────────────
+function doPlotSim() {
+  if (!state.pi1) { logWarn('No simulated data. Click "Simulate Data" first.'); return; }
+  setBusy();
+  setTimeout(() => {
+  const model = document.getElementById('modelSelector').value;
+  const effectiveModel = model === 'All' ? 'M0' : model;
+  const wP = getWParams();
+  const wbP = getWeibullParams();
+  const refP = getRefParams();
+  const best = { model: effectiveModel, ...wP, ...wbP, sigma_M0: refP.sigma_M0, N0: refP.N0 };
+  clearLog();
+  logAccent('Plotting percentile curves...');
+  document.getElementById('sec-results').classList.remove('hidden');
+
+  // ── Consult 'Include simulated data' option ─────────────────────────────
+  const includeSimulated = document.getElementById('simAfterFit').checked;
+  if (includeSimulated && state.rawDf) {
+    // Overlay real data (in red) on top of simulated data scatter
+    const useCens = document.getElementById('useCensoring').checked;
+    const runoutThr = useCens ? parseFloat(document.getElementById('runout_thr').value) : 1e20;
+    const tOrig = filterFinite(...Object.values(transformFatigueData(state.rawDf, refP.sigma_M0, refP.N0, runoutThr)));
+    logInfo('Include simulated data: ON — real data overlaid in red.');
+    plotCurves(best, state.pi1, state.pi2, state.pi3, refP.sigma_M0, refP.N0, state.coordSystem,
+               tOrig.pi1, tOrig.pi2, tOrig.pi3);
+  } else if (includeSimulated) {
+    logInfo('Include simulated data: ON — no real data loaded, using simulated only.');
+    plotCurves(best, state.pi1, state.pi2, state.pi3, refP.sigma_M0, refP.N0, state.coordSystem);
+  } else {
+    logInfo('Include simulated data: OFF — using simulated data only.');
+    plotCurves(best, state.pi1, state.pi2, state.pi3, refP.sigma_M0, refP.N0, state.coordSystem);
+  }
+
+  showTabByName('tab-curves');
+  document.getElementById('sec-results').scrollIntoView({behavior:'smooth', block:'start'});
+  setReady();
+  }, 10);
+}
+
+// ─── Estimate σ_M0 & N0 ──────────────────────────────────
+async function doEstimateRefs() {
+  if (!state.rawDf) { logWarn('No data loaded. Load a CSV file first.'); return; }
+  setBusy();
+  const df = state.rawDf;
+  const useCens = document.getElementById('useCensoring').checked;
+  const runoutThr = useCens ? parseFloat(document.getElementById('runout_thr').value) : 1e20;
+  const nGrid = parseInt(document.getElementById('nGrid').value);
+  const nRestGrid = parseInt(document.getElementById('nRestGrid').value);
+  const nRestRefine = parseInt(document.getElementById('nRestRefine').value);
+  const modelList = getSelectedModels();
+  const method = document.querySelector('input[name="estMethod"]:checked').value;
+
+  document.getElementById('btnEstimate').disabled = true;
+  document.getElementById('btnFitManual').disabled = true;
+  clearLog();
+  logAccent(`Method: Option ${method}`);
+  logInfo(`Models: ${modelList.join(', ')}`);
+  logInfo(`Grid: ${nGrid}×${nGrid}, grid restarts=${nRestGrid}, refine restarts=${nRestRefine}`);
+
+  setProgress(0,1,'Starting...');
+  const allResults = [];
+
+  if (method === '2') {
+    // Option 2
+    setProgress(0, nGrid*nGrid, 'Option 2: Joint grid search...');
+    const results = await estimateReferences(df,
+      {runoutThr, nGrid, nRestGrid, nRestRefine, modelList},
+      (d,t,m) => setProgress(d,t,m));
+    results.forEach(r => allResults.push(r));
+  } else {
+    // Option 1: independent per model
+    const gridSize = nGrid*nGrid;
+    const totalSteps = modelList.length * gridSize;
+    for (let i = 0; i < modelList.length; i++) {
+      const mod = modelList[i];
+      logInfo(`── Estimating ${mod} (independent)...`);
+      const res = await estimateOneModel(mod, df,
+        {runoutThr, nGrid, nRestGrid, nRestRefine},
+        (d,t,m) => setProgress(i*gridSize+d, totalSteps, m));
+      if (!res) { logWarn(`  ${mod}: did not converge.`); continue; }
+      allResults.push(res);
+      logInfo(`  ${mod}: σ_M0=${res.sigma_M0.toFixed(4)}  N₀=${res.N0.toFixed(4)}  AIC=${res.AIC.toFixed(2)}`);
+    }
+  }
+
+  document.getElementById('btnEstimate').disabled = false;
+  document.getElementById('btnFitManual').disabled = false;
+
+  if (allResults.length === 0) { logErr('No results obtained.'); setProgress(0,1,''); setReady(); return; }
+  allResults.sort((a,b) => a.AIC - b.AIC);
+  const best = allResults[0];
+  logOk(`Best model: ${best.model}  AIC=${best.AIC.toFixed(2)}  BIC=${best.BIC.toFixed(2)}`);
+  setProgress(1,1,'✔ Done');
+
+  // Update case title only if empty or currently set to a model name
+  const caseTitleEl3 = document.getElementById('caseTitle');
+  const currentTitle3 = caseTitleEl3.value.trim();
+  const modelNames3 = Object.keys(MODEL_FREE);
+  const isTitleAModelName3 = modelNames3.includes(currentTitle3) ||
+    modelNames3.some(m => currentTitle3 === 'Case_' + m);
+  if (!currentTitle3 || isTitleAModelName3) caseTitleEl3.value = best.model;
+
+  applyBestToWidgets(best, df);
+  // Update model selector
+  document.getElementById('modelSelector').value = best.model;
+  // Sync checkboxes
+  Object.keys(MODEL_FREE).forEach(m => {
+    const el = document.getElementById('cb_'+m); if (el) el.checked = (m===best.model);
+  });
+
+  showResults(df, allResults, best);
+  document.getElementById('sec-results').scrollIntoView({behavior:'smooth', block:'start'});
+
+  setReady();
+}
+
+// ─── Fit (manual σ_M0, N0) ───────────────────────────────
+async function doFitManual() {
+  if (!state.rawDf) { logWarn('No data loaded. Load a CSV file first.'); return; }
+  setBusy();
+  const df = state.rawDf;
+  const useCens = document.getElementById('useCensoring').checked;
+  const runoutThr = useCens ? parseFloat(document.getElementById('runout_thr').value) : 1e20;
+  let sigma_M0 = parseFloat(document.getElementById('p_sigmaM0').value);
+  let N0       = parseFloat(document.getElementById('p_N0').value);
+  const modelList = getSelectedModels();
+
+  const minSM = Math.min(...df.map(r=>r.sigmaM));
+  const minN  = Math.min(...df.map(r=>r.N));
+  if (sigma_M0 >= minSM) {
+    sigma_M0 = 0.9*minSM;
+    document.getElementById('p_sigmaM0').value = sigma_M0.toFixed(4);
+    logWarn(`σ_M0 corrected to ${sigma_M0.toFixed(4)}`);
+  }
+  if (N0 >= minN) {
+    N0 = 0.9*minN;
+    document.getElementById('p_N0').value = N0.toFixed(4);
+    logWarn(`N₀ corrected to ${N0.toFixed(4)}`);
+  }
+
+  clearLog();
+  logAccent(`Fitting models ${modelList.join(', ')} with σ_M0=${sigma_M0.toFixed(4)}  N₀=${N0.toFixed(4)}`);
+  document.getElementById('btnEstimate').disabled = true;
+  document.getElementById('btnFitManual').disabled = true;
+
+  const {pi1,pi2,pi3,cens} = filterFinite(...Object.values(transformFatigueData(df, sigma_M0, N0, runoutThr)));
+
+  const allResults = [];
+  for (let i = 0; i < modelList.length; i++) {
+    const mod = modelList[i];
+    logInfo(`  ${mod}...`);
+    setProgress(i, modelList.length, `Fitting ${mod}...`);
+    await yieldToUI();
+    const res = fitModel(mod, pi1, pi2, pi3, Array.from(cens));
+    res.sigma_M0 = sigma_M0; res.N0 = N0;
+    res.pi1=pi1; res.pi2=pi2; res.pi3=pi3; res.cens=Array.from(cens);
+    allResults.push(res);
+    logInfo(`    loglik=${res.loglik.toFixed(2)}  AIC=${res.AIC.toFixed(2)}`);
+  }
+
+  document.getElementById('btnEstimate').disabled = false;
+  document.getElementById('btnFitManual').disabled = false;
+  setProgress(1,1,'✔ Done');
+
+  allResults.sort((a,b) => a.AIC - b.AIC);
+  const best = allResults[0];
+  logOk(`Best model: ${best.model}  AIC=${best.AIC.toFixed(2)}`);
+
+  applyBestToWidgets(best, df);
+  // Update case title only if empty or currently set to a model name
+  const caseTitleElFM = document.getElementById('caseTitle');
+  const currentTitleFM = caseTitleElFM.value.trim();
+  const modelNamesFM = Object.keys(MODEL_FREE);
+  const isTitleAModelNameFM = modelNamesFM.includes(currentTitleFM) ||
+    modelNamesFM.some(m => currentTitleFM === 'Case_' + m);
+  if (!currentTitleFM || isTitleAModelNameFM) caseTitleElFM.value = best.model;
+  document.getElementById('modelSelector').value = best.model;
+  Object.keys(MODEL_FREE).forEach(m => {
+    const el = document.getElementById('cb_'+m); if (el) el.checked = (m===best.model);
+  });
+
+  showResults(df, allResults, best);
+  document.getElementById('sec-results').scrollIntoView({behavior:'smooth', block:'start'});
+
+  setReady();
+}
+
+// ═══════════════════════════════════════════════════════════
+// DRAG & DROP on file area
+// ═══════════════════════════════════════════════════════════
+(function() {
+  const drop = document.getElementById('fileDrop');
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag-over'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('drag-over'));
+  drop.addEventListener('drop', e => {
+    e.preventDefault();
+    drop.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        try {
+          // ── Clear all previous data (real and simulated) ──────────────────
+          state.rawDf = null;
+          state.fittedResults = [];
+          state.best = null;
+          state.simDf = null;
+          state.pi1 = null; state.pi2 = null; state.pi3 = null; state.cens = null;
+          destroyCharts();
+          document.getElementById('dataTableContainer').innerHTML = '';
+          document.getElementById('modelTableContainer').innerHTML = '';
+          document.getElementById('simTableContainer').innerHTML = '';
+          document.getElementById('chartsContainer').innerHTML = '';
+          const badge = document.getElementById('resultBadge');
+          if (badge) { badge.classList.add('hidden'); badge.innerHTML = ''; }
+          document.getElementById('sec-results').classList.add('hidden');
+
+          // ── Select 'All' and check all model checkboxes ───────────────────
+          document.getElementById('modelSelector').value = 'All';
+          Object.keys(MODEL_FREE).forEach(m => {
+            const el = document.getElementById('cb_'+m);
+            if (el) el.checked = true;
+          });
+          buildWParams('M0', MODEL_DEFAULTS['M0']);
+
+          const df = parseCSV(ev.target.result);
+          state.rawDf = df;
+          updateExtrema(df);
+          clearLog();
+          logOk(`File dropped: ${file.name}  (${df.length} valid rows)`);
+          logInfo(`Columns: ${Object.keys(df[0]).join(', ')}`);
+          logInfo('Model selector set to "All". All model checkboxes activated.');
+          const baseName = file.name.replace(/\.[^.]+$/, '');
+          document.getElementById('caseTitle').value = baseName;
+          document.getElementById('sec-results').classList.remove('hidden');
+          const cont = document.getElementById('dataTableContainer');
+          const cols = Object.keys(df[0]);
+          const colsWithR = ['sigmam', 'sigmaM', 'R', ...cols.filter(c => c !== 'sigmam' && c !== 'sigmaM')];
+          const fmts = colsWithR.map(c => c==='N'?'sci':c==='runout'?'int':'6g');
+          const tableRows = df.map(r => { const o = {sigmam: r.sigmam, sigmaM: r.sigmaM, R: r.sigmam/r.sigmaM}; cols.filter(c => c !== 'sigmam' && c !== 'sigmaM').forEach(c => o[c] = r[c]); return o; });
+          makePaginatedTable(cont, tableRows, colsWithR, fmts, 'Loaded fatigue data');
+          showTabByName('tab-data');
+          document.getElementById('sec-results').scrollIntoView({behavior:'smooth', block:'start'});
+        } catch(e) { logErr('CSV parse error: ' + e.message); }
+      };
+      reader.readAsText(file);
+    }
+  });
+})();
+// ─── Botón de reinicio completo con confirmación ─────────────────────────
+const resetBtn = document.getElementById('resetAndLoadBtn');
+if (resetBtn) {
+  resetBtn.addEventListener('click', function() {
+    const userConfirmed = confirm(
+      '⚠️ ATENCIÓN: Esto va a reiniciar completamente la aplicación.\n\n' +
+      'Se perderán:\n' +
+      '• Todos los datos cargados actualmente\n' +
+      '• Resultados de ajustes previos\n' +
+      '• Gráficos generados\n' +
+      '• Datos simulados\n' +
+      '• Configuraciones no guardadas\n\n' +
+      'Después del reinicio, se abrirá el diálogo para cargar un nuevo fichero CSV.\n\n' +
+      '¿Deseas continuar?'
+    );
+
+    if (!userConfirmed) return;
+
+    sessionStorage.setItem('pendienteCarga', 'true');
+    location.reload();
+  });
+}
+
+// Al cargar la página, si hay una carga pendiente, abrimos el selector de archivos
+window.addEventListener('load', function() {
+  if (sessionStorage.getItem('pendienteCarga') === 'true') {
+    sessionStorage.removeItem('pendienteCarga');
+    const fileInput = document.getElementById('csvFileInput');
+    if (fileInput) {
+      setTimeout(() => {
+        fileInput.click();
+      }, 100);
+    }
+  }
+});
+// INIT
+buildModelCheckboxes();
+document.getElementById('modelSelector').value = 'All';
+buildWParams('M0', MODEL_DEFAULTS['M0']);
+Object.keys(MODEL_FREE).forEach(m => {
+  const el = document.getElementById('cb_'+m);
+  if (el) el.checked = true;
+});
+document.getElementById('p_lambda').value  = '0.5';
+document.getElementById('p_delta').value   = '0.3';
+document.getElementById('p_beta').value    = '2.5';
+document.getElementById('p_sigmaM0').value = '40';
+document.getElementById('p_N0').value      = '1000';
+document.getElementById('caseTitle').value = '';
+
+updateSlider('nGrid','nGridVal');
+updateSlider('nRestGrid','nRestGridVal');
+updateSlider('nRestRefine','nRestRefineVal');
+
+logInfo('Weibull–Hyperbola Model v8 — simulation with guaranteed physical branch.');
+logInfo('Reference auto-correction active. Rejection rate always reported.');
+setReady();
+</script>
+</body>
+</html>
