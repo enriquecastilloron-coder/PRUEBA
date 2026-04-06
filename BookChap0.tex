@@ -1,0 +1,408 @@
+
+% !TeX program = pdflatex
+% !TeX program = lualatex
+% !BIB program = biber
+% !TeX encoding = UTF-8
+% !TeX spellcheck = en_US
+% !TeX root = BookChap0.tex
+% !TeX TS-program = pdflatex
+
+\documentclass[
+    11pt,
+    fleqn,
+    a4paper
+]{LegrandOrangeBook}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\usepackage{url}  % Solo para \url si lo necesitas
+
+\title{\Huge\textbf{A General Equation of Science}\\\Large\textbf{Implications}}
+
+\usepackage{float}
+%\usepackage{amsmath,amssymb}
+\usepackage{tcolorbox}
+\definecolor{ocre}{RGB}{243, 102, 25} % Color for highlighting
+\chapterimage{orange1.jpg} % Chapter heading image
+\chapterspaceabove{6.5cm} % Whitespace to chapter title
+\chapterspacebelow{6.75cm} % Whitespace to text on chapter pages
+
+
+\usepackage{fontspec}
+\setmainfont{Times New Roman}   % puedes cambiar a Calibri, Georgia, Libertinus Serif,
+
+\usepackage{fancyvrb}
+
+% ---------------------------------------------------------------------------------------
+% Other mathematical packages
+\usepackage{bm}
+\usepackage{centernot}
+\usepackage{xkeyval}
+\usepackage{placeins}
+\usepackage{listings}
+% Algorithm packages
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\newtheorem{assumption}{Assumption}
+
+\usepackage{tocloft}
+
+\setlength{\cftfignumwidth}{4em}
+\setlength{\cftfigindent}{1em}
+
+\setlength{\cftpartnumwidth}{3em}
+
+\usepackage{minted}
+\usemintedstyle{default} % o vs, tango, friendly, etc.
+
+\usepackage{pgfplots}
+\usepackage{tikz}
+\usetikzlibrary{fit}
+\usetikzlibrary{shapes,arrows,positioning,calc}
+\usetikzlibrary{patterns, decorations.pathmorphing, backgrounds, shapes, arrows, positioning, calc, 3d}
+
+\usepackage{comment}
+\usepackage{caption}
+\usepackage{subcaption}
+
+% BIBLIOGRAPHY CONFIGURATION - SIMPLIFIED
+% Remove one of the duplicate lines and use only this:
+\addbibresource{bibliography.bib}
+
+% ===== MDFRAMED ENVIRONMENTS (SIMPLIFIED) =====
+\usepackage{mdframed}
+\usepackage{xcolor}
+%\definecolor{brown}{RGB}{165,42,42}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% AÑADIDO SOLO PARA complements.tex
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{amsmath, amssymb}
+%\usepackage{amsthm}
+\usepackage{mathrsfs}
+\usepackage{mathtools}
+\usepackage{booktabs}
+
+
+%\begin{comment}
+%\newtheorem{definition}{Definition}
+%\newtheorem{theorem}{Theorem}
+%\newtheorem{corollary}{Corollary}
+%\newtheorem{remark}{Remark}
+%\newtheorem{example}{Example}
+%\newtheorem{proof}{Proof}
+%\end{comment}
+
+%\newtheorem{lemma}{Lemma}
+\newtheorem{application}{Application}
+\newtheorem{myremark}{Remark}[chapter]
+
+\begin{comment}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathcal{N}}
+\end{comment}
+
+
+\newcommand{\minitocboxed}{%
+  \begingroup
+  \tcbstart
+  \begin{tcolorbox}[colback=orange!8, arc=3pt, boxrule=1pt]
+    \minitoc
+  \end{tcolorbox}
+  \tcbend
+  \endgroup
+}
+
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\Cov}{\operatorname{Cov}}
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\as}{\text{ a.s.}}
+\newcommand{\iid}{\stackrel{\text{i.i.d.}}{\sim}}
+\newcommand{\convp}{\xrightarrow{p}}
+\newcommand{\convas}{\xrightarrow{\text{a.s.}}}
+\newcommand{\convd}{\xrightarrow{d}}
+\newcommand{\plim}{\operatorname*{plim}}
+\newcommand{\ind}{\mathbf{1}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Problem box
+\newmdenv[
+    skipabove=7pt,
+    skipbelow=7pt,
+    backgroundcolor=brown!30,
+    linecolor=ocre!50,
+    linewidth=1pt,
+    roundcorner=3pt,
+    innerleftmargin=8pt,
+    innerrightmargin=8pt,
+    innertopmargin=8pt,
+    innerbottommargin=8pt
+]{problembox}
+
+% Description box
+\newmdenv[
+    skipabove=7pt,
+    skipbelow=7pt,
+    rightline=false,
+    leftline=true,
+    topline=false,
+    bottomline=false,
+    linecolor=ocre!50,
+    linewidth=4pt,
+    backgroundcolor=orange!30,
+    innerleftmargin=5pt,
+    innerrightmargin=5pt,
+    innertopmargin=5pt,
+    innerbottommargin=5pt
+]{descriptionbox}
+
+% Shadow box
+\newmdenv[
+    skipabove=7pt,
+    skipbelow=7pt,
+    backgroundcolor=brown!8,
+    linecolor=ocre!50,
+    linewidth=1pt,
+    innerleftmargin=8pt,
+    innerrightmargin=8pt,
+    innertopmargin=8pt,
+    innerbottommargin=8pt
+]{shadowbox}
+
+% Code box
+\newmdenv[
+    skipabove=7pt,
+    skipbelow=7pt,
+    backgroundcolor=brown!8,
+    linecolor=ocre!50,
+    linewidth=1pt,
+    innerleftmargin=8pt,
+    innerrightmargin=8pt,
+    innertopmargin=8pt,
+    innerbottommargin=8pt,
+    font=\small
+]{codeboxbase}
+
+\newenvironment{codebox}
+{\VerbatimEnvironment
+ \begin{codeboxbase}%
+ \begin{Verbatim}}
+{\end{Verbatim}%
+ \end{codeboxbase}}
+
+% Example box
+\newmdenv[
+    skipabove=7pt,
+    skipbelow=7pt,
+    backgroundcolor=orange!8,
+    linecolor=ocre!50,
+    linewidth=1pt,
+    innerleftmargin=8pt,
+    innerrightmargin=8pt,
+    innertopmargin=8pt,
+    innerbottommargin=8pt
+]{examplebox}
+
+% Remark box
+\newenvironment{remarkbox}
+{\begin{mdframed}[
+   backgroundcolor=blue!10,
+   linecolor=blue,
+   linewidth=1pt]
+   \textbf{Remark: }\ignorespaces
+}
+{\end{mdframed}}
+
+
+
+% Algorithm box - simplified
+\newmdenv[
+    skipabove=7pt,
+    skipbelow=7pt,
+    backgroundcolor=yellow!8,
+    linecolor=ocre!50,
+    linewidth=1pt,
+    innerleftmargin=8pt,
+    innerrightmargin=8pt,
+    innertopmargin=8pt,
+    innerbottommargin=8pt
+]{algorithmbox}
+
+\newenvironment{importantbox}[1][]
+  {\begin{mdframed}[
+     backgroundcolor=orange!10,
+     linecolor=orange,
+     linewidth=1pt,
+     frametitle={#1}]
+  }
+  {\end{mdframed}}
+
+% Custom mathematical commands
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\C}{\mathbb{C}}
+
+\DeclareMathOperator{\rank}{rank}
+
+% METADATA FOR PDF - MOVED HERE
+\hypersetup{
+    pdftitle={A General Equation of Science. Implications},
+    pdfauthor={Enrique Castillo Ron and Alfonso Fernández-Canteli},
+    pdfsubject={General Equation of Science},
+    pdfkeywords={Science, Equation, Modeling, Foundations},
+}
+
+\usepackage[tight]{minitoc}
+\dominitoc
+\nomtcrule  % Sin líneas horizontales
+\setlength{\mtcindent}{0pt}  % Sin sangría
+\renewcommand{\mtcfont}{\small\sffamily}  % Fuente pequeña sans-serif
+\renewcommand{\mtcSfont}{\small\sffamily}  % Para secciones
+
+% Entorno shadowbox personalizado
+\newenvironment{pythoncode}
+{\begin{shadowbox}\begin{lstlisting}[language=Python]}
+{\end{lstlisting}\end{shadowbox}}
+
+
+%\includeonly{cap04a_MethodsSolvingFE}
+
+
+\begin{document}
+\setcounter{minitocdepth}{1}
+
+
+%----------------------------------------------------------------------------------------
+%	TITLE PAGE
+%----------------------------------------------------------------------------------------
+\titlepage
+    {\includegraphics[width=210mm,height=297mm]{background.png}}
+    {
+        \centering\sffamily
+        {\Huge\bfseries A General Equation of Science\par}
+        \vspace{16pt}
+        {\LARGE Implications\par}
+        \vspace{24pt}
+        {\huge\bfseries Enrique Castillo Ron\\ and\\ Alfonso Fernández-Canteli\par}
+    }
+
+%----------------------------------------------------------------------------------------
+%	COPYRIGHT PAGE
+%----------------------------------------------------------------------------------------
+
+\thispagestyle{empty}
+
+~\vfill
+
+\noindent Copyright \copyright\ 2025 Enrique Castillo Ron and Alfonso Fernández-Canteli\\
+
+\noindent \textsc{Published by Publisher}\\
+
+\noindent \textsc{\href{https://www.latextemplates.com/template/legrand-orange-book}{book-website.com}}\\
+
+\noindent Licensed under the Creative Commons Attribution-NonCommercial 4.0 License (the ``License''). You may not use this file except in compliance with the License. You may obtain a copy of the License at \url{https://creativecommons.org/licenses/by-nc-sa/4.0}. Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an \textsc{``as is'' basis, without warranties or conditions of any kind}, either express or implied. See the License for the specific language governing permissions and limitations under the License.\\
+
+\noindent \textit{First printing, March 2025}
+
+
+
+%----------------------------------------------------------------------------------------
+%	TABLE OF CONTENTS
+%----------------------------------------------------------------------------------------
+
+\pagestyle{empty}
+%\listoffigures % Comment if not needed
+%\listoftables % Comment if not needed
+
+\pagestyle{fancy}
+
+\tableofcontents
+\adjustmtc
+\cleardoublepage
+
+\begin{comment}
+\renewenvironment{proof}{%
+  \begin{pBox}%
+  \begin{proofT}%
+}{%
+  \end{proofT}%
+  \end{pBox}%
+}
+\end{comment}
+\setcounter{mtc}{0}
+%\setcounter{minitocdepth}{1}
+%\faketableofcontents  % Reinicia completamente minitoc
+%----------------------------------------------------------------------------------------
+%	PART I: WHAT IS THIS BOOK ABOUT?
+%----------------------------------------------------------------------------------------
+
+\chapterimage{orange2.jpg}
+\chapterspaceabove{6.75cm}
+\chapterspacebelow{7.25cm}
+
+\part{What is This Book About}
+\parttoc
+
+
+
+%\begin{comment}
+\input{cap01_intro}
+\input{cap02_historia}
+\input{cap03_buckingham}
+\input{cap04_funcionales}
+%\input{cap04a_MethodsSolvingFEOLD}
+\input{cap04a_MethodsSolvingFE}
+%\input{cap04a_MethodsSolvingFEClaude}
+%\input{cap04a_MethodsSolvingFEchatGPT}
+%\input{cap04a_MethodsSolvingFEGrok}
+%\input{cap04a_MethodsSolvingFEDeepseek}
+
+
+\input{cap05_TranDimensionlessForm}
+
+
+
+
+\input{cap05a_FormBuckFunctions}
+%\input{cap05b_forma_buckingham}
+
+
+
+
+\input{cap06_copulas_intro}
+\input{cap07_copulas_arquimedianas}
+
+
+
+
+%\begin{comment}
+\input{cap08_redes_bayesianas_v2}
+\input{cap09_inferencia_bayesiana}
+\input{cap10_fatiga}
+%\end{comment}
+\input{cap10a_trivariateWeibullHyperbolaModel}
+
+\input{cap11_acciones_interacciones}
+
+
+
+\input{cap12_redes_funcionales}
+\input{cap13_herramientas}
+
+
+
+\input{cap14_conclusiones}
+\input{cap15_futuro}
+
+
+
+\appendix
+\input{apendiceA_probabilidad}
+
+
+
+\input{apendiceB_codigo}
+\input{apendiceC_demostraciones}
+\printbibliography[title={Bibliography}]
+\end{document} 
