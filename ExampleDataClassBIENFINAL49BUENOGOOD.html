@@ -1,0 +1,2607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Data Processing App</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/themes/ui-lightness/jquery-ui.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body { 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+        }
+
+        .card h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #4a5568;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card h2::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 2px;
+        }
+
+        .file-upload-area {
+            border: 2px dashed #cbd5e0;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            margin-bottom: 20px;
+        }
+
+        .file-upload-area:hover {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #edf2f7 0%, #e2e8f0 100%);
+        }
+
+        .file-upload-area.dragover {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%);
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .file-upload-label {
+            display: inline-block;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .file-upload-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .file-info {
+            margin-top: 15px;
+            padding: 10px 15px;
+            background: linear-gradient(135deg, #e6fffa 0%, #b2f5ea 100%);
+            border: 1px solid #38b2ac;
+            border-radius: 8px;
+            color: #234e52;
+            font-weight: 500;
+            font-size: 14px;
+            display: none;
+        }
+
+        .file-info.show {
+            display: block;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 50px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            margin: 5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(72, 187, 120, 0.4);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(72, 187, 120, 0.6);
+        }
+
+        .btn-accent {
+            background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(237, 137, 54, 0.4);
+        }
+
+        .btn-accent:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(237, 137, 54, 0.6);
+        }
+
+        .btn-toggle {
+            background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(159, 122, 234, 0.4);
+        }
+
+        .btn-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(159, 122, 234, 0.6);
+        }
+
+        .btn-toggle.active {
+            background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+            box-shadow: 0 4px 15px rgba(56, 161, 105, 0.4);
+        }
+
+        .btn-alignment {
+            background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(229, 62, 62, 0.4);
+        }
+
+        .btn-alignment:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(229, 62, 62, 0.6);
+        }
+
+        .btn-alignment.active {
+            background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+            box-shadow: 0 4px 15px rgba(245, 101, 101, 0.4);
+        }
+
+        .sortable { 
+            list-style-type: none; 
+            padding: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .sortable li { 
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            border-radius: 12px;
+            cursor: move;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .sortable li:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            border-color: #667eea;
+        }
+
+        .log-recommended { 
+            background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+            color: #c53030;
+            border-color: #fc8181;
+        }
+
+        .log-applied { 
+            background: linear-gradient(135deg, #c6f6d5 0%, #9ae6b4 100%);
+            color: #2f855a;
+            border-color: #68d391;
+        }
+
+        .no-log { 
+            color: #4a5568;
+        }
+
+        .checkbox-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            border-radius: 12px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .checkbox-item:hover {
+            border-color: #667eea;
+            transform: translateY(-1px);
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            margin-right: 12px;
+            transform: scale(1.2);
+            accent-color: #667eea;
+        }
+
+        .checkbox-item label {
+            font-weight: 500;
+            cursor: pointer;
+            flex: 1;
+        }
+
+        .disabled-label {
+            opacity: 0.5;
+            cursor: not-allowed !important;
+        }
+
+        .disabled-label:hover {
+            border-color: transparent !important;
+            transform: none !important;
+        }
+
+        .table-container {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            background: white;
+            max-height: 500px;
+            position: relative;
+        }
+
+        .table-header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: #1a202c;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .table-body {
+            max-height: 400px;
+            overflow-y: auto;
+            overflow-x: auto;
+        }
+
+        table { 
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th, td { 
+            padding: 15px 12px;
+            text-align: right;
+            border-bottom: 1px solid #e2e8f0;
+            white-space: nowrap;
+        }
+
+        th { 
+            background: #1a202c !important;
+            color: #ffffff !important;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            position: sticky;
+            top: 0;
+            z-index: 5;
+        }
+
+        tbody tr {
+            transition: all 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background-color: #f7fafc;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+
+        tbody tr:nth-child(even):hover {
+            background-color: #f0f4f8;
+        }
+
+        #feedback, #logFeedback, #reorderFeedback { 
+            margin-top: 15px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-weight: 500;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        #feedback.show, #logFeedback.show, #reorderFeedback.show {
+            opacity: 1;
+        }
+
+        #logFeedback.error { 
+            background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+            color: #c53030;
+            border: 1px solid #fc8181;
+        }
+
+        #feedback, #reorderFeedback {
+            background: linear-gradient(135deg, #c6f6d5 0%, #9ae6b4 100%);
+            color: #2f855a;
+            border: 1px solid #68d391;
+        }
+
+        #parallelPlot { 
+            width: 100%; 
+            height: 600px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            background: linear-gradient(135deg, #fff5e6 0%, #ffe4b3 100%);
+        }
+
+        .percentage-input {
+            width: 60px;
+            font-size: 12px;
+            text-align: center;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 6px;
+            padding: 4px;
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: absolute;
+            z-index: 1000;
+        }
+
+        .percentage-input:focus {
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .plot-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-group label {
+            font-weight: 500;
+            color: #4a5568;
+            white-space: nowrap;
+        }
+
+        .control-group input[type="number"] {
+            width: 80px;
+            padding: 8px;
+            border: 2px solid #667eea;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .control-group span {
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .probability-field {
+            padding: 8px 12px;
+            background: linear-gradient(135deg, #e6fffa 0%, #b2f5ea 100%);
+            border: 2px solid #38b2ac;
+            border-radius: 6px;
+            font-weight: 600;
+            color: #234e52;
+            text-align: center;
+            min-width: 100px;
+            box-shadow: 0 2px 8px rgba(56, 178, 172, 0.2);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e2e8f0;
+            border-left: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #718096;
+            font-weight: 500;
+        }
+
+        #percentageInputsContainer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        #percentageInputsContainer input {
+            pointer-events: auto;
+            position: absolute;
+            transform: translateX(-50%); /* Centrar horizontalmente */
+        }
+
+        .detailed-cdf-canvas {
+            width: 100%;
+            height: 300px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .cdf-title {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #4a5568;
+        }
+
+        .cdf-container {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 20px;
+            border: 2px solid #e2e8f0;
+        }
+
+        #percentageInputsContainer input {
+            pointer-events: auto;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .sortable {
+                grid-template-columns: 1fr;
+            }
+            
+            .checkbox-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .plot-controls {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+   <div class="container">
+       <div class="header">
+           <h1>🚀 Advanced Data Analytics</h1>
+           <p>Transform, visualize, and explore your data with modern tools</p>
+       </div>
+
+       <div class="card">
+           <h2>📁 Data Import</h2>
+           <div class="file-upload-area" id="fileUploadArea">
+               <div style="margin-bottom: 15px;">
+                   <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #667eea;">
+                       <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                       <polyline points="14,2 14,8 20,8"></polyline>
+                       <line x1="16" y1="13" x2="8" y2="13"></line>
+                       <line x1="16" y1="17" x2="8" y2="17"></line>
+                       <polyline points="10,9 9,9 8,9"></polyline>
+                   </svg>
+               </div>
+               <input type="file" id="fileInput" accept=".csv,.txt">
+               <label for="fileInput" class="file-upload-label">Choose CSV File</label>
+               <p style="margin-top: 10px; color: #718096; font-size: 14px;">or drag and drop your file here</p>
+           </div>
+           
+           <div class="file-info" id="fileInfo">
+               <strong>📄 File loaded:</strong> <span id="fileName"></span>
+           </div>
+           
+           <div class="loading" id="loadingIndicator">
+               <div class="spinner"></div>
+               <p>Processing your data...</p>
+           </div>
+
+           <div id="dataStats" style="display: none;">
+               <div class="stats-grid">
+                   <div class="stat-card">
+                       <div class="stat-value" id="rowCount">0</div>
+                       <div class="stat-label">Rows</div>
+                   </div>
+                   <div class="stat-card">
+                       <div class="stat-value" id="colCount">0</div>
+                       <div class="stat-label">Columns</div>
+                   </div>
+                   <div class="stat-card">
+                       <div class="stat-value" id="logRecCount">0</div>
+                       <div class="stat-label">Log Recommended</div>
+                   </div>
+               </div>
+           </div>
+
+           <div class="controls-grid">
+               <button class="btn btn-primary" onclick="dataClass.detectLogRecommendations(); dataClass.renderLogCheckboxes();">
+                   🔍 Detect Log Variables
+               </button>
+           </div>
+       </div>
+
+       <div class="card" id="reorderSection" style="display: none;">
+           <h2>🔄 Reorder Variables</h2>
+           <ul id="sortableColumns" class="sortable"></ul>
+           <div id="reorderFeedback"></div>
+       </div>
+
+       <div class="card" id="logSection" style="display: none;">
+           <h2>📊 Logarithmic Transformation</h2>
+           <div id="logCheckboxes" class="checkbox-container"></div>
+           <div id="logFeedback"></div>
+       </div>
+
+       <div class="card" id="exportSection" style="display: none;">
+           <h2>💾 Data Export & Scaling</h2>
+           <div class="controls-grid">
+               <button class="btn btn-secondary" id="toggleScale" onclick="dataClass.toggleScale();">
+                   📏 Show Data in [0,1] Scale
+               </button>
+               <button class="btn btn-accent" onclick="dataClass.saveData();">
+                   💾 Save Data as CSV
+               </button>
+           </div>
+       </div>
+
+       <div class="card" id="tableSection" style="display: none;">
+           <h2>📋 Data Preview</h2>
+           <div class="table-container">
+               <div class="table-header" id="tableHeader"></div>
+               <div class="table-body" id="tableBody"></div>
+           </div>
+       </div>
+
+       <div class="card" id="plotSection" style="display: none;">
+           <h2>📈 Parallel Coordinates Plot</h2>
+           <div class="plot-controls">
+               <div class="control-group">
+                   <label for="conditionalProbability">Conditional Probability:</label>
+                   <div class="probability-field" id="conditionalProbability">0.00000000</div>
+               </div>
+               <div class="control-group">
+                   <button class="btn btn-alignment" id="bottomAligned" onclick="dataClass.toggleBottomAlignment();">
+                       ⬇️ Bottom Aligned
+                   </button>
+                   <button class="btn btn-alignment" id="topAligned" onclick="dataClass.toggleTopAlignment();">
+                       ⬆️ Top Aligned
+                   </button>
+               </div>
+               <div class="control-group">
+                   <label for="globalPercentage">Global Percentage:</label>
+                   <input type="number" id="globalPercentage" min="0" max="100" value="20" step="0.1">
+                   <span>%</span>
+               </div>
+               <div class="control-group">
+                   <button class="btn btn-toggle" id="toggleAllLines" onclick="dataClass.toggleAllLines();">
+                       🔄 Show All Lines
+                   </button>
+               </div>
+           </div>
+           <div style="position: relative;">
+               <canvas id="parallelPlot"></canvas>
+               <div id="percentageInputsContainer"></div>
+           </div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn btn-accent" onclick="dataClass.saveParallelPlotAsPDF();" aria-label="Save plot as PDF">
+                    📄 Save Plot as PDF
+                </button>
+                <button class="btn btn-primary" onclick="dataClass.showDetailedCDFs();" aria-label="Show detailed CDFs">
+                    📊 Show Detailed CDFs
+                </button>
+                <button class="btn btn-primary" onclick="dataClass.resetApp();" aria-label="Reset application">
+                    ❌ Exit
+                </button>
+            </div>
+       </div>
+
+       <div class="card" id="detailedCDFSection" style="display: none;">
+           <h2>📊 Detailed Conditional CDFs</h2>
+        <div style="text-align: center; margin-bottom: 20px;">
+            <button class="btn btn-secondary" onclick="dataClass.hideDetailedCDFs();">
+                ← Back to Parallel Plot
+            </button>
+            <button class="btn btn-accent" onclick="dataClass.saveCDFsAsPDF();">
+                📄 Save CDFs as PDF
+            </button>
+        </div>
+           <div id="detailedCDFContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 30px;"></div>
+       </div>
+   </div>
+   <script>
+        class DataClass {
+            constructor() {
+                this.originalData = [];
+                this.transformedData = [];
+                this.scaledData = [];
+                this.columnNames = [];
+                this.isScaled = false;
+                this.logTransformed = {};
+                this.columnOrder = [];
+                this.logRecommended = {};
+                this.hasNegativeValues = {};
+                this.sliders = {};
+                this.canvas = document.getElementById('parallelPlot');
+                this.ctx = this.canvas.getContext('2d');
+                this.colors = [];
+                this.percentageInputs = {};
+                this.percentagePositions = {};
+                this.originalSliders = {};
+                this.showAllLines = false;
+                this.bottomAligned = false;
+                this.topAligned = false;
+                this.currentFileName = '';
+                
+                this.renderTimeout = null;
+                this.lastRenderTime = 0;
+                this.minRenderInterval = 16;
+                this.globalPercentage = 20;
+                this.exactPercentages = {}; // Nueva propiedad para porcentajes exactos
+
+                
+                this.initCanvas();
+                this.initDragDrop();
+            }
+
+            resetToInitialState() {
+                // Limpiar todos los datos
+                this.originalData = [];
+                this.transformedData = [];
+                this.scaledData = [];
+                this.columnNames = [];
+                this.columnOrder = [];
+                this.logTransformed = {};
+                this.logRecommended = {};
+                this.hasNegativeValues = {};
+                this.sliders = {};
+                this.originalSliders = {};
+                this.percentageInputs = {};
+                this.percentagePositions = {};
+                this.colors = [];
+                this.exactPercentages = {};
+                
+                // Resetear estados UI
+                this.isScaled = false;
+                this.showAllLines = false;
+                this.bottomAligned = false;
+                this.topAligned = false;
+                this.globalPercentage = 20;
+                
+                // Limpiar elementos de la interfaz
+                this.clearPercentageInputs();
+                document.getElementById('sortableColumns').innerHTML = '';
+                document.getElementById('logCheckboxes').innerHTML = '';
+                document.getElementById('tableHeader').innerHTML = '';
+                document.getElementById('tableBody').innerHTML = '';
+                document.getElementById('detailedCDFContainer').innerHTML = '';
+                
+                // Resetear controles UI
+                document.getElementById('globalPercentage').value = '20';
+                document.getElementById('toggleScale').textContent = '📏 Show Data in [0,1] Scale';
+                document.getElementById('toggleAllLines').textContent = '🔄 Show All Lines';
+                document.getElementById('toggleAllLines').classList.remove('active');
+                document.getElementById('bottomAligned').textContent = '⬇️ Bottom Aligned';
+                document.getElementById('bottomAligned').classList.remove('active');
+                document.getElementById('topAligned').textContent = '⬆️ Top Aligned';
+                document.getElementById('topAligned').classList.remove('active');
+                document.getElementById('conditionalProbability').textContent = '0.00000000';
+                
+                // Resetear estadísticas
+                document.getElementById('rowCount').textContent = '0';
+                document.getElementById('colCount').textContent = '0';
+                document.getElementById('logRecCount').textContent = '0';
+                
+                // Ocultar secciones
+                ['reorderSection', 'logSection', 'exportSection', 'tableSection', 'plotSection', 'detailedCDFSection', 'dataStats'].forEach(id => {
+                    document.getElementById(id).style.display = 'none';
+                });
+                
+                // Limpiar canvas
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Limpiar timeouts
+                if (this.renderTimeout) {
+                    clearTimeout(this.renderTimeout);
+                    this.renderTimeout = null;
+                }
+            }
+            async loadFile(file) {
+                this.showLoading();
+                
+                // Resetear a estado inicial antes de cargar nuevos datos
+                this.resetToInitialState();
+                
+                try {
+                    // Guardar el nombre del archivo
+                    this.currentFileName = file.name;
+                    
+                    const text = await file.text();
+                    const lines = text.trim().split('\n');
+                    this.columnNames = lines[0].split(',').map(name => name.trim());
+                    this.columnOrder = [...this.columnNames];
+                    this.originalData = lines.slice(1).map(line => 
+                        line.split(',').map(val => parseFloat(val.trim()))
+                    );
+                    this.transformedData = JSON.parse(JSON.stringify(this.originalData));
+                    
+                    // Mostrar información del archivo
+                    document.getElementById('fileName').textContent = this.currentFileName;
+                    document.getElementById('fileInfo').classList.add('show');
+                    
+                    this.clearPercentageInputs();
+                    
+                    this.detectLogRecommendations();
+                    this.logTransformed = Object.fromEntries(this.columnNames.map(name => [name, false]));
+                    
+                    this.columnNames.forEach(name => {
+                        if (this.logRecommended[name] && !this.hasNegativeValues[name]) {
+                            this.logTransformed[name] = true;
+                        }
+                    });
+                    
+                    this.applyTransformations();
+                    this.colors = this.originalData.map((_, i) => this.colorSelection(i, this.originalData.length));
+                    this.renderColumnList();
+                    this.renderLogCheckboxes();
+                    this.renderTable();
+                    
+                    // Llamar a toggleScale() aquí para iniciar en escala [0,1]
+                    this.toggleScale(); // Esto cambiará isScaled a true y renderizará en escala [0,1]
+                    
+                    setTimeout(() => {
+                        this.resizeCanvas();
+                        this.renderParallelPlot();
+                    }, 100);
+                    
+                    this.updateStats();
+                    this.showSections();
+                } catch (error) {
+                    console.error('Error loading file:', error);
+                    alert('Error loading file. Please check the file format.');
+                } finally {
+                    this.hideLoading();
+                }
+            }
+
+            updateAllSlidersToGlobalPercentage() {
+                this.columnOrder.forEach(name => {
+                    this.updateSliderFromPercentage(name, this.globalPercentage);
+                });
+                
+                Object.keys(this.percentageInputs).forEach(name => {
+                    const input = this.percentageInputs[name];
+                    if (input && document.activeElement !== input) {
+                        input.value = this.globalPercentage.toFixed(1);
+                    }
+                });
+                
+                this.debouncedRender();
+            }
+
+            updateSliderFromPercentage(name, percentage) {
+                this.exactPercentages[name] = percentage; // Actualizar porcentaje exacto
+                const colIndex = this.columnNames.indexOf(name);
+                const values = this.transformedData.map(row => row[colIndex]).filter(v => !isNaN(v));
+                if (values.length === 0) return;
+                
+                const sortedValues = [...values].sort((a, b) => a - b);
+                const targetCount = Math.round(values.length * percentage / 100);
+                
+                if (targetCount === 0) {
+                    this.originalSliders[name].min = sortedValues[0];
+                    this.originalSliders[name].max = sortedValues[0];
+                } else if (targetCount >= values.length) {
+                    this.originalSliders[name].min = sortedValues[0];
+                    this.originalSliders[name].max = sortedValues[sortedValues.length - 1];
+                } else {
+                    if (this.bottomAligned) {
+                        // Alinear al fondo - mantener min fijo, cambiar max
+                        this.originalSliders[name].min = sortedValues[0];
+                        this.originalSliders[name].max = sortedValues[targetCount - 1];
+                    } else if (this.topAligned) {
+                        // Alinear arriba - mantener max fijo, cambiar min
+                        this.originalSliders[name].min = sortedValues[sortedValues.length - targetCount];
+                        this.originalSliders[name].max = sortedValues[sortedValues.length - 1];
+                    } else {
+                        // Centrado - mantener la posición central actual si es posible
+                        const currentSlider = this.originalSliders[name];
+                        if (currentSlider) {
+                            const currentCenter = (currentSlider.min + currentSlider.max) / 2;
+                            
+                            // Encontrar el rango que esté más cerca del centro actual
+                            let bestRange = Infinity;
+                            let bestMin = sortedValues[0];
+                            let bestMax = sortedValues[targetCount - 1];
+                            
+                            for (let i = 0; i <= sortedValues.length - targetCount; i++) {
+                                const rangeMin = sortedValues[i];
+                                const rangeMax = sortedValues[i + targetCount - 1];
+                                const rangeCenter = (rangeMin + rangeMax) / 2;
+                                const distanceToCurrentCenter = Math.abs(rangeCenter - currentCenter);
+                                
+                                if (distanceToCurrentCenter < bestRange) {
+                                    bestRange = distanceToCurrentCenter;
+                                    bestMin = rangeMin;
+                                    bestMax = rangeMax;
+                                }
+                            }
+                            
+                            this.originalSliders[name].min = bestMin;
+                            this.originalSliders[name].max = bestMax;
+                        } else {
+                            // Si no hay slider actual, usar comportamiento original (centrado en mediana)
+                            const medianIndex = Math.floor(sortedValues.length / 2);
+                            const centerValue = sortedValues[medianIndex];
+                            
+                            let bestRange = Infinity;
+                            let bestMin = sortedValues[0];
+                            let bestMax = sortedValues[targetCount - 1];
+                            
+                            for (let i = 0; i <= sortedValues.length - targetCount; i++) {
+                                const rangeMin = sortedValues[i];
+                                const rangeMax = sortedValues[i + targetCount - 1];
+                                const rangeMid = (rangeMin + rangeMax) / 2;
+                                const distanceToCenter = Math.abs(rangeMid - centerValue);
+                                
+                                if (distanceToCenter < bestRange) {
+                                    bestRange = distanceToCenter;
+                                    bestMin = rangeMin;
+                                    bestMax = rangeMax;
+                                }
+                            }
+                            
+                            this.originalSliders[name].min = bestMin;
+                            this.originalSliders[name].max = bestMax;
+                        }
+                    }
+                }
+                
+                if (this.isScaled) {
+                    this.sliders[name] = this.convertSliderToScaled(name);
+                } else {
+                    this.sliders[name] = { ...this.originalSliders[name] };
+                }
+            }
+            initCanvas() {
+                this.resizeCanvas();
+                this.canvas.addEventListener('mousedown', this.handleMouseDown.bind(this));
+                this.canvas.addEventListener('mousemove', this.throttleMouseMove.bind(this));
+                this.canvas.addEventListener('mouseup', this.handleMouseUp.bind(this));
+                
+                window.addEventListener('resize', () => {
+                    this.resizeCanvas();
+                    if (this.transformedData.length > 0) {
+                        this.debouncedRender();
+                    }
+                });
+            }
+
+            throttleMouseMove(e) {
+                const now = Date.now();
+                if (now - this.lastRenderTime >= this.minRenderInterval) {
+                    this.handleMouseMove(e);
+                    this.lastRenderTime = now;
+                }
+            }
+
+            debouncedRender() {
+                if (this.renderTimeout) {
+                    clearTimeout(this.renderTimeout);
+                }
+                this.renderTimeout = setTimeout(() => {
+                    this.renderParallelPlot();
+                }, 5);
+            }
+
+            resizeCanvas() {
+                const rect = this.canvas.getBoundingClientRect();
+                this.canvas.width = rect.width;
+                this.canvas.height = rect.height;
+            }
+
+            initDragDrop() {
+                const area = document.getElementById('fileUploadArea');
+                
+                area.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    area.classList.add('dragover');
+                });
+                
+                area.addEventListener('dragleave', () => {
+                    area.classList.remove('dragover');
+                });
+                
+                area.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    area.classList.remove('dragover');
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        this.loadFile(files[0]);
+                    }
+                });
+            }
+
+            colorSelection(index, total) {
+                const hue = (index / total) * 360;
+                return `hsla(${hue}, 70%, 50%, 0.5)`;
+            }
+
+            showLoading() {
+                document.getElementById('loadingIndicator').classList.add('show');
+            }
+
+            hideLoading() {
+                document.getElementById('loadingIndicator').classList.remove('show');
+            }
+
+            showSections() {
+                ['reorderSection', 'logSection', 'exportSection', 'tableSection', 'plotSection', 'dataStats'].forEach(id => {
+                    document.getElementById(id).style.display = 'block';
+                });
+            }
+
+            updateStats() {
+                document.getElementById('rowCount').textContent = this.originalData.length;
+                document.getElementById('colCount').textContent = this.columnNames.length;
+                document.getElementById('logRecCount').textContent = Object.values(this.logRecommended).filter(v => v).length;
+            }
+
+            updateConditionalProbability() {
+                if (this.originalData.length === 0) {
+                    document.getElementById('conditionalProbability').textContent = '0.00000000';
+                    return;
+                }
+
+                let validSamples = 0;
+                for (let rowIdx = 0; rowIdx < this.originalData.length; rowIdx++) {
+                    let isValidSample = true;
+                    
+                    for (const name of this.columnOrder) {
+                        const origSlider = this.originalSliders[name];
+                        if (origSlider) {
+                            const currentColIndex = this.columnNames.indexOf(name);
+                            const origVal = this.transformedData[rowIdx][currentColIndex];
+                            if (isNaN(origVal) || origVal < origSlider.min || origVal > origSlider.max) {
+                                isValidSample = false;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    if (isValidSample) {
+                        validSamples++;
+                    }
+                }
+
+                const probability = validSamples / this.originalData.length;
+                document.getElementById('conditionalProbability').textContent = probability.toFixed(8);
+            }
+
+            toggleBottomAlignment() {
+                this.bottomAligned = !this.bottomAligned;
+                if (this.bottomAligned) {
+                    this.topAligned = false;
+                    document.getElementById('topAligned').classList.remove('active');
+                    document.getElementById('topAligned').textContent = '⬆️ Top Aligned';
+                }
+                
+                const btn = document.getElementById('bottomAligned');
+                if (this.bottomAligned) {
+                    btn.classList.add('active');
+                    btn.textContent = '⬇️ Bottom Aligned (ON)';
+                } else {
+                    btn.classList.remove('active');
+                    btn.textContent = '⬇️ Bottom Aligned';
+                }
+                
+                this.applyAlignment();
+            }
+
+            toggleTopAlignment() {
+                this.topAligned = !this.topAligned;
+                if (this.topAligned) {
+                    this.bottomAligned = false;
+                    document.getElementById('bottomAligned').classList.remove('active');
+                    document.getElementById('bottomAligned').textContent = '⬇️ Bottom Aligned';
+                }
+                
+                const btn = document.getElementById('topAligned');
+                if (this.topAligned) {
+                    btn.classList.add('active');
+                    btn.textContent = '⬆️ Top Aligned (ON)';
+                } else {
+                    btn.classList.remove('active');
+                    btn.textContent = '⬆️ Top Aligned';
+                }
+                
+                this.applyAlignment();
+            }
+
+            applyAlignment() {
+                this.columnOrder.forEach(name => {
+                    const colIndex = this.columnNames.indexOf(name);
+                    const values = this.transformedData.map(row => row[colIndex]).filter(v => !isNaN(v));
+                    if (values.length === 0) return;
+                    
+                    const sortedValues = [...values].sort((a, b) => a - b);
+                    
+                    // Usar el porcentaje exacto almacenado
+                    const exactPercentage = this.exactPercentages[name] || this.globalPercentage;
+                    const targetCount = Math.round(values.length * exactPercentage / 100);
+                    
+                    if (!this.originalSliders[name]) return;
+                    
+                    if (this.bottomAligned) {
+                        this.originalSliders[name].min = sortedValues[0];
+                        this.originalSliders[name].max = sortedValues[Math.max(0, Math.min(targetCount - 1, sortedValues.length - 1))];
+                    } else if (this.topAligned) {
+                        this.originalSliders[name].min = sortedValues[Math.max(0, sortedValues.length - targetCount)];
+                        this.originalSliders[name].max = sortedValues[sortedValues.length - 1];
+                    }
+                    
+                    if (this.isScaled) {
+                        this.sliders[name] = this.convertSliderToScaled(name);
+                    } else {
+                        this.sliders[name] = { ...this.originalSliders[name] };
+                    }
+                });
+                
+                this.debouncedRender();
+            }
+
+            // Método para alternar entre mostrar todas las líneas o solo un subconjunto
+            toggleAllLines() {
+                this.showAllLines = !this.showAllLines;
+                const btn = document.getElementById('toggleAllLines');
+                
+                if (this.showAllLines) {
+                    btn.textContent = '🔄 Show Sample';
+                    btn.classList.add('active');
+                } else {
+                    btn.textContent = '🔄 Show All Lines';
+                    btn.classList.remove('active');
+                }
+                
+                this.debouncedRender();
+            }
+
+            clearPercentageInputs() {
+                Object.values(this.percentageInputs).forEach(input => {
+                    if (input.parentNode) {
+                        input.parentNode.removeChild(input);
+                    }
+                });
+                this.percentageInputs = {};
+                this.percentagePositions = {};
+            }
+
+            reinitializeSliders() {
+                this.clearPercentageInputs();
+                this.initSliders();
+                this.updatePercentageInputPositions();
+            }
+
+            computeScaledData() {
+                this.scaledData = JSON.parse(JSON.stringify(this.transformedData));
+                this.columnOrder.forEach((name, colIdx) => {
+                    const origIdx = this.columnNames.indexOf(name);
+                    const values = this.transformedData.map(row => row[origIdx]).filter(v => !isNaN(v)).sort((a, b) => a - b);
+                    if (values.length === 0) return;
+                    
+                    const n = values.length;
+                    const rankMap = new Map();
+                    values.forEach((val, i) => rankMap.set(val, (i + 1) / n));
+                    
+                    this.scaledData.forEach(row => {
+                        const val = row[origIdx];
+                        row[colIdx] = isNaN(val) ? NaN : rankMap.get(val) || (values.indexOf(val) + 1) / n;
+                    });
+                });
+            }
+
+            convertSliderToScaled(name) {
+                const origSlider = this.originalSliders[name];
+                if (!origSlider) return null;
+                
+                const colIndex = this.columnNames.indexOf(name);
+                const values = this.transformedData.map(row => row[colIndex]).filter(v => !isNaN(v));
+                if (values.length === 0) return null;
+                
+                const sortedValues = [...values].sort((a, b) => a - b);
+                const n = sortedValues.length;
+                const rankMap = new Map();
+                sortedValues.forEach((val, i) => rankMap.set(val, (i + 1) / n));
+                
+                return {
+                    min: rankMap.get(origSlider.min) || 0,
+                    max: rankMap.get(origSlider.max) || 1,
+                    isDragging: false,
+                    dragHandle: null
+                };
+            }
+
+            convertSliderToOriginal(name, scaledSlider) {
+                const colIndex = this.columnNames.indexOf(name);
+                const values = this.transformedData.map(row => row[colIndex]).filter(v => !isNaN(v));
+                if (values.length === 0) return null;
+                
+                const sortedValues = [...values].sort((a, b) => a - b);
+                const n = sortedValues.length;
+                
+                const minIndex = Math.floor(scaledSlider.min * n);
+                const maxIndex = Math.floor(scaledSlider.max * n);
+                
+                return {
+                    min: sortedValues[Math.max(0, Math.min(minIndex, n - 1))],
+                    max: sortedValues[Math.max(0, Math.min(maxIndex, n - 1))],
+                    isDragging: false,
+                    dragHandle: null
+                };
+            }
+
+            initSliders() {
+                this.sliders = {};
+                
+                this.columnOrder.forEach(name => {
+                    const colIndex = this.columnNames.indexOf(name);
+                    const values = this.transformedData.map(row => row[colIndex]).filter(v => !isNaN(v));
+                    if (values.length === 0) return;
+                    
+                    if (this.originalSliders[name]) {
+                        if (this.isScaled) {
+                            this.sliders[name] = this.convertSliderToScaled(name);
+                        } else {
+                            this.sliders[name] = { ...this.originalSliders[name] };
+                        }
+                    } else {
+                        const sortedValues = [...values].sort((a, b) => a - b);
+                        const medianIndex = Math.floor(sortedValues.length / 2);
+                        const centerValue = sortedValues[medianIndex];
+                        
+                        const targetPercentage = this.globalPercentage / 100;
+                        const targetCount = Math.max(1, Math.floor(values.length * targetPercentage));
+                        
+                        let bestMin = centerValue;
+                        let bestMax = centerValue;
+                        let bestRange = Infinity;
+                        
+                        for (let i = 0; i <= sortedValues.length - targetCount; i++) {
+                            const rangeMin = sortedValues[i];
+                            const rangeMax = sortedValues[i + targetCount - 1];
+                            const rangeMid = (rangeMin + rangeMax) / 2;
+                            const distanceToCenter = Math.abs(rangeMid - centerValue);
+                            
+                            if (distanceToCenter < bestRange) {
+                                bestRange = distanceToCenter;
+                                bestMin = rangeMin;
+                                bestMax = rangeMax;
+                            }
+                        }
+                        
+                        this.originalSliders[name] = {
+                            min: bestMin,
+                            max: bestMax,
+                            isDragging: false,
+                            dragHandle: null
+                        };
+
+                        this.exactPercentages[name] = this.globalPercentage; // Guardar el porcentaje exacto
+                        
+                        if (this.isScaled) {
+                            this.sliders[name] = this.convertSliderToScaled(name);
+                        } else {
+                            this.sliders[name] = { ...this.originalSliders[name] };
+                        }
+                    }
+                });
+                
+                setTimeout(() => {
+                    this.updatePercentageInputPositions();
+                }, 100);
+            }
+
+            detectLogRecommendations() {
+                this.logRecommended = {};
+                this.hasNegativeValues = {};
+                this.columnNames.forEach((name, idx) => {
+                    const values = this.originalData.map(row => row[idx]).filter(v => !isNaN(v));
+                    this.hasNegativeValues[name] = values.some(v => v <= 0);
+                    
+                    if (this.hasNegativeValues[name]) {
+                        this.logRecommended[name] = false;
+                        return;
+                    }
+                    
+                    const positiveValues = values.filter(v => v > 0);
+                    if (positiveValues.length === 0) {
+                        this.logRecommended[name] = false;
+                        return;
+                    }
+                    
+                    const max = Math.max(...positiveValues);
+                    const min = Math.min(...positiveValues);
+                    this.logRecommended[name] = max / min > 100;
+                });
+            }
+
+            renderColumnList() {
+                const ul = document.getElementById('sortableColumns');
+                ul.innerHTML = '';
+                this.columnOrder.forEach(name => {
+                    const li = document.createElement('li');
+                    li.textContent = this.logTransformed[name] && !this.hasNegativeValues[name] ? `log(${name})` : name;
+                    li.setAttribute('data-name', name);
+                    li.className = this.logTransformed[name] && !this.hasNegativeValues[name] ? 'log-applied' : (this.logRecommended[name] ? 'log-recommended' : 'no-log');
+                    ul.appendChild(li);
+                });
+                
+                $(ul).sortable({
+                    update: () => {
+                        this.columnOrder = $(ul).sortable('toArray', { attribute: 'data-name' });
+                        this.applyTransformations();
+                        this.showFeedback('reorderFeedback', 'Reordering applied');
+                    }
+                });
+            }
+
+            renderLogCheckboxes() {
+                const div = document.getElementById('logCheckboxes');
+                div.innerHTML = '';
+                this.columnNames.forEach(name => {
+                    const checkboxItem = document.createElement('div');
+                    checkboxItem.className = 'checkbox-item';
+                    
+                    const isDisabled = this.hasNegativeValues[name];
+                    
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.setAttribute('data-name', name);
+                    checkbox.checked = this.logTransformed[name] && !isDisabled;
+                    if (this.logRecommended[name] && !isDisabled && !this.logTransformed[name]) {
+                        checkbox.checked = false;
+                    }
+                    checkbox.disabled = isDisabled;
+                    
+                    const label = document.createElement('label');
+                    label.textContent = this.logTransformed[name] && !isDisabled ? `log(${name})` : name;
+                    label.className = this.logTransformed[name] && !isDisabled ? 'log-applied' : 'no-log';
+                    
+                    if (isDisabled) {
+                        checkboxItem.classList.add('disabled-label');
+                        checkboxItem.title = `Cannot apply log transformation to ${name} due to negative or zero values`;
+                    }
+                    
+                    checkboxItem.appendChild(checkbox);
+                    checkboxItem.appendChild(label);
+                    div.appendChild(checkboxItem);
+                    
+                    if (isDisabled) {
+                        checkbox.addEventListener('click', () => {
+                            this.showFeedback('logFeedback', `Cannot apply log transformation to ${name} due to negative or zero values`, true);
+                        });
+                    } else {
+                        checkbox.addEventListener('change', (e) => {
+                            this.logTransformed[name] = e.target.checked;
+                            this.applyTransformations();
+                            this.renderColumnList();
+                            this.renderLogCheckboxes();
+                            this.reinitializeSliders();
+                            this.showFeedback('logFeedback', 'Log transformations applied');
+                        });
+                    }
+                });
+            }
+
+            showFeedback(elementId, message, isError = false) {
+                const element = document.getElementById(elementId);
+                element.textContent = message;
+                element.className = isError ? 'error show' : 'show';
+                setTimeout(() => {
+                    element.classList.remove('show');
+                    if (isError) element.classList.remove('error');
+                }, 3000);
+            }
+
+            applyTransformations() {
+                const newData = this.originalData.map(row => {
+                    const reordered = [];
+                    this.columnOrder.forEach(name => {
+                        const idx = this.columnNames.indexOf(name);
+                        reordered.push(row[idx]);
+                    });
+                    return reordered;
+                });
+                
+                this.transformedData = newData.map(row => {
+                    const newRow = [...row];
+                    this.columnOrder.forEach((name, idx) => {
+                        if (this.logTransformed[name] && !this.hasNegativeValues[name]) {
+                            newRow[idx] = newRow[idx] > 0 ? Math.log10(newRow[idx]) : NaN;
+                        }
+                    });
+                    return newRow;
+                });
+                
+                this.computeScaledData();
+                this.originalSliders = {};
+                this.initSliders();
+                this.clearPercentageInputs();
+                this.renderTable();
+                this.debouncedRender();
+            }
+
+            calculatePercentageFromOriginal(name) {
+                const origSlider = this.originalSliders[name];
+                if (!origSlider) return 0;
+                
+                const colIndex = this.columnNames.indexOf(name);
+                const values = this.transformedData.map(row => row[colIndex]).filter(v => !isNaN(v));
+                if (values.length === 0) return 0;
+                
+                const inRange = values.filter(v => v >= origSlider.min && v <= origSlider.max).length;
+                return (inRange / values.length * 100);
+            }
+
+            toggleScale() {
+                this.isScaled = !this.isScaled;
+                document.getElementById('toggleScale').textContent = 
+                    this.isScaled ? '📏 Show Data in Original Scale' : '📏 Show Data in [0,1] Scale';
+                
+                this.initSliders();
+                this.renderTable();
+                this.debouncedRender();
+            }
+
+            renderTable() {
+                const dataToShow = this.isScaled ? this.scaledData : this.transformedData;
+                
+                const headerContainer = document.getElementById('tableHeader');
+                headerContainer.innerHTML = '';
+                const headerTable = document.createElement('table');
+                const thead = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                
+                this.columnOrder.forEach(name => {
+                    const th = document.createElement('th');
+                    th.textContent = this.logTransformed[name] && !this.hasNegativeValues[name] ? `log(${name})` : name;
+                    th.className = this.logTransformed[name] && !this.hasNegativeValues[name] ? 'log-applied' : 'no-log';
+                    headerRow.appendChild(th);
+                });
+                
+                thead.appendChild(headerRow);
+                headerTable.appendChild(thead);
+                headerContainer.appendChild(headerTable);
+                
+                const bodyContainer = document.getElementById('tableBody');
+                bodyContainer.innerHTML = '';
+                const bodyTable = document.createElement('table');
+                const tbody = document.createElement('tbody');
+                
+                dataToShow.forEach(row => {
+                    const tr = document.createElement('tr');
+                    row.forEach(val => {
+                        const td = document.createElement('td');
+                        td.textContent = isNaN(val) ? 'NaN' : val.toFixed(4);
+                        tr.appendChild(td);
+                    });
+                    tbody.appendChild(tr);
+                });
+                
+                bodyTable.appendChild(tbody);
+                bodyContainer.appendChild(bodyTable);
+            }
+
+            updatePercentageInputPositions() {
+                // Los inputs ahora están posicionados relativos al canvas, no necesitan actualización en scroll
+                if (!this.canvas) return;
+                
+                Object.keys(this.percentageInputs).forEach(name => {
+                    const input = this.percentageInputs[name];
+                    const pos = this.percentagePositions[name];
+                    if (input && pos) {
+                        input.style.left = `${pos.x}px`;
+                        input.style.top = `${pos.y}px`;
+                    }
+                });
+            }
+
+            drawEmpiricalCDF(ctx, x, y, width, height, variableIndex, allData) {
+                if (allData.length === 0) return;
+                
+                const conditionalData = [];
+                allData.forEach(row => {
+                    let isValidRow = true;
+                    
+                    this.columnOrder.forEach((name, colIdx) => {
+                        if (colIdx === variableIndex) return;
+                        
+                        const origSlider = this.originalSliders[name];
+                        if (origSlider) {
+                            const currentColIndex = this.columnNames.indexOf(name);
+                            const origVal = this.transformedData[allData.indexOf(row)][currentColIndex];
+                            if (isNaN(origVal) || origVal < origSlider.min || origVal > origSlider.max) {
+                                isValidRow = false;
+                            }
+                        }
+                    });
+                    
+                    if (isValidRow) {
+                        const currentVarValue = row[variableIndex];
+                        if (!isNaN(currentVarValue)) {
+                            conditionalData.push(currentVarValue);
+                        }
+                    }
+                });
+                
+                if (conditionalData.length === 0) {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                    ctx.fillRect(x, y, width, height);
+                    ctx.strokeStyle = '#ddd';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(x, y, width, height);
+                    
+                    ctx.fillStyle = '#999';
+                    ctx.font = '10px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('No data', x + width/2, y + height/2);
+                    return;
+                }
+                
+                const sortedValues = [...conditionalData].sort((a, b) => a - b);
+                const min = Math.min(...sortedValues);
+                const max = Math.max(...sortedValues);
+                
+                if (min === max) {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                    ctx.fillRect(x, y, width, height);
+                    ctx.strokeStyle = '#ddd';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(x, y, width, height);
+                    
+                    ctx.strokeStyle = '#4CAF50';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(x + width/2, y);
+                    ctx.lineTo(x + width/2, y + height);
+                    ctx.stroke();
+                } else {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                    ctx.fillRect(x, y, width, height);
+                    ctx.strokeStyle = '#ddd';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(x, y, width, height);
+                    
+                    ctx.strokeStyle = '#4CAF50';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    
+                    let firstPoint = true;
+                    for (let i = 0; i < sortedValues.length; i++) {
+                        const value = sortedValues[i];
+                        const cdfValue = (i + 1) / sortedValues.length;
+                        
+                        const plotX = x + ((value - min) / (max - min)) * width;
+                        const plotY = y + height - (cdfValue * height);
+                        
+                        if (firstPoint) {
+                            ctx.moveTo(plotX, plotY);
+                            firstPoint = false;
+                        } else {
+                            ctx.lineTo(plotX, plotY);
+                        }
+                    }
+                    ctx.stroke();
+                }
+                
+                ctx.fillStyle = '#666';
+                ctx.font = '10px Arial';
+                ctx.textAlign = 'center';
+                
+                if (sortedValues.length > 0) {
+                    ctx.fillText(min.toFixed(1), x, y + height + 12);
+                    ctx.fillText(max.toFixed(1), x + width, y + height + 12);
+                }
+                
+                ctx.textAlign = 'right';
+                ctx.fillText('0', x - 3, y + height);
+                ctx.fillText('1', x - 3, y + 5);
+                
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#333';
+                ctx.font = 'bold 10px Arial';
+                ctx.fillText(`CDF (n=${conditionalData.length})`, x + width/2, y - 5);
+            }
+
+            renderParallelPlot() {
+                const ctx = this.ctx;
+                const width = this.canvas.width;
+                const height = this.canvas.height;
+                ctx.clearRect(0, 0, width, height);
+                
+                if (!this.transformedData.length || !this.columnOrder.length) return;
+
+                const dataToShow = this.isScaled ? this.scaledData : this.transformedData;
+                const axisWidth = 3;
+                const margin = { top: 50, bottom: 140, left: 50, right: 50 };
+                const plotHeight = height - margin.top - margin.bottom;
+                const plotWidth = width - margin.left - margin.right;
+                const axisSpacing = plotWidth / (this.columnOrder.length - 1 || 1);
+                
+                const cdfWidth = Math.min(80, axisSpacing * 0.8);
+                const cdfHeight = 60;
+                const cdfYOffset = margin.top + plotHeight + 50;
+
+                // Controlar el número de líneas basado en showAllLines
+                let step;
+                if (this.showAllLines) {
+                    step = 1;
+                } else {
+                    const maxLines = this.isScaled ? 300 : 200;
+                    step = Math.max(1, Math.floor(dataToShow.length / maxLines));
+                }
+                
+                // Dibujar líneas de fondo
+                for (let rowIdx = 0; rowIdx < dataToShow.length; rowIdx += step) {
+                    const row = dataToShow[rowIdx];
+                    ctx.beginPath();
+                    ctx.strokeStyle = this.colors[rowIdx] ? this.colors[rowIdx].replace('0.5', '0.2') : 'rgba(100,100,100,0.2)';
+                    ctx.lineWidth = 1;
+                    
+                    let validPath = false;
+                    this.columnOrder.forEach((name, i) => {
+                        const x = margin.left + i * axisSpacing;
+                        const val = row[i];
+                        if (isNaN(val)) return;
+                        
+                        let y;
+                        if (this.isScaled) {
+                            y = margin.top + plotHeight * (1 - val);
+                        } else {
+                            const values = dataToShow.map(row => row[i]).filter(v => !isNaN(v));
+                            if (values.length === 0) return;
+                            
+                            let min = Math.min(...values);
+                            let max = Math.max(...values);
+                            const isLog = this.logTransformed[name] && !this.hasNegativeValues[name];
+                            
+                            if (isLog) {
+                                min = Math.max(min, 0.0001);
+                                const logMin = Math.log10(Math.max(min, 0.0001));
+                                const logMax = Math.log10(max);
+                                const logVal = Math.log10(Math.max(val, 0.0001));
+                                y = margin.top + plotHeight * (1 - (logVal - logMin) / (logMax - logMin));
+                            } else {
+                                y = margin.top + plotHeight * (1 - (val - min) / (max - min));
+                            }
+                        }
+                        
+                        if (!validPath) {
+                            ctx.moveTo(x, y);
+                            validPath = true;
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                    });
+                    if (validPath) ctx.stroke();
+                }
+
+                // Dibujar líneas destacadas (usar filtros basados en datos originales)
+                const highlightedRows = [];
+                dataToShow.forEach((row, rowIdx) => {
+                    const isInRange = this.columnOrder.every((name, i) => {
+                        const slider = this.sliders[name]; // ← Usar sliders en lugar de originalSliders
+                        if (!slider) return true;
+                        
+                        const val = row[i]; // ← Usar el valor de dataToShow directamente
+                        return val >= slider.min && val <= slider.max;
+                    });
+                    
+                    if (isInRange) {
+                        highlightedRows.push({row, rowIdx});
+                    }
+                });
+
+                // Ajustar el número de líneas destacadas basado en showAllLines
+                let highlightStep;
+                if (this.showAllLines) {
+                    highlightStep = 1;
+                } else {
+                    const maxHighlighted = 50;
+                    highlightStep = Math.max(1, Math.floor(highlightedRows.length / maxHighlighted));
+                }
+
+                for (let i = 0; i < highlightedRows.length; i += highlightStep) {
+                    const {row, rowIdx} = highlightedRows[i];
+                    ctx.beginPath();
+                    ctx.strokeStyle = this.showAllLines ? '#ffffff' : 'rgba(204, 102, 0, 0.9)';
+                    ctx.lineWidth = 2;
+                    
+                    let validPath = false;
+                    this.columnOrder.forEach((name, colIdx) => {
+                        const x = margin.left + colIdx * axisSpacing;
+                        const val = row[colIdx];
+                        if (isNaN(val)) return;
+                        
+                        let y;
+                        if (this.isScaled) {
+                            y = margin.top + plotHeight * (1 - val);
+                        } else {
+                            const values = dataToShow.map(row => row[colIdx]).filter(v => !isNaN(v));
+                            if (values.length === 0) return;
+                            
+                            let min = Math.min(...values);
+                            let max = Math.max(...values);
+                            const isLog = this.logTransformed[name] && !this.hasNegativeValues[name];
+                            
+                            if (isLog) {
+                                min = Math.max(min, 0.0001);
+                                const logMin = Math.log10(Math.max(min, 0.0001));
+                                const logMax = Math.log10(max);
+                                const logVal = Math.log10(Math.max(val, 0.0001));
+                                y = margin.top + plotHeight * (1 - (logVal - logMin) / (logMax - logMin));
+                            } else {
+                                y = margin.top + plotHeight * (1 - (val - min) / (max - min));
+                            }
+                        }
+                        
+                        if (!validPath) {
+                            ctx.moveTo(x, y);
+                            validPath = true;
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                    });
+                    if (validPath) ctx.stroke();
+                }
+
+                // Dibujar ejes, ticks y sliders POR ENCIMA de las líneas
+                this.columnOrder.forEach((name, i) => {
+                    const x = margin.left + i * axisSpacing;
+                    
+                    let values, min, max;
+                    if (this.isScaled) {
+                        min = 0;
+                        max = 1;
+                        values = [0, 1];
+                    } else {
+                        values = dataToShow.map(row => row[i]).filter(v => !isNaN(v));
+                        if (values.length === 0) return;
+                        min = Math.min(...values);
+                        max = Math.max(...values);
+                        const isLog = this.logTransformed[name] && !this.hasNegativeValues[name];
+                        if (isLog) {
+                            min = Math.max(min, 0.0001);
+                        }
+                    }
+
+                    ctx.beginPath();
+                    ctx.lineWidth = axisWidth;
+                    ctx.strokeStyle = 'black';
+                    ctx.moveTo(x, margin.top);
+                    ctx.lineTo(x, margin.top + plotHeight);
+                    ctx.stroke();
+
+                    // Ticks del eje
+                    const numTicks = 5;
+                    ctx.font = '12px Arial';
+                    ctx.fillStyle = 'black';
+                    ctx.textAlign = 'right';
+                    for (let j = 0; j <= numTicks; j++) {
+                        const ratio = j / numTicks;
+                        const y = margin.top + plotHeight * (1 - ratio);
+                        let value;
+                        
+                        if (this.isScaled) {
+                            value = ratio;
+                        } else {
+                            const isLog = this.logTransformed[name] && !this.hasNegativeValues[name];
+                            if (isLog) {
+                                const logMin = Math.log10(min);
+                                const logMax = Math.log10(max);
+                                value = Math.pow(10, logMin + ratio * (logMax - logMin));
+                            } else {
+                                value = min + ratio * (max - min);
+                            }
+                        }
+                        
+                        const tickX = x - 5;
+                        ctx.beginPath();
+                        ctx.moveTo(tickX, y);
+                        ctx.lineTo(x, y);
+                        ctx.stroke();
+                        ctx.fillText(isNaN(value) ? 'NaN' : value.toFixed(2), tickX - 5, y + 4);
+                    }
+
+                    ctx.textAlign = 'center';
+                    ctx.fillText(this.logTransformed[name] && !this.hasNegativeValues[name] ? `log(${name})` : name, x, margin.top - 30);
+
+                    // Dibujar sliders
+                    const slider = this.sliders[name];
+                    if (slider) {
+                        let yMin, yMax;
+                        if (this.isScaled) {
+                            yMin = margin.top + plotHeight * (1 - slider.min);
+                            yMax = margin.top + plotHeight * (1 - slider.max);
+                        } else {
+                            const isLog = this.logTransformed[name] && !this.hasNegativeValues[name];
+                            yMin = this.scaleYPos(slider.min, min, max, isLog, margin.top, plotHeight);
+                            yMax = this.scaleYPos(slider.max, min, max, isLog, margin.top, plotHeight);
+                        }
+                        
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                        ctx.fillRect(x - 10, yMax, 20, yMin - yMax);
+
+                        const cdfX = x - cdfWidth/2;
+                        this.drawEmpiricalCDF(ctx, cdfX, cdfYOffset, cdfWidth, cdfHeight, i, dataToShow);
+
+                        const percentage = this.calculatePercentageFromOriginal(name).toFixed(1);
+
+                        // Posición fija calculada una sola vez
+                        const inputY = cdfYOffset + cdfHeight + 25; // Fijo entre CDF y slider
+                        this.percentagePositions[name] = {
+                            x: x, // Centrado en el eje
+                            y: inputY // Posición vertical fija
+                        };
+
+                        const container = document.getElementById('percentageInputsContainer');
+                        let input = this.percentageInputs[name];
+
+                        if (!input) {
+                            input = document.createElement('input');
+                            input.className = 'percentage-input';
+                            input.setAttribute('data-name', name);
+                            input.type = 'text';
+                            input.placeholder = '%';
+                            container.appendChild(input);
+                            this.percentageInputs[name] = input;
+                            
+                            input.addEventListener('change', (e) => {
+                                const targetName = e.target.getAttribute('data-name');
+                                const newPercentage = parseFloat(e.target.value);
+                                if (!isNaN(newPercentage) && newPercentage >= 0 && newPercentage <= 100) {
+                                    this.updateSliderFromPercentage(targetName, newPercentage);
+                                    this.debouncedRender();
+                                }
+                            });
+                            
+                            input.addEventListener('keydown', (e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    const targetName = e.target.getAttribute('data-name');
+                                    const newPercentage = parseFloat(e.target.value);
+                                    if (!isNaN(newPercentage) && newPercentage >= 0 && newPercentage <= 100) {
+                                        this.updateSliderFromPercentage(targetName, newPercentage);
+                                        this.debouncedRender();
+                                    }
+                                    e.target.blur();
+                                }
+                            });
+                        }
+
+                        if (document.activeElement !== input) {
+                            input.value = percentage;
+                        }
+
+                        // Posicionamiento fijo basado en el canvas
+                        const rect = this.canvas.getBoundingClientRect();
+                        const pos = this.percentagePositions[name];
+                        input.style.left = `${pos.x}px`; // Relativo al contenedor del canvas
+                        input.style.top = `${pos.y}px`;  // Relativo al contenedor del canvas
+                        input.style.display = 'block';                    
+                    }
+                });
+
+                // Actualizar la probabilidad condicional
+                this.updateConditionalProbability();
+            }
+
+            handleMouseDown(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                const margin = { top: 50, bottom: 140, left: 50, right: 50 };
+                const plotHeight = this.canvas.height - margin.top - margin.bottom;
+                const plotWidth = this.canvas.width - margin.left - margin.right;
+                const axisSpacing = plotWidth / (this.columnOrder.length - 1 || 1);
+
+                this.columnOrder.forEach((name, i) => {
+                    const x = margin.left + i * axisSpacing;
+                    const slider = this.sliders[name];
+                    if (!slider || Math.abs(mouseX - x) > 15) return;
+
+                    let yMin, yMax;
+                    if (this.isScaled) {
+                        yMin = margin.top + plotHeight * (1 - slider.min);
+                        yMax = margin.top + plotHeight * (1 - slider.max);
+                    } else {
+                        const dataToUse = this.transformedData;
+                        const values = dataToUse.map(row => row[i]).filter(v => !isNaN(v));
+                        if (values.length === 0) return;
+                        let min = Math.min(...values);
+                        let max = Math.max(...values);
+                        const isLog = this.logTransformed[name] && !this.hasNegativeValues[name];
+                        if (isLog) {
+                            min = Math.max(min, 0.0001);
+                        }
+                        yMin = this.scaleYPos(slider.min, min, max, isLog, margin.top, plotHeight);
+                        yMax = this.scaleYPos(slider.max, min, max, isLog, margin.top, plotHeight);
+                    }
+
+                    if (mouseY > yMax && mouseY < yMin) {
+                        slider.isDragging = true;
+                        slider.dragHandle = 'middle';
+                        slider.dragOffset = mouseY - (yMax + yMin) / 2;
+                    }
+                });
+            }
+
+            handleMouseMove(e) {
+                if (!Object.values(this.sliders).some(s => s.isDragging)) return;
+                if (this.bottomAligned || this.topAligned) return; // No permitir arrastre cuando está alineado
+
+                const rect = this.canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                const margin = { top: 50, bottom: 140, left: 50, right: 50 };
+                const plotHeight = this.canvas.height - margin.top - margin.bottom;
+                const plotWidth = this.canvas.width - margin.left - margin.right;
+                const axisSpacing = plotWidth / (this.columnOrder.length - 1 || 1);
+
+                this.columnOrder.forEach((name, i) => {
+                    const x = margin.left + i * axisSpacing;
+                    const slider = this.sliders[name];
+                    if (!slider || !slider.isDragging || Math.abs(mouseX - x) > 25) return;
+
+                    if (this.isScaled) {
+                        const scaleY = (y) => {
+                            const ratio = 1 - (y - margin.top) / plotHeight;
+                            return Math.max(0, Math.min(1, ratio));
+                        };
+                        
+                        if (slider.dragHandle === 'middle') {
+                            const delta = (slider.max - slider.min) / 2;
+                            const centerValue = scaleY(mouseY - (slider.dragOffset || 0));
+                            let newMin = centerValue - delta;
+                            let newMax = centerValue + delta;
+
+                            // Limitar a los extremos [0, 1] en modo escalado
+                            if (newMin < 0) {
+                                newMin = 0;
+                                newMax = newMin + (slider.max - slider.min); // Mantener longitud del rango
+                            } else if (newMax > 1) {
+                                newMax = 1;
+                                newMin = newMax - (slider.max - slider.min); // Mantener longitud del rango
+                            }
+
+                            slider.min = newMin;
+                            slider.max = newMax;
+                            
+                            this.originalSliders[name] = this.convertSliderToOriginal(name, slider);
+                        }
+                    } else {
+                        const dataToUse = this.transformedData;
+                        const values = dataToUse.map(row => row[i]).filter(v => !isNaN(v));
+                        if (values.length === 0) return;
+                        let min = Math.min(...values);
+                        let max = Math.max(...values);
+                        const isLog = this.logTransformed[name] && !this.hasNegativeValues[name];
+                        if (isLog) {
+                            min = Math.max(min, 0.0001);
+                        }
+
+                        const scaleY = (y) => {
+                            const ratio = 1 - (y - margin.top) / plotHeight;
+                            if (isLog) {
+                                const logMin = Math.log10(Math.max(min, 0.0001));
+                                const logMax = Math.log10(max);
+                                const value = Math.pow(10, logMin + ratio * (logMax - logMin));
+                                return Math.max(min, Math.min(max, value));
+                            }
+                            return Math.max(min, Math.min(max, min + ratio * (max - min)));
+                        };
+
+                        if (slider.dragHandle === 'middle') {
+                            const delta = (slider.max - slider.min) / 2;
+                            const centerValue = scaleY(mouseY - (slider.dragOffset || 0));
+                            let newMin = centerValue - delta;
+                            let newMax = centerValue + delta;
+
+                            // Limitar a los extremos de la escala
+                            if (newMin < min) {
+                                newMin = min;
+                                newMax = newMin + (slider.max - slider.min); // Mantener longitud del rango
+                            } else if (newMax > max) {
+                                newMax = max;
+                                newMin = newMax - (slider.max - slider.min); // Mantener longitud del rango
+                            }
+
+                            slider.min = newMin;
+                            slider.max = newMax;
+                            
+                            this.originalSliders[name] = { ...slider };
+                        }
+                    }
+                });
+                
+                this.debouncedRender();
+            }
+
+            handleMouseUp() {
+                Object.values(this.sliders).forEach(slider => {
+                    slider.isDragging = false;
+                    slider.dragHandle = null;
+                    slider.dragOffset = 0;
+                });
+            }
+
+            scaleYPos(val, min, max, isLog, marginTop, plotHeight) {
+                if (this.isScaled) return marginTop + plotHeight * (1 - val);
+                if (isLog) {
+                    const logMin = Math.log10(Math.max(min, 0.0001));
+                    const logMax = Math.log10(max);
+                    const logVal = Math.log10(Math.max(val, 0.0001));
+                    return marginTop + plotHeight * (1 - (logVal - logMin) / (logMax - logMin));
+                }
+                return marginTop + plotHeight * (1 - (val - min) / (max - min));
+            }
+
+            saveData() {
+                const dataToSave = this.isScaled ? this.scaledData : this.transformedData;
+                const headers = this.columnOrder.map(name => this.logTransformed[name] && !this.hasNegativeValues[name] ? `log(${name})` : name);
+                let csvContent = headers.join(',') + '\n';
+                dataToSave.forEach(row => {
+                    csvContent += row.map(val => isNaN(val) ? 'NaN' : val.toFixed(4)).join(',') + '\n';
+                });
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'transformed_data.csv';
+                link.click();
+                URL.revokeObjectURL(link.href);
+            }
+
+            showDetailedCDFs() {
+                document.getElementById('plotSection').style.display = 'none';
+                document.getElementById('detailedCDFSection').style.display = 'block';
+                this.renderDetailedCDFs();
+            }
+
+            hideDetailedCDFs() {
+                document.getElementById('detailedCDFSection').style.display = 'none';
+                document.getElementById('plotSection').style.display = 'block';
+            }
+
+            renderDetailedCDFs() {
+                const container = document.getElementById('detailedCDFContainer');
+                container.innerHTML = '';
+                
+                const dataToShow = this.isScaled ? this.scaledData : this.transformedData;
+                
+                this.columnOrder.forEach((name, variableIndex) => {
+                    const cdfDiv = document.createElement('div');
+                    cdfDiv.className = 'cdf-container';
+                    
+                    const title = document.createElement('div');
+                    title.className = 'cdf-title';
+                    title.textContent = `Conditional CDF: ${this.logTransformed[name] && !this.hasNegativeValues[name] ? `log(${name})` : name}`;
+                    cdfDiv.appendChild(title);
+                    
+                    const canvas = document.createElement('canvas');
+                    canvas.className = 'detailed-cdf-canvas';
+                    canvas.width = 500;
+                    canvas.height = 350;
+                    cdfDiv.appendChild(canvas);
+                    
+                    container.appendChild(cdfDiv);
+                    
+                    this.drawDetailedCDF(canvas, variableIndex, dataToShow, name);
+                });
+            }
+
+            drawDetailedCDF(canvas, variableIndex, allData, variableName) {
+                const ctx = canvas.getContext('2d');
+                const width = canvas.width;
+                const height = canvas.height;
+                const margin = { top: 40, bottom: 80, left: 80, right: 40 };
+                const plotWidth = width - margin.left - margin.right;
+                const plotHeight = height - margin.top - margin.bottom;
+                
+                ctx.clearRect(0, 0, width, height);
+                
+                const conditionalData = [];
+                allData.forEach((row, rowIdx) => {
+                    let isValidRow = true;
+                    
+                    this.columnOrder.forEach((name, colIdx) => {
+                        if (colIdx === variableIndex) return;
+                        
+                        const origSlider = this.originalSliders[name];
+                        if (origSlider) {
+                            const currentColIndex = this.columnNames.indexOf(name);
+                            const origVal = this.transformedData[rowIdx][currentColIndex];
+                            if (isNaN(origVal) || origVal < origSlider.min || origVal > origSlider.max) {
+                                isValidRow = false;
+                            }
+                        }
+                    });
+                    
+                    if (isValidRow) {
+                        const currentVarValue = row[variableIndex];
+                        if (!isNaN(currentVarValue)) {
+                            conditionalData.push(currentVarValue);
+                        }
+                    }
+                });
+                
+                if (conditionalData.length === 0) {
+                    ctx.fillStyle = '#999';
+                    ctx.font = '16px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('No data available', width/2, height/2);
+                    return;
+                }
+                
+                const sortedValues = [...conditionalData].sort((a, b) => a - b);
+                const min = Math.min(...sortedValues);
+                const max = Math.max(...sortedValues);
+                
+                ctx.fillStyle = '#f8f9fa';
+                ctx.fillRect(margin.left, margin.top, plotWidth, plotHeight);
+                
+                ctx.strokeStyle = '#e9ecef';
+                ctx.lineWidth = 1;
+                
+                for (let i = 0; i <= 10; i++) {
+                    const x = margin.left + (i / 10) * plotWidth;
+                    ctx.beginPath();
+                    ctx.moveTo(x, margin.top);
+                    ctx.lineTo(x, margin.top + plotHeight);
+                    ctx.stroke();
+                }
+                
+                for (let i = 0; i <= 10; i++) {
+                    const y = margin.top + (i / 10) * plotHeight;
+                    ctx.beginPath();
+                    ctx.moveTo(margin.left, y);
+                    ctx.lineTo(margin.left + plotWidth, y);
+                    ctx.stroke();
+                }
+                
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(margin.left, margin.top, plotWidth, plotHeight);
+                
+                if (min !== max) {
+                    ctx.strokeStyle = '#007bff';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    
+                    let firstPoint = true;
+                    for (let i = 0; i < sortedValues.length; i++) {
+                        const value = sortedValues[i];
+                        const cdfValue = (i + 1) / sortedValues.length;
+                        
+                        const plotX = margin.left + ((value - min) / (max - min)) * plotWidth;
+                        const plotY = margin.top + plotHeight - (cdfValue * plotHeight);
+                        
+                        if (firstPoint) {
+                            ctx.moveTo(plotX, plotY);
+                            firstPoint = false;
+                        } else {
+                            ctx.lineTo(plotX, plotY);
+                        }
+                    }
+                    ctx.stroke();
+                } else {
+                    ctx.strokeStyle = '#007bff';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(margin.left + plotWidth/2, margin.top);
+                    ctx.lineTo(margin.left + plotWidth/2, margin.top + plotHeight);
+                    ctx.stroke();
+                }
+                
+                ctx.fillStyle = '#333';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                for (let i = 0; i <= 5; i++) {
+                    const ratio = i / 5;
+                    const value = min + ratio * (max - min);
+                    const x = margin.left + ratio * plotWidth;
+                    ctx.fillText(value.toFixed(2), x, margin.top + plotHeight + 20);
+                }
+                
+                ctx.textAlign = 'right';
+                for (let i = 0; i <= 5; i++) {
+                    const ratio = i / 5;
+                    const y = margin.top + plotHeight - ratio * plotHeight;
+                    ctx.fillText(ratio.toFixed(1), margin.left - 10, y + 4);
+                }
+                
+                ctx.fillStyle = '#333';
+                ctx.font = 'bold 14px Arial';
+                ctx.textAlign = 'center';
+                
+                const xLabel = this.logTransformed[variableName] && !this.hasNegativeValues[variableName] ? `log(${variableName})` : variableName;
+                ctx.fillText(xLabel, margin.left + plotWidth/2, margin.top + plotHeight + 50);
+                
+                ctx.save();
+                ctx.translate(20, margin.top + plotHeight/2);
+                ctx.rotate(-Math.PI/2);
+                ctx.fillText('Cumulative Probability', 0, 0);
+                ctx.restore();
+                
+                ctx.font = 'bold 16px Arial';
+                ctx.fillText(`Conditional CDF (n=${conditionalData.length})`, width/2, 25);
+                
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillStyle = '#666';
+                ctx.fillText(`Min: ${min.toFixed(3)}`, margin.left, height - 10);
+                ctx.fillText(`Max: ${max.toFixed(3)}`, margin.left + 100, height - 10);
+                ctx.fillText(`Range: ${(max - min).toFixed(3)}`, margin.left + 200, height - 10);
+            }
+
+            async saveParallelPlotAsPDF() {
+                const { jsPDF } = window.jspdf;
+                
+                const tempContainer = document.createElement('div');
+                tempContainer.style.position = 'absolute';
+                tempContainer.style.left = '-9999px';
+                tempContainer.style.top = '-9999px';
+                tempContainer.style.width = '1200px';
+                tempContainer.style.height = '800px';
+                tempContainer.style.backgroundColor = 'white';
+                tempContainer.style.padding = '40px';
+                tempContainer.style.boxSizing = 'border-box';
+                
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = 1120;
+                tempCanvas.height = 720;
+                tempCanvas.style.width = '100%';
+                tempCanvas.style.height = 'calc(100% - 80px)';
+                tempCanvas.style.border = '1px solid #ddd';
+                tempCanvas.style.borderRadius = '8px';
+                
+                const title = document.createElement('h2');
+                title.textContent = 'Parallel Coordinates Plot';
+                title.style.textAlign = 'center';
+                title.style.margin = '0 0 20px 0';
+                title.style.fontFamily = 'Arial, sans-serif';
+                title.style.fontSize = '24px';
+                title.style.color = '#333';
+                
+                const info = document.createElement('div');
+                info.style.fontSize = '14px';
+                info.style.color = '#666';
+                info.style.marginBottom = '20px';
+                info.style.fontFamily = 'Arial, sans-serif';
+                
+                const dateStr = new Date().toLocaleDateString();
+                const scaleInfo = this.isScaled ? '[0,1] Scale' : 'Original Scale';
+                const logVars = this.columnOrder.filter(name => this.logTransformed[name] && !this.hasNegativeValues[name]);
+                const lineInfo = this.showAllLines ? 'All Lines' : 'Sample Lines';
+                
+                info.innerHTML = `
+                    <strong>Generated:</strong> ${dateStr} | 
+                    <strong>Dataset:</strong> ${this.originalData.length} rows, ${this.columnNames.length} columns | 
+                    <strong>Scale:</strong> ${scaleInfo} | 
+                    <strong>Display:</strong> ${lineInfo}
+                    ${logVars.length > 0 ? `<br><strong>Log transformed:</strong> ${logVars.join(', ')}` : ''}
+                `;
+                
+                tempContainer.appendChild(title);
+                tempContainer.appendChild(info);
+                tempContainer.appendChild(tempCanvas);
+                
+                document.body.appendChild(tempContainer);
+                
+                const tempCtx = tempCanvas.getContext('2d');
+                const originalCanvas = this.canvas;
+                const originalCtx = this.ctx;
+                
+                this.canvas = tempCanvas;
+                this.ctx = tempCtx;
+                this.renderParallelPlot();
+                
+                this.canvas = originalCanvas;
+                this.ctx = originalCtx;
+                
+                try {
+                    const canvas = await html2canvas(tempContainer, {
+                        scale: 2,
+                        backgroundColor: '#ffffff',
+                        useCORS: true,
+                        allowTaint: true,
+                        width: 1200,
+                        height: 800
+                    });
+                    
+                    const pdf = new jsPDF('l', 'mm', 'a4');
+                    const pageWidth = pdf.internal.pageSize.getWidth();
+                    const pageHeight = pdf.internal.pageSize.getHeight();
+                    
+                    const imgData = canvas.toDataURL('image/png', 1.0);
+                    
+                    const imgWidth = pageWidth - 20;
+                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                    
+                    pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, Math.min(imgHeight, pageHeight - 20));
+                    
+                    if (imgHeight > pageHeight - 20) {
+                        pdf.addPage();
+                    }
+                    
+                    this.addStatisticsToPDF(pdf, imgHeight > pageHeight - 20 ? 20 : imgHeight + 20);
+                    
+                    pdf.save('parallel_coordinates_plot.pdf');
+                    
+                } catch (error) {
+                    console.error('Error generating PDF:', error);
+                    alert('Error generating PDF. Please try again.');
+                } finally {
+                    document.body.removeChild(tempContainer);
+                }
+            }
+
+            async saveCDFsAsPDF() {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                const margin = 20;
+                
+                pdf.setFontSize(16);
+                pdf.setFont(undefined, 'bold');
+                pdf.text('Conditional CDFs Report', pageWidth / 2, margin, { align: 'center' });
+                
+                pdf.setFontSize(10);
+                pdf.setFont(undefined, 'normal');
+                const dateStr = new Date().toLocaleDateString();
+                pdf.text(`Generated on: ${dateStr}`, margin, margin + 10);
+                pdf.text(`Dataset: ${this.originalData.length} rows, ${this.columnNames.length} columns`, margin, margin + 16);
+                
+                let yPosition = margin + 30;
+                
+                for (let index = 0; index < this.columnOrder.length; index++) {
+                    const name = this.columnOrder[index];
+                    
+                    if (yPosition > pageHeight - 120) {
+                        pdf.addPage();
+                        yPosition = margin;
+                    }
+                    
+                    const tempContainer = document.createElement('div');
+                    tempContainer.style.position = 'absolute';
+                    tempContainer.style.left = '-9999px';
+                    tempContainer.style.top = '-9999px';
+                    tempContainer.style.width = '600px';
+                    tempContainer.style.height = '450px';
+                    tempContainer.style.backgroundColor = 'white';
+                    tempContainer.style.padding = '20px';
+                    tempContainer.style.boxSizing = 'border-box';
+                    
+                    const title = document.createElement('h3');
+                    title.textContent = `Conditional CDF: ${this.logTransformed[name] && !this.hasNegativeValues[name] ? `log(${name})` : name}`;
+                    title.style.textAlign = 'center';
+                    title.style.margin = '0 0 20px 0';
+                    title.style.fontFamily = 'Arial, sans-serif';
+                    title.style.fontSize = '18px';
+                    title.style.color = '#333';
+                    
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 500;
+                    canvas.height = 350;
+                    canvas.style.border = '1px solid #ddd';
+                    canvas.style.borderRadius = '8px';
+                    canvas.style.display = 'block';
+                    canvas.style.margin = '0 auto';
+                    
+                    tempContainer.appendChild(title);
+                    tempContainer.appendChild(canvas);
+                    
+                    const stats = document.createElement('div');
+                    stats.style.fontSize = '12px';
+                    stats.style.color = '#666';
+                    stats.style.marginTop = '15px';
+                    stats.style.fontFamily = 'Arial, sans-serif';
+                    
+                    const colIndex = this.columnNames.indexOf(name);
+                    const values = this.transformedData.map(row => row[colIndex]).filter(v => !isNaN(v));
+                    const origSlider = this.originalSliders[name];
+                    
+                    if (origSlider && values.length > 0) {
+                        const inRange = values.filter(v => v >= origSlider.min && v <= origSlider.max).length;
+                        const percentage = (inRange / values.length * 100).toFixed(1);
+                        
+                        stats.innerHTML = `
+                            <strong>Selected range:</strong> ${origSlider.min.toFixed(3)} to ${origSlider.max.toFixed(3)}<br>
+                            <strong>Data points in range:</strong> ${inRange} (${percentage}%)<br>
+                            <strong>Total data points:</strong> ${values.length}
+                        `;
+                    }
+                    
+                    tempContainer.appendChild(stats);
+                    
+                    document.body.appendChild(tempContainer);
+                    
+                    this.drawDetailedCDF(canvas, index, this.isScaled ? this.scaledData : this.transformedData, name);
+                    
+                    try {
+                        const capturedCanvas = await html2canvas(tempContainer, {
+                            scale: 2,
+                            backgroundColor: '#ffffff',
+                            useCORS: true,
+                            allowTaint: true,
+                            width: 600,
+                            height: 450
+                        });
+                        
+                        const imgData = capturedCanvas.toDataURL('image/png', 1.0);
+                        
+                        const imgWidth = pageWidth - 2 * margin;
+                        const imgHeight = (capturedCanvas.height * imgWidth) / capturedCanvas.width;
+                        
+                        pdf.addImage(imgData, 'PNG', margin, yPosition, imgWidth, imgHeight);
+                        
+                        yPosition += imgHeight + 20;
+                        
+                    } catch (error) {
+                        console.error('Error capturing CDF:', error);
+                        
+                        pdf.setFontSize(12);
+                        pdf.setFont(undefined, 'bold');
+                        pdf.text(`Error rendering CDF for ${name}`, margin, yPosition);
+                        yPosition += 20;
+                    }
+                    
+                    document.body.removeChild(tempContainer);
+                }
+                
+                const totalPages = pdf.internal.getNumberOfPages();
+                for (let i = 1; i <= totalPages; i++) {
+                    pdf.setPage(i);
+                    pdf.setFontSize(8);
+                    pdf.setFont(undefined, 'normal');
+                    pdf.text(`Page ${i} of ${totalPages}`, pageWidth - margin, pageHeight - 10, { align: 'right' });
+                }
+                
+                pdf.save('conditional_cdfs_report.pdf');
+            }
+
+            addStatisticsToPDF(pdf, startY) {
+                const margin = 20;
+                let yPos = startY;
+                
+                pdf.setFontSize(14);
+                pdf.setFont(undefined, 'bold');
+                pdf.text('Selection Summary', margin, yPos);
+                yPos += 10;
+                
+                pdf.setFontSize(10);
+                pdf.setFont(undefined, 'normal');
+                
+                this.columnOrder.forEach((name) => {
+                    const origSlider = this.originalSliders[name];
+                    if (origSlider) {
+                        const colIndex = this.columnNames.indexOf(name);
+                        const values = this.transformedData.map(row => row[colIndex]).filter(v => !isNaN(v));
+                        
+                        if (values.length > 0) {
+                            const inRange = values.filter(v => v >= origSlider.min && v <= origSlider.max).length;
+                            const percentage = (inRange / values.length * 100).toFixed(1);
+                            
+                            const displayName = this.logTransformed[name] && !this.hasNegativeValues[name] ? `log(${name})` : name;
+                            const text = `${displayName}: ${origSlider.min.toFixed(3)} to ${origSlider.max.toFixed(3)} (${percentage}%)`;
+                            
+                            pdf.text(text, margin, yPos);
+                            yPos += 6;
+                        }
+                    }
+                });
+            }
+
+            resetApp() {
+                // Show confirmation dialog
+                if (!confirm('Are you sure you want to reset the application? All data and settings will be cleared.')) {
+                    return; // Cancel if user clicks "Cancel"
+                }
+
+                // Resetear a estado inicial
+                this.resetToInitialState();
+                
+                // Limpiar información del archivo
+                this.currentFileName = '';
+                document.getElementById('fileName').textContent = '';
+                document.getElementById('fileInfo').classList.remove('show');
+                
+                // Resetear input de archivo
+                document.getElementById('fileInput').value = '';
+
+                // Show feedback
+                this.showFeedback('logFeedback', 'Application reset successfully');
+            }
+        }
+
+        // Inicializar la aplicación
+        const dataClass = new DataClass();
+
+        // Event listeners
+        document.getElementById('fileInput').addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                dataClass.loadFile(file);
+            }
+        });
+
+        // Event listeners para el porcentaje global
+        document.getElementById('globalPercentage').addEventListener('input', (e) => {
+            const newPercentage = parseFloat(e.target.value);
+            if (!isNaN(newPercentage) && newPercentage >= 0 && newPercentage <= 100) {
+                dataClass.globalPercentage = newPercentage;
+                dataClass.updateAllSlidersToGlobalPercentage();
+            }
+        });
+
+        document.getElementById('globalPercentage').addEventListener('change', (e) => {
+            const newPercentage = parseFloat(e.target.value);
+            if (!isNaN(newPercentage) && newPercentage >= 0 && newPercentage <= 100) {
+                dataClass.globalPercentage = newPercentage;
+                dataClass.updateAllSlidersToGlobalPercentage();
+            }
+        });
+    </script>
+</body>
+</html>
