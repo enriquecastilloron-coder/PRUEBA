@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conditional Dimensional Explorer — Earth Tones</title>
+<script src="https://cdn.plot.ly/plotly-3.1.0.min.js"></script>
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+  font-size: 13px;
+  background: #6b4c3a;  /* marrón tostado más claro que el anterior */
+  overflow: hidden;
+}
+
+#shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: 7px;
+  gap: 6px;
+}
+
+/* toolbar R1 - marrón medio */
+#toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  background: #5d4037;
+  border-radius: 12px;
+  padding: 5px 14px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  flex-wrap: wrap;
+}
+
+#toolbar h2 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #f5f5dc;
+  margin-right: 4px;
+  white-space: nowrap;
+}
+
+#toolbar button {
+  padding: 4px 12px;
+  border: 1px solid #7b5e4b;
+  border-radius: 7px;
+  background: #2e7d32;
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: 0.1s ease;
+  white-space: nowrap;
+}
+
+#toolbar button:hover {
+  background: #1b5e20;
+  border-color: #a5d6a7;
+}
+
+#toolbar label {
+  font-size: 12px;
+  color: #efebe9;
+  white-space: nowrap;
+}
+
+#sampleSize {
+  width: 70px;
+  padding: 4px 6px;
+  border: 1px solid #7b5e4b;
+  border-radius: 7px;
+  font-size: 12px;
+  background: #efebe9;
+  color: #2c1e16;
+}
+
+/* main row */
+#main {
+  display: flex;
+  flex: 1;
+  gap: 7px;
+  min-height: 0;
+}
+
+/* plot area R2 */
+#plot-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  background: #d7ccc8;
+  border-radius: 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  overflow: hidden;
+}
+
+/* right panel R3 */
+#panel {
+  width: 260px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+  background: #bcaaa4;
+  border-radius: 14px;
+  padding: 12px 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+.p-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: #2c1e16;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+#thresh-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#thresholdSlider {
+  flex: 1;
+  cursor: pointer;
+  height: 4px;
+  background: #8d6e63;
+  border-radius: 5px;
+  -webkit-appearance: none;
+}
+#thresholdSlider:focus {
+  outline: none;
+}
+#thresholdSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #2e7d32;
+  cursor: pointer;
+  border: none;
+}
+
+#thresholdVal {
+  font-size: 12px;
+  font-family: monospace;
+  font-weight: 600;
+  color: #2c1e16;
+  min-width: 32px;
+  text-align: right;
+}
+
+#pointsCount {
+  font-size: 10px;
+  color: #2c1e16;
+  font-weight: 500;
+  background: #efebe9;
+  padding: 2px 6px;
+  border-radius: 20px;
+  display: inline-block;
+  width: fit-content;
+}
+
+hr.div {
+  border: none;
+  border-top: 1px solid #8d6e63;
+  margin: 2px 0;
+}
+
+/* sliders panel R4 */
+#sliders-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  min-height: 120px;
+  padding-right: 2px;
+}
+
+#sliders-panel::-webkit-scrollbar {
+  width: 4px;
+}
+#sliders-panel::-webkit-scrollbar-thumb {
+  background: #6d4c41;
+  border-radius: 4px;
+}
+
+.cslider {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  column-gap: 6px;
+  padding: 6px 6px;
+  border-radius: 10px;
+  background: #efebe9;
+  border: 1px solid #bcaaa4;
+}
+
+.cslider label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #2c1e16;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  align-self: center;
+}
+
+.cslider .sv {
+  font-size: 10px;
+  font-family: monospace;
+  font-weight: 600;
+  color: #4e342e;
+  text-align: right;
+  align-self: center;
+}
+
+.cslider input[type="range"] {
+  grid-column: 1 / -1;
+  width: 100%;
+  height: 14px;
+  cursor: pointer;
+  margin-top: 2px;
+  -webkit-appearance: none;
+  background: #d7ccc8;
+  border-radius: 7px;
+}
+.cslider input[type="range"]:focus {
+  outline: none;
+}
+.cslider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #2e7d32;
+  cursor: pointer;
+  border: none;
+}
+
+/* MODALS */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 0.1s, opacity 0.15s ease;
+}
+
+.modal-overlay.active {
+  visibility: visible;
+  opacity: 1;
+}
+
+.modal-container {
+  background: #efebe9;
+  width: 80vw;
+  max-width: 1000px;
+  min-width: 550px;
+  max-height: 85vh;
+  border-radius: 28px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 45px rgba(0,0,0,0.4);
+  overflow: hidden;
+  color: #2c1e16;
+}
+
+.modal-header, .modal-footer {
+  padding: 16px 24px;
+  background: #d7ccc8;
+  border-bottom: 1px solid #bcaaa4;
+}
+
+.modal-header h3 {
+  color: #2c1e16;
+}
+
+.modal-body {
+  flex: 1;
+  padding: 24px 28px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: row;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+
+.vars-group {
+  flex: 1;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vars-group select {
+  width: 100%;
+  height: 240px;
+  border-radius: 12px;
+  padding: 8px;
+  border: 1px solid #bcaaa4;
+  background: #fff8f0;
+  color: #2c1e16;
+}
+
+.modal-footer button {
+  padding: 6px 20px;
+  border-radius: 40px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid #8d6e63;
+  background: #efebe9;
+  color: #2c1e16;
+}
+
+.modal-footer button.primary {
+  background: #2e7d32;
+  color: white;
+  border: none;
+}
+
+.table-wrapper {
+  flex: 1;
+  overflow: auto;
+  padding: 12px 16px;
+  background: #fff8f0;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.data-table th, .data-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #d7ccc8;
+}
+
+#corrHeatmapDiv {
+  width: 100%;
+  height: 100%;
+  min-height: 500px;
+}
+</style>
+</head>
+<body>
+
+<div id="shell">
+  <div id="toolbar">
+    <h2>📐 Conditional Explorer</h2>
+    <input type="file" id="fileInput" accept=".csv" hidden>
+    <button id="uploadBtn">📂 Upload CSV</button>
+    <label>📊 n =</label>
+    <input id="sampleSize" type="number" value="2000" min="200" max="20000" step="100">
+    <button id="sampleBtn">⚡ Structured sample</button>
+    <button id="realisticBtn">🧬 Realistic ± corr (10 vars)</button>
+    <button id="selectVarsBtn" style="background:#2e7d32;">🎛️ Variable selection</button>
+    <button id="saveCsvBtn">💾 Save CSV</button>
+    <button id="showTableBtn">📋 Show data table</button>
+    <button id="showCorrBtn">📈 Correlation matrix</button>
+    <button id="fullscreenBtn" class="fullscreen-btn">🔲 Fullscreen</button>
+  </div>
+
+  <div id="main">
+    <div id="plot-wrap">
+      <div id="plot-area"></div>
+    </div>
+    <div id="panel">
+      <div class="p-label">🎯 distance threshold</div>
+      <div id="thresh-row">
+        <input type="range" id="thresholdSlider" min="0" max="3" step="0.01" value="0.8">
+        <div id="thresholdVal">0.80</div>
+      </div>
+      <div id="pointsCount">—</div>
+      <hr class="div">
+      <div class="p-label">🎚️ conditioning point (sliders)</div>
+      <div id="sliders-panel">
+        <div id="slidersContainer"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODALES -->
+<div id="varModal" class="modal-overlay"><div class="modal-container"><div class="modal-header"><h3>📌 Variable selection</h3><button id="closeVarModalBtn">✖ Cancel</button></div><div class="modal-body"><div class="vars-group"><label>🎨 Represented variables (2 or 3)</label><select id="modalRepresentedSelect" multiple size="6"></select><small>Select 2-3 variables for the scatter plot.</small></div><div class="vars-group"><label>🔍 Conditioning variables (sliders)</label><select id="modalConditioningSelect" multiple size="6"></select><small>No overlap with represented.</small></div></div><div class="modal-footer"><button id="applyVarsBtn" class="primary">✅ Apply & close</button><button id="cancelVarsBtn">Cancel</button></div></div></div>
+<div id="dataModal" class="modal-overlay"><div class="modal-container" style="max-width:90vw"><div class="modal-header"><h3>📋 Active dataset preview</h3><button id="closeModalBtn">✖ Close</button></div><div class="table-wrapper"><table class="data-table" id="modalDataTable"></table></div></div></div>
+<div id="corrModal" class="modal-overlay"><div class="modal-container" style="max-width:95vw; height:90vh"><div class="modal-header"><h3>📊 Correlation matrix (Pearson)</h3><button id="closeCorrModalBtn">✖ Close & return</button></div><div class="table-wrapper"><div id="corrHeatmapDiv"></div></div></div></div>
+
+<script>
+// ---------- GLOBAL STATE ----------
+let colNames = [], rawData = [], quantileData = [], conditioningPoint = {}, represented = [], conditioningVars = [], threshold = 0.8;
+
+// DOM elements
+const thresholdSlider = document.getElementById('thresholdSlider');
+const thresholdVal = document.getElementById('thresholdVal');
+const pointsCountSpan = document.getElementById('pointsCount');
+const slidersContainer = document.getElementById('slidersContainer');
+const sampleBtn = document.getElementById('sampleBtn');
+const realisticBtn = document.getElementById('realisticBtn');
+const uploadBtn = document.getElementById('uploadBtn');
+const fileInput = document.getElementById('fileInput');
+const saveCsvBtn = document.getElementById('saveCsvBtn');
+const showTableBtn = document.getElementById('showTableBtn');
+const showCorrBtn = document.getElementById('showCorrBtn');
+const selectVarsBtn = document.getElementById('selectVarsBtn');
+const fullscreenBtn = document.getElementById('fullscreenBtn');
+
+// Modal elements
+const varModal = document.getElementById('varModal');
+const modalRepresentedSelect = document.getElementById('modalRepresentedSelect');
+const modalConditioningSelect = document.getElementById('modalConditioningSelect');
+const applyVarsBtn = document.getElementById('applyVarsBtn');
+const cancelVarsBtn = document.getElementById('cancelVarsBtn');
+const closeVarModalBtn = document.getElementById('closeVarModalBtn');
+const dataModal = document.getElementById('dataModal');
+const closeModalBtn = document.getElementById('closeModalBtn');
+const modalDataTable = document.getElementById('modalDataTable');
+const corrModal = document.getElementById('corrModal');
+const closeCorrModalBtn = document.getElementById('closeCorrModalBtn');
+const corrHeatmapDiv = document.getElementById('corrHeatmapDiv');
+
+// ---------- ECDF ----------
+function computeECDF(dataMatrix) {
+  const n = dataMatrix.length;
+  if (n === 0) return [];
+  const m = dataMatrix[0].length;
+  const Q = Array(n).fill().map(() => Array(m));
+  for (let j = 0; j < m; j++) {
+    const col = dataMatrix.map(row => row[j]);
+    const sorted = [...col].sort((a,b) => a - b);
+    for (let i = 0; i < n; i++) {
+      let rank = 1;
+      for (let k = 0; k < n; k++) if (sorted[k] === col[i]) { rank = k+1; break; }
+      Q[i][j] = rank / (n + 1);
+    }
+  }
+  return Q;
+}
+
+// Sliders
+function rebuildConditioningSliders() {
+  slidersContainer.innerHTML = '';
+  if (conditioningVars.length === 0) {
+    const emptyMsg = document.createElement('div');
+    emptyMsg.innerText = '— no conditioning variables —';
+    emptyMsg.style.cssText = 'font-size:11px;color:#5d4037;padding:8px 2px';
+    slidersContainer.appendChild(emptyMsg);
+    return;
+  }
+  for (let v of conditioningVars) {
+    const currentVal = (conditioningPoint[v] !== undefined) ? conditioningPoint[v] : 0.5;
+    conditioningPoint[v] = currentVal;
+    const div = document.createElement('div');
+    div.className = 'cslider';
+    const label = document.createElement('label');
+    label.textContent = v;
+    const valueSpan = document.createElement('div');
+    valueSpan.className = 'sv';
+    valueSpan.innerText = currentVal.toFixed(2);
+    const slider = document.createElement('input');
+    slider.type = 'range';
+    slider.min = 0;
+    slider.max = 1;
+    slider.step = 0.01;
+    slider.value = currentVal;
+    slider.oninput = (function(varName, spanElem) {
+      return function(e) {
+        const newVal = parseFloat(e.target.value);
+        conditioningPoint[varName] = newVal;
+        spanElem.innerText = newVal.toFixed(2);
+        updatePlot();
+      };
+    })(v, valueSpan);
+    div.appendChild(label);
+    div.appendChild(valueSpan);
+    div.appendChild(slider);
+    slidersContainer.appendChild(div);
+  }
+}
+
+function filterPoints() {
+  if (!quantileData.length) return { idx: [], alpha: [] };
+  const idxList = [], alphaList = [];
+  for (let i = 0; i < quantileData.length; i++) {
+    let sqDist = 0;
+    for (let v of conditioningVars) {
+      const j = colNames.indexOf(v);
+      if (j === -1) continue;
+      const diff = quantileData[i][j] - conditioningPoint[v];
+      sqDist += diff * diff;
+    }
+    const dist = Math.sqrt(sqDist);
+    if (dist < threshold) {
+      idxList.push(i);
+      alphaList.push(Math.max(0.2, 1 - dist / threshold));
+    }
+  }
+  return { idx: idxList, alpha: alphaList };
+}
+
+function getPlotSize() {
+  const wrap = document.getElementById('plot-wrap');
+  const sz = Math.floor(Math.min(wrap.clientWidth, wrap.clientHeight));
+  return Math.max(280, sz || 500);
+}
+
+function updatePlot() {
+  if (represented.length < 2) return;
+  const { idx, alpha } = filterPoints();
+  pointsCountSpan.innerText = `${idx.length} / ${quantileData.length} pts`;
+  const repIdx = represented.map(v => colNames.indexOf(v));
+  const sz = getPlotSize();
+  
+  const greenR = 46, greenG = 125, greenB = 50;  // #2e7d32
+  
+  if (represented.length === 2) {
+    const trace = {
+      x: idx.map(i => quantileData[i][repIdx[0]]),
+      y: idx.map(i => quantileData[i][repIdx[1]]),
+      mode: 'markers',
+      type: 'scatter',
+      marker: { 
+        size: 6, 
+        color: alpha.map(a => `rgba(${greenR}, ${greenG}, ${greenB}, ${a})`), 
+        line: { width: 0 } 
+      }
+    };
+    const frame = {
+      x: [0,1,1,0,0], y: [0,0,1,1,0],
+      mode: 'lines', type: 'scatter', line: { color: '#2e7d32', width: 1.5 }, hoverinfo: 'skip'
+    };
+    const layout = {
+      width: sz, height: sz, paper_bgcolor: '#efebe9', plot_bgcolor: '#fff8f0',
+      xaxis: { title: { text: represented[0], font: { size: 14, weight: 600, color: '#2c1e16' } }, range: [0,1], gridcolor: '#bcaaa4' },
+      yaxis: { title: { text: represented[1], font: { size: 14, weight: 600, color: '#2c1e16' } }, range: [0,1], gridcolor: '#bcaaa4' },
+      margin: { l: 52, r: 12, t: 12, b: 52 }, showlegend: false
+    };
+    Plotly.newPlot('plot-area', [trace, frame], layout, { displayModeBar: false });
+  } 
+  else if (represented.length >= 3) {
+    const trace3d = {
+      x: idx.map(i => quantileData[i][repIdx[0]]),
+      y: idx.map(i => quantileData[i][repIdx[1]]),
+      z: idx.map(i => quantileData[i][repIdx[2]]),
+      mode: 'markers', type: 'scatter3d',
+      marker: { 
+        size: 3.5, 
+        color: alpha.map(a => `rgba(${greenR}, ${greenG}, ${greenB}, ${a})`), 
+        opacity: 0.9 
+      }
+    };
+    const layout3d = {
+      width: sz, height: sz, paper_bgcolor: '#efebe9',
+      scene: {
+        xaxis: { title: { text: represented[0], font: { size: 12, weight: 'bold', color: '#2c1e16' } }, range: [0,1], backgroundcolor: '#fff8f0', gridcolor: '#bcaaa4' },
+        yaxis: { title: { text: represented[1], font: { size: 12, weight: 'bold', color: '#2c1e16' } }, range: [0,1] },
+        zaxis: { title: { text: represented[2], font: { size: 12, weight: 'bold', color: '#2c1e16' } }, range: [0,1] },
+        aspectmode: 'cube', bgcolor: '#fff8f0'
+      }, margin: { l: 0, r: 0, t: 0, b: 0 }
+    };
+    Plotly.newPlot('plot-area', [trace3d], layout3d, { displayModeBar: true });
+  }
+}
+
+function loadDataset(headers, data) {
+  colNames = headers.slice();
+  rawData = data.map(row => row.slice());
+  quantileData = computeECDF(rawData);
+  conditioningPoint = {};
+  for (let c of colNames) conditioningPoint[c] = 0.5;
+  let defaultRep = colNames.slice(0, Math.min(2, colNames.length));
+  let defaultCond = colNames.length >= 3 ? [colNames[2]] : [];
+  defaultCond = defaultCond.filter(v => !defaultRep.includes(v));
+  represented = defaultRep;
+  conditioningVars = defaultCond;
+  rebuildConditioningSliders();
+  updatePlot();
+  populateModalSelects();
+}
+
+function populateModalSelects() {
+  modalRepresentedSelect.innerHTML = '';
+  modalConditioningSelect.innerHTML = '';
+  for (let c of colNames) {
+    const optRep = document.createElement('option');
+    optRep.value = c; optRep.textContent = c;
+    const optCond = optRep.cloneNode(true);
+    modalRepresentedSelect.appendChild(optRep);
+    modalConditioningSelect.appendChild(optCond);
+  }
+  Array.from(modalRepresentedSelect.options).forEach(opt => opt.selected = represented.includes(opt.value));
+  updateConditioningSelectOptions();
+  Array.from(modalConditioningSelect.options).forEach(opt => { if (conditioningVars.includes(opt.value)) opt.selected = true; });
+}
+
+function updateConditioningSelectOptions() {
+  const repVals = Array.from(modalRepresentedSelect.selectedOptions).map(o => o.value);
+  Array.from(modalConditioningSelect.options).forEach(opt => {
+    if (repVals.includes(opt.value)) {
+      opt.disabled = true;
+      if (opt.selected) opt.selected = false;
+    } else opt.disabled = false;
+  });
+}
+
+function enforceMaxRepresented() {
+  const sel = Array.from(modalRepresentedSelect.selectedOptions);
+  if (sel.length > 3) {
+    alert("Max 3 represented variables.");
+    for (let i = 3; i < sel.length; i++) sel[i].selected = false;
+  }
+  updateConditioningSelectOptions();
+}
+
+function openVarModal() {
+  populateModalSelects();
+  modalRepresentedSelect.removeEventListener('change', enforceMaxRepresented);
+  modalRepresentedSelect.addEventListener('change', enforceMaxRepresented);
+  varModal.classList.add('active');
+}
+
+function closeVarModal() { varModal.classList.remove('active'); }
+
+function applyVariableSelection() {
+  let newRep = Array.from(modalRepresentedSelect.selectedOptions).map(o => o.value);
+  let newCond = Array.from(modalConditioningSelect.selectedOptions).map(o => o.value);
+  if (newRep.length < 2) { alert("Select at least 2 represented variables."); return; }
+  if (newRep.length > 3) { alert("Max 3 represented."); return; }
+  newCond = newCond.filter(v => !newRep.includes(v));
+  represented = newRep;
+  conditioningVars = newCond;
+  for (let v of conditioningVars) if (conditioningPoint[v] === undefined) conditioningPoint[v] = 0.5;
+  rebuildConditioningSliders();
+  updatePlot();
+  closeVarModal();
+}
+
+// CORREGIDO: Error de Blob solucionado
+function saveActiveCSV() {
+  if (!colNames.length) { alert("No data to save."); return; }
+  const header = colNames.join(',');
+  const rows = rawData.map(row => row.join(','));
+  const csvString = [header, ...rows].join('\n');
+  // Ahora sí, pasamos un array con la cadena
+  const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  a.href = url;
+  a.download = 'conditional_sample.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function renderDataTable() {
+  if (!colNames.length) { modalDataTable.innerHTML = '<tr><td>No data<\/td><tr>'; return; }
+  const thead = `<thead><tr>${colNames.map(h => `<th>${escapeHtml(h)}</th>`).join('')}?</thead>`;
+  const tbodyRows = rawData.slice(0, 500).map(row => `<tr>${row.map(cell => `<td>${typeof cell === 'number' ? cell.toFixed(3) : cell}</td>`).join('')}</tr>`).join('');
+  const more = rawData.length > 500 ? `<tr><td colspan="${colNames.length}" style="background:#fef9e3">⚠️ showing first 500 of ${rawData.length}</td></tr>` : '';
+  modalDataTable.innerHTML = thead + `<tbody>${tbodyRows}${more}</tbody>`;
+}
+function escapeHtml(s) { return String(s).replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
+function showDataTableModal() { renderDataTable(); dataModal.classList.add('active'); }
+function closeModal() { dataModal.classList.remove('active'); }
+
+function computeCorrelationMatrix() {
+  if (!rawData.length) return null;
+  const n = rawData.length, m = colNames.length;
+  const means = Array(m).fill(0);
+  for (let i = 0; i < n; i++) for (let j = 0; j < m; j++) means[j] += rawData[i][j];
+  for (let j = 0; j < m; j++) means[j] /= n;
+  const stds = Array(m).fill(0);
+  for (let i = 0; i < n; i++) for (let j = 0; j < m; j++) stds[j] += (rawData[i][j] - means[j]) ** 2;
+  for (let j = 0; j < m; j++) stds[j] = Math.sqrt(stds[j] / (n - 1));
+  const corr = Array(m).fill().map(() => Array(m).fill(0));
+  for (let i = 0; i < m; i++) {
+    for (let j = 0; j < m; j++) {
+      if (i === j) { corr[i][j] = 1; continue; }
+      let cov = 0;
+      for (let k = 0; k < n; k++) cov += (rawData[k][i] - means[i]) * (rawData[k][j] - means[j]);
+      cov /= (n - 1);
+      corr[i][j] = cov / (stds[i] * stds[j]);
+    }
+  }
+  return { corr, labels: colNames };
+}
+function showCorrelationModal() {
+  const res = computeCorrelationMatrix();
+  if (!res) { alert("No data"); return; }
+  const { corr, labels } = res;
+  const colorscale = [[0,'#2166ac'],[0.1,'#4393c3'],[0.2,'#92c5de'],[0.3,'#d1e5f0'],[0.4,'#f7f7f7'],[0.5,'#f7f7f7'],[0.6,'#fddbc7'],[0.7,'#f4a582'],[0.8,'#d6604d'],[0.9,'#b2182b'],[1,'#67001f']];
+  const trace = {
+    z: corr, x: labels, y: labels, type: 'heatmap', colorscale, zmin: -1, zmax: 1,
+    text: corr.map(r => r.map(v => v.toFixed(2))), texttemplate: '%{text}', textfont: { size: 9 }
+  };
+  const layout = {
+    title: 'Pearson correlation matrix', width: Math.min(1000, window.innerWidth * 0.85),
+    height: Math.min(800, window.innerHeight * 0.75), xaxis: { tickangle: -45, tickfont: { size: 10 } },
+    yaxis: { tickfont: { size: 10 } }, margin: { l: 100, r: 20, t: 60, b: 100 }
+  };
+  Plotly.newPlot(corrHeatmapDiv, [trace], layout, { displayModeBar: true });
+  corrModal.classList.add('active');
+}
+function closeCorrModal() { corrModal.classList.remove('active'); }
+
+function generateStructuredSample() {
+  const n = parseInt(document.getElementById('sampleSize').value, 10);
+  const headers = ["math","physics","chemistry","biology","statistics","history","literature","philosophy","languages","music","painting","design","sport","fitness","coordination"];
+  const loadings = [[.8,.1,.05,.05,.7],[.85,.1,.05,.05,.7],[.75,.1,.05,.05,.6],[.6,.15,.05,.05,.55],[.8,.1,.05,.05,.65],[.1,.8,.1,.05,.6],[.05,.85,.1,.05,.6],[.1,.75,.15,.05,.55],[.05,.7,.1,.05,.55],[.05,.1,.8,.1,.55],[.05,.05,.85,.1,.6],[.05,.05,.75,.1,.55],[.05,.05,.1,.85,.6],[.05,.05,.05,.8,.55],[.05,.05,.05,.75,.5]];
+  const corr = [[1,.55,.35,.25,.65],[.55,1,.30,.20,.60],[.35,.30,1,.25,.45],[.25,.20,.25,1,.40],[.65,.60,.45,.40,1]];
+  function cholesky(A) { const n=A.length, L=Array(n).fill().map(()=>Array(n).fill(0)); for(let i=0;i<n;i++) for(let j=0;j<=i;j++){ let s=0; for(let k=0;k<j;k++) s+=L[i][k]*L[j][k]; if(i===j) L[i][j]=Math.sqrt(Math.max(0,A[i][i]-s)); else L[i][j]=(A[i][j]-s)/L[j][j]; } return L; }
+  function normal() { return Math.sqrt(-2*Math.log(Math.random())) * Math.cos(2*Math.PI*Math.random()); }
+  const L = cholesky(corr);
+  const data = [];
+  for (let i = 0; i < n; i++) {
+    const z = Array(5).fill().map(normal);
+    const f = Array(5).fill(0);
+    for (let r = 0; r < 5; r++) for (let c = 0; c <= r; c++) f[r] += L[r][c] * z[c];
+    const row = [];
+    for (let j = 0; j < headers.length; j++) {
+      let val = 0;
+      for (let k = 0; k < 5; k++) val += loadings[j][k] * f[k];
+      val += 0.25 * normal();
+      let final = 70 + 12 * val;
+      final = Math.min(100, Math.max(0, final));
+      row.push(Math.round(final * 10) / 10);
+    }
+    data.push(row);
+  }
+  loadDataset(headers, data);
+}
+
+function generateRealisticCorrelatedData() {
+  const n = parseInt(document.getElementById('sampleSize').value, 10);
+  const varNames = ["Income", "Education", "Debt", "Savings", "Stress", "Health", "SocialScore", "RiskTolerance", "WorkHours", "LeisureTime"];
+  const m = 10;
+  const targetCorr = Array(m).fill().map(() => Array(m).fill(0));
+  for (let i = 0; i < m; i++) targetCorr[i][i] = 1;
+  targetCorr[0][1] = targetCorr[1][0] = 0.6;
+  targetCorr[0][3] = targetCorr[3][0] = 0.7;
+  targetCorr[1][6] = targetCorr[6][1] = 0.5;
+  targetCorr[3][5] = targetCorr[5][3] = 0.5;
+  targetCorr[2][4] = targetCorr[4][2] = 0.6;
+  targetCorr[2][7] = targetCorr[7][2] = 0.5;
+  targetCorr[5][9] = targetCorr[9][5] = 0.4;
+  targetCorr[6][9] = targetCorr[9][6] = 0.3;
+  targetCorr[0][2] = targetCorr[2][0] = -0.55;
+  targetCorr[1][2] = targetCorr[2][1] = -0.35;
+  targetCorr[3][4] = targetCorr[4][3] = -0.65;
+  targetCorr[4][5] = targetCorr[5][4] = -0.45;
+  targetCorr[7][3] = targetCorr[3][7] = -0.4;
+  targetCorr[8][5] = targetCorr[5][8] = -0.5;
+  targetCorr[8][9] = targetCorr[9][8] = -0.7;
+  targetCorr[8][0] = targetCorr[0][8] = 0.3;
+  targetCorr[8][4] = targetCorr[4][8] = 0.55;
+  targetCorr[9][4] = targetCorr[4][9] = -0.3;
+  function nearPD(M, iter=100) { let A = M.map(r=>r.slice()); for(let it=0;it<iter;it++){ try { const L = choleskyStable(A); return { L }; } catch(e) { for(let i=0;i<m;i++) A[i][i] += 0.01; } } return { L: choleskyStable(A) }; }
+  function choleskyStable(A) { const n=A.length, L=Array(n).fill().map(()=>Array(n).fill(0)); for(let i=0;i<n;i++) for(let j=0;j<=i;j++){ let s=0; for(let k=0;k<j;k++) s+=L[i][k]*L[j][k]; if(i===j){ let val=A[i][i]-s; if(val<0) val=1e-6; L[i][i]=Math.sqrt(val); } else L[i][j]=(A[i][j]-s)/L[j][j]; } return L; }
+  const { L } = nearPD(targetCorr);
+  function normal() { return Math.sqrt(-2*Math.log(Math.random())) * Math.cos(2*Math.PI*Math.random()); }
+  const data = [];
+  for (let i = 0; i < n; i++) {
+    const z = Array(m).fill().map(normal);
+    const f = Array(m).fill(0);
+    for (let r = 0; r < m; r++) for (let c = 0; c <= r; c++) f[r] += L[r][c] * z[c];
+    const row = [];
+    for (let j = 0; j < m; j++) {
+      let val = f[j];
+      let scaled = 60 + 12 * val;
+      scaled = Math.min(100, Math.max(0, scaled));
+      row.push(Math.round(scaled * 10) / 10);
+    }
+    data.push(row);
+  }
+  loadDataset(varNames, data);
+}
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(err => alert(`Fullscreen error: ${err.message}`));
+  } else {
+    document.exitFullscreen();
+  }
+}
+
+// Event listeners
+thresholdSlider.oninput = (e) => { threshold = parseFloat(e.target.value); thresholdVal.innerText = threshold.toFixed(2); updatePlot(); };
+selectVarsBtn.onclick = () => openVarModal();
+applyVarsBtn.onclick = () => applyVariableSelection();
+cancelVarsBtn.onclick = () => closeVarModal();
+closeVarModalBtn.onclick = () => closeVarModal();
+uploadBtn.onclick = () => fileInput.click();
+fileInput.onchange = (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const text = ev.target.result;
+    const lines = text.trim().split(/\r?\n/);
+    if (lines.length < 2) return;
+    const headers = lines[0].split(',').map(s => s.trim());
+    const dataRows = lines.slice(1).map(line => line.split(',').map(v => parseFloat(v.trim())));
+    loadDataset(headers, dataRows);
+  };
+  reader.readAsText(f);
+};
+sampleBtn.onclick = () => generateStructuredSample();
+realisticBtn.onclick = () => generateRealisticCorrelatedData();
+saveCsvBtn.onclick = () => saveActiveCSV();
+showTableBtn.onclick = () => showDataTableModal();
+closeModalBtn.onclick = () => closeModal();
+showCorrBtn.onclick = () => showCorrelationModal();
+closeCorrModalBtn.onclick = () => closeCorrModal();
+fullscreenBtn.addEventListener('click', toggleFullscreen);
+dataModal.addEventListener('click', (e) => { if (e.target === dataModal) closeModal(); });
+corrModal.addEventListener('click', (e) => { if (e.target === corrModal) closeCorrModal(); });
+window.addEventListener('resize', () => { if (represented.length >= 2) updatePlot(); });
+
+generateStructuredSample();
+</script>
+</body>
+</html>

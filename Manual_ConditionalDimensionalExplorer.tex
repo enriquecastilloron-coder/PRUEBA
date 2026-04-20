@@ -1,0 +1,229 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{color,colortbl}
+\usepackage{hyperref}
+\usepackage[authoryear]{natbib}
+%\usepackage{enumerate}
+%\usepackage{natbib} %comment out if you do not have the package
+\usepackage{url} % not crucial - just used below for the URL
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}{Corollary}
+
+\newcommand{\bfg}[1]{\mbox{\boldmath $#1$\unboldmath}}
+\newtheorem{example}{Example}[section]
+%\pdfminorversion=4
+% NOTE: To produce blinded version, replace "0" with "1" below.
+\newcommand{\blind}{0}
+
+% DON'T change margins - should be 1 inch all around.
+\addtolength{\oddsidemargin}{-.5in}%
+\addtolength{\evensidemargin}{-.5in}%
+\addtolength{\textwidth}{1in}%
+\addtolength{\textheight}{1.3in}%
+\addtolength{\topmargin}{-.8in}%
+
+% MODIFICAR Y CREAR COLORES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%\setbeamercolor{title}{fg=red!80!black,bg=blue!20!white}
+%____________________________________________________
+\definecolor{MyBlue}{rgb}{0.00,0.09,0.66}  %clÃ¡sico
+\definecolor{MyRed}{rgb}{0.5,0.0,0.00}   %clÃ¡sico
+\definecolor{MyGreen}{rgb}{0.21,0.47,0.22} %clÃ¡sico
+\definecolor{MyLightGreen}{rgb}{0.294,0.717,0.467} %clÃ¡sico
+\definecolor{MyGrey}{rgb}{0.4,0.4,0.4}      %mÃ¡s claro
+\definecolor{MyLightGrey}{rgb}{0.6,0.6,0.6}      %mÃ¡s claro
+\definecolor{MyGrey}{rgb}{0.248,0.248,0.248}
+\definecolor{MyWhite}{rgb}{1,1,1}
+\definecolor{MyBrown}{rgb}{.694,.631,.584}   %amarronado
+\definecolor{MyBrown}{rgb}{.737,.400,.125}   %amarronado
+\definecolor{MyPink}{rgb}{.447,.200,.388}   %arrosado
+%%____________________________________________________
+\definecolor{color1}{rgb}{.482,.631,.749}   %azul clarito
+\definecolor{color2}{rgb}{.95,.0,.0}   %amarronado
+\definecolor{color3}{rgb}{.749,.843,.231}   %arrosado
+\definecolor{color4}{rgb}{.500,.100,.188}   %teja
+\definecolor{color5}{rgb}{.102,.373,.408}   %verde UC
+\definecolor{color6}{rgb}{.749,.843,.231}   %verde clarito
+%____________________________________________________
+
+%____________________________________________________
+\definecolor{RedRoofs}{rgb}{.749,.0,.0}   %Teja
+\definecolor{RedRoof}{rgb}{.549,.0,.0}   %Teja suave
+\definecolor{Brown}{rgb}{.6,.298,.0}   %amarronado
+\definecolor{Blues}{rgb}{.0,.298,.6}   %azul
+\definecolor{Blue}{rgb}{.0,.198,.3}   %azul suave
+\definecolor{Green}{rgb}{.298,.596,.0}   %teja
+\definecolor{color5}{rgb}{.102,.373,.408}   %verde UC
+\definecolor{color6}{rgb}{.749,.843,.231}   %verde clarito
+%____________________________________________________
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%----------------%%%%%%%%%%%%%%%%%%%%%
+
+
+\definecolor{CoColor}{rgb}{0,0.4078,0.545}
+\definecolor{DColor}{rgb}{0.545,0.270,0.0745}
+\definecolor{DriColor}{rgb}{0,0.804,0}
+\definecolor{DsColor}{rgb}{0,0.498,1}
+\definecolor{IColor}{rgb}{0.957,0.643,0.376}
+\definecolor{ItColor}{rgb}{0.420,0.557,0.137}
+\definecolor{PColor}{rgb}{0.8,0.196,0.6}
+\definecolor{SColor}{rgb}{0.557,0.42,0.137}
+\definecolor{SdColor}{rgb}{0.804,0.678,0}
+\definecolor{VColor}{rgb}{0.545,0,0.545}
+\definecolor{VisColor}{rgb}{1,0.498,0}
+\definecolor{VtColor}{rgb}{1,0.843,0}
+\definecolor{WColor}{rgb}{0.6,0.196,0.8}
+\definecolor{AsColor}{rgb}{0.941,0.501,0.501}
+\definecolor{TFColor}{rgb}{0.635,0.803,0.352}
+\definecolor{SSColor}{rgb}{0.874,0.604,0.553}
+
+\begin{document}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  TITLE PAGE
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{titlepage}
+  \begin{center}
+  \vspace*{2cm}
+  {\fontsize{28}{34}\selectfont\bfseries\color{accentgold}
+    Conditional Dimensional Explorer}
+  \vspace{1cm}
+  {\LARGE\bfseries User Manual\par}
+
+  \vspace{3mm}
+  
+    {\LARGE\bfseries Summary\par}
+    \vspace{5mm}
+    \end{center}
+
+    This manual describes the complete usage of the \textbf{Conditional Dimensional Explorer} web application, a browser-based tool for the analysis of cnditional dependencies using visual tools. No installation is required; the application runs entirely in any modern web browser.
+
+    The \textbf{Conditional Explorer} is an interactive web tool that implements the opacity-based conditional learning method described in this chapter. Its main features are:
+
+\begin{itemize}
+    \item \textbf{Data input:} Upload your own CSV file or generate synthetic datasets (structured sample or realistic correlations).
+    \item \textbf{Conditional queries:} Select any set of variables as \emph{represented} (output) and any disjoint set as \emph{conditioning} (input). The output is displayed as a 2D or 3D scatter plot.
+    \item \textbf{Opacity lens:} A distance threshold slider controls how sharply points fade with distance from the user-defined conditioning point (set via sliders for each input variable). Points close to the conditioning point are opaque; distant points become transparent.
+    \item \textbf{Real-time interaction:} Moving any slider updates the plot in milliseconds, allowing the user to explore sensitivity, interactions, and conditional distributions intuitively.
+    \item \textbf{Additional utilities:} Save the active dataset as CSV, view the data table, display the correlation matrix, and toggle fullscreen mode.
+\end{itemize}
+
+The tool is available online and its source code accompanies this book. It serves both as a pedagogical device for understanding conditional probabilities and as a practical validation tool for Bayesian network models.
+  \vfill
+
+\end{titlepage}
+
+% ─────────────────────────────────────────────────────────────────────────────
+%  TABLE OF CONTENTS
+% ─────────────────────────────────────────────────────────────────────────────
+\tableofcontents
+\newpage
+
+
+
+\begin{center}
+    {\bf User Manual for the Conditional Dimensional Explorer}
+
+\end{center}
+
+\section{Introduction}
+
+The web-based tool \texttt{ConditionalExplorer} (Figure~\ref{fig:app_main}) implements the opacity method described above. This manual explains every control and how to use it to learn conditional distributions from your own data or from built-in simulated examples.See the interactive version at \href{http://enriquecastilloron.github.io/PRUEBA/Fatigue3DModel.html}{\textcolor{blue}{\underline{Click to open application}}} and \href{http://enriquecastilloron.github.io/PRUEBA/UserManual_ObtainPiTermsv_1(ENGLISH).pdf}{\textcolor{blue}{\underline{manual}}}.
+
+
+\subsection{Getting Started: Loading or Generating Data}
+
+The toolbar at the top of the application provides the following options:
+
+\begin{itemize}
+    \item \textbf{Upload CSV:} Click to load your own dataset. The file must be in comma-separated format, with the first row containing the variable names. All subsequent rows must contain numeric values. The application will automatically compute the empirical CDF (ECDF) transformation for each variable, mapping all values to the quantile range \([0,1]\).
+    \item \textbf{n = [2000]:} Sets the number of samples for the simulated datasets. You can change this value before clicking one of the simulation buttons.
+    \item \textbf{Structured sample:} Generates a synthetic dataset with 15 variables (math, physics, chemistry, etc.) that exhibit a realistic correlation structure based on a latent factor model. This is useful for testing the tool.
+    \item \textbf{Realistic ± corr (10 vars):} Generates a dataset of 10 economic/social variables (Income, Education, Debt, etc.) with a mix of positive and negative correlations. This dataset is ideal for studying interactions.
+\end{itemize}
+
+After loading or generating data, the variable names appear in the selection panels on the right.
+
+\subsection{Defining the Query: Represented vs. Conditioning Variables}
+
+The right-hand panel contains two multi-select lists and a set of sliders. This is where you define your conditional query.
+
+\begin{itemize}
+    \item \textbf{Represented variables (output):} Select at least 2 and at most 3 variables. These will be plotted on the axes (2D or 3D scatter plot). They represent the \textbf{output} of the conditional query: the distribution you want to see.
+    \item \textbf{Conditioning variables (input):} Select any number of variables (can be zero). These are the \textbf{inputs}. They will appear as sliders below. The system enforces that a variable cannot be simultaneously a represented and a conditioning variable.
+    \item \textbf{Conditioning point (sliders):} For each selected conditioning variable, a slider appears. Each slider ranges from 0 to 1, representing the quantile of that variable. By moving a slider, you set the conditioning value \(\mathbf{c}\) for that input.
+\end{itemize}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.95\textwidth]{ConditionalExplorer.png}
+\caption{Main window of the Conditional Explorer. The toolbar (top) controls data loading/simulation. The right panel defines the output (represented variables) and input (conditioning variables). The sliders set the conditioning point. The plot area shows the conditional distribution.}
+\label{fig:app_main}
+\end{figure}
+
+\subsection{Adjusting the Lens: The Distance Threshold}
+
+Below the variable lists, you find a slider labeled \textbf{distance threshold}. This is the \(\tau\) parameter from the opacity formula.
+
+\begin{itemize}
+    \item \textbf{Small \(\tau\) (e.g., 0.2):} Only points extremely close to the conditioning point remain opaque. This gives a very local, high-resolution view of the conditional distribution, but may show very few points (high variance).
+    \item \textbf{Large \(\tau\) (e.g., 1.5):} Points farther away remain partially visible. The plot shows a smoother, global view, but may include points that are only weakly conditioned on the input.
+    \item \textbf{Very large \(\tau\) (e.g., 3.0):} Almost all points are visible, and the plot approximates the marginal distribution of the output variables, independent of the inputs.
+\end{itemize}
+
+The label below the threshold shows the number of points currently considered (those with distance \(<\tau\)). You can use this to balance local precision and sample size.
+
+\subsection{Interpreting the Plot: 2D and 3D Conditional Views}
+
+\begin{itemize}
+    \item \textbf{2D Mode (2 represented variables):} The plot shows a standard scatter plot. Points are colored in a green palette (from the earth-tone theme). The opacity of each point follows the rule above. A black square outlines the unit square \([0,1]^2\).
+    \item \textbf{3D Mode (3 represented variables):} The plot switches to a 3D scatter plot. You can click, drag, and rotate the view. Opacity works identically. This is invaluable for understanding how three outputs co-vary given the inputs.
+\end{itemize}
+
+\subsection{Exploring Conditional Distributions: A Worked Example}
+
+Let's walk through a typical exploration using the “Realistic ± corr” dataset.
+
+\begin{enumerate}
+    \item Click \textbf{Realistic ± corr (10 vars)}. The dataset loads.
+    \item In the right panel, under “represented variables”, select \textbf{Income} and \textbf{Health} (two outputs).
+    \item Under “conditioning variables”, select \textbf{Debt}. A slider for Debt appears.
+    \item Move the Debt slider to a low value (e.g., 0.2, meaning low debt percentile). Observe the scatter plot of Income vs. Health. Points with low debt are opaque; others are faint. What is the relationship between Income and Health for low-debt individuals?
+    \item Now move the Debt slider to a high value (e.g., 0.8). The opaque points shift. Do you see a change in correlation? Is the relationship the same? This is the \textbf{conditional distribution} of (Income, Health) given Debt.
+    \item Add a second conditioning variable, e.g., \textbf{Education}. Now you have two sliders (Debt and Education). Set both to low values. Then set both to high values. Then set Debt low and Education high. You are now exploring a 2D conditional query: “Income vs. Health given Debt = low and Education = high”. The opacity pattern reveals interactions: do Debt and Education amplify or cancel each other's effects?
+    \item Increase the distance threshold. The visible points include more variation. Decrease it to focus on a tighter neighborhood. The number of points shown updates in real time.
+\end{enumerate}
+
+\subsection{Advanced Features}
+
+\begin{itemize}
+    \item \textbf{Variable Selection Modal:} Clicking the \textbf{Variable selection} button opens a large, spacious dialog where you can comfortably select the represented and conditioning variables. This is especially useful when there are many variables.
+    \item \textbf{Show data table:} Opens a modal window showing the raw data (first 500 rows). Useful for verification.
+    \item \textbf{Correlation matrix:} Opens a heatmap of the Pearson correlations between all variables in the current dataset. This gives a global overview of dependencies.
+    \item \textbf{Save CSV:} Exports the current dataset (active sample) to a CSV file on your computer, in the same format as the uploaded files.
+    \item \textbf{Fullscreen:} Expands the application to full screen, giving maximum space to the plot and sliders.
+\end{itemize}
+
+\subsection{Pedagogical Tips for Effective Learning}
+
+\begin{itemize}
+    \item \textbf{Start with 2 represented variables and 1 conditioning variable.} Master the one-input case first.
+    \item \textbf{Use the realistic dataset.} Its built-in positive and negative correlations make the effects of conditioning dramatically visible.
+    \item \textbf{Animate the conditioning.} Move a slider slowly from 0 to 1 and watch how the opaque cloud moves. This reveals the functional relationship between input and output.
+    \item \textbf{Test hypotheses.} For example, in the realistic dataset, you might hypothesize that “high Education reduces the negative effect of Debt on Health”. Set Debt to a high value, then vary Education. Does the Health distribution shift as predicted?
+    \item \textbf{Compare with the correlation matrix.} The global correlation might be weak, but conditioning on a third variable could reveal a strong local relationship. The opacity plot will show this even if the global correlation does not.
+\end{itemize}
+
+\subsection{Limitations and Practical Notes}
+
+\begin{itemize}
+    \item The ECDF transformation is computed from the active sample. If you upload a new CSV, the transformation is recomputed.
+    \item For very large datasets (\(>10,000\) points), the 3D plot may become sluggish. Use the 2D mode or reduce the sample size via the \texttt{n} control before simulating.
+    \item The opacity method assumes continuous variables. Discrete variables are handled by the ECDF as well, but the distance metric in quantile space remains valid.
+    \item The conditioning point \((\mathbf{c})\) is set in quantile space. A value of 0.5 means the median of that variable. This is interpretable regardless of the original units.
+\end{itemize}
+
+\end{document}
