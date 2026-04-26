@@ -1,0 +1,696 @@
+\documentclass[12pt,a4paper]{article}
+
+% ── Packages ──────────────────────────────────────────────────────────────────
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{geometry}
+\geometry{top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm}
+
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tcolorbox}
+\usepackage{parskip}
+
+% ── Colours ───────────────────────────────────────────────────────────────────
+\definecolor{primaryblue}{RGB}{0,123,255}
+\definecolor{darkblue}{RGB}{0,70,140}
+\definecolor{lightgray}{RGB}{248,249,250}
+\definecolor{successgreen}{RGB}{21,87,36}
+\definecolor{successbg}{RGB}{212,237,218}
+\definecolor{warningyellow}{RGB}{133,100,4}
+\definecolor{warningbg}{RGB}{255,243,205}
+\definecolor{dangerbg}{RGB}{248,215,218}
+\definecolor{dangerred}{RGB}{114,28,36}
+\definecolor{codebg}{RGB}{233,236,239}
+
+% ── Hyperref setup ────────────────────────────────────────────────────────────
+\hypersetup{
+    colorlinks=true,
+    linkcolor=darkblue,
+    urlcolor=primaryblue,
+    citecolor=darkblue,
+    pdftitle={Fatigue 3D Model – User Manual},
+    pdfauthor={Statistical Analysis Tool},
+    pdfsubject={User Manual}
+}
+
+% ── Section formatting ────────────────────────────────────────────────────────
+\titleformat{\section}{\Large\bfseries\color{darkblue}}{}{0em}{}[\color{primaryblue}\titlerule]
+\titleformat{\subsection}{\large\bfseries\color{darkblue}}{}{0em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\color{darkblue}}{}{0em}{}
+
+% ── Custom boxes ──────────────────────────────────────────────────────────────
+\tcbuselibrary{skins,breakable}
+
+\newtcolorbox{notebox}{
+    colback=successbg, colframe=successgreen,
+    fonttitle=\bfseries, title=Note,
+    breakable, left=6pt, right=6pt, top=4pt, bottom=4pt
+}
+
+\newtcolorbox{warnbox}{
+    colback=warningbg, colframe=warningyellow,
+    fonttitle=\bfseries, title=Warning,
+    breakable, left=6pt, right=6pt, top=4pt, bottom=4pt
+}
+
+\newtcolorbox{stepbox}[1]{
+    colback=lightgray, colframe=primaryblue,
+    fonttitle=\bfseries\color{white}, coltitle=white,
+    title=Step #1,
+    breakable, left=6pt, right=6pt, top=4pt, bottom=4pt
+}
+
+\newtcolorbox{infobox}{
+    colback=codebg, colframe=primaryblue!60,
+    breakable, left=6pt, right=6pt, top=4pt, bottom=4pt,
+    fontupper=\ttfamily\small
+}
+
+% ── Header / footer ───────────────────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{darkblue}\textbf{Fatigue 3D Model}}
+\fancyhead[R]{\small\color{darkblue}User Manual}
+\fancyfoot[C]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{\color{primaryblue}\hrule width\headwidth height\headrulewidth}
+
+% ── Inline code ───────────────────────────────────────────────────────────────
+\newcommand{\code}[1]{\colorbox{codebg}{\texttt{\small#1}}}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\begin{document}
+% ══════════════════════════════════════════════════════════════════════════════
+
+% ── Title page ────────────────────────────────────────────────────────────────
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    {\color{darkblue}\rule{\linewidth}{2pt}}\\[0.5cm]
+    {\Huge\bfseries\color{darkblue} Fatigue 3D Model\\[0.4cm]
+     \Large Statistical Analysis Tool}\\[0.3cm]
+    {\color{primaryblue}\rule{\linewidth}{2pt}}\\[1.5cm]
+    {\LARGE\bfseries User Manual}\\[0.5cm]
+    {\large Version 1.0}\\[3cm]
+    \begin{tcolorbox}[colback=lightgray, colframe=primaryblue, width=0.8\linewidth]
+        \centering
+        \textbf{Program:} \texttt{Fatigue3DModel.html}\\[4pt]
+        \textbf{Purpose:} Three-dimensional statistical modelling\\
+        \phantom{\textbf{Purpose:}} of fatigue data using hyperbolic regression\\[4pt]
+        \textbf{Platform:} Any modern web browser\\[4pt]
+        \textbf{Input format:} CSV (comma-separated values)
+    \end{tcolorbox}
+    \vfill
+    {\small\color{gray} This document describes the complete workflow of the tool,\\
+    from data loading to the generation of percentile hyperbola plots.}
+\end{titlepage}
+
+% ── Table of contents ─────────────────────────────────────────────────────────
+\tableofcontents
+\newpage
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Introduction}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\textbf{Fatigue 3D Model} is a self-contained, browser-based statistical analysis tool
+designed to fit a three-dimensional hyperbolic regression model to fatigue or similar
+engineering data.  The program is distributed as a single HTML file
+(\texttt{Fatigue3DModel.html}) and requires no installation: it runs entirely inside
+any modern web browser.
+
+\subsection{Purpose}
+
+The tool addresses the problem of characterising the statistical distribution of a
+\emph{response variable} (e.g.\ fatigue life) as a function of two \emph{predictor
+variables} (e.g.\ stress amplitude and a third physical quantity such as stress ratio,
+temperature, or frequency).  By fitting a multivariate linear model in the transformed
+space $x \cdot y \cdot z$ and computing empirical percentiles of the residuals, the
+tool generates a family of hyperbolic iso-percentile curves that cover the full
+probability range from $P_0$ to $P_{99}$.
+
+\subsection{Key Features}
+
+\begin{itemize}[leftmargin=1.5em]
+    \item Automatic detection and application of a base-10 logarithmic transformation
+          for columns whose range spans more than three orders of magnitude.
+    \item Interactive scatter plot of the raw data with click-to-toggle outlier
+          identification.
+    \item Ordinary least-squares (OLS) fitting of a seven-parameter bilinear model
+          in the product space.
+    \item Automatic outlier detection based on the asymptotes of the fitted hyperbola.
+    \item Computation of residual quantiles at seven probability levels:
+          $P_0$, $P_5$, $P_{25}$, $P_{50}$, $P_{75}$, $P_{95}$, and $P_{99}$.
+    \item Generation of iso-percentile hyperbola plots for five representative values
+          of the third variable, both in original scale and in the uniform $[0,1]$
+          probability scale.
+    \item One-click PDF export of every interactive plot.
+\end{itemize}
+
+\subsection{System Requirements}
+
+\begin{itemize}[leftmargin=1.5em]
+    \item A modern web browser (Chrome, Firefox, Edge, or Safari --- version released
+          after 2020 recommended).
+    \item An internet connection is required on first use so that the browser can load
+          the external libraries (Plotly, jsPDF, html2canvas) from their CDN addresses.
+          Subsequent uses may work offline if the browser has cached those resources.
+    \item No installation, no server, no database.
+\end{itemize}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Input Data Format}
+% ══════════════════════════════════════════════════════════════════════════════
+
+The program reads a \textbf{comma-separated values (CSV)} file.  The file must satisfy
+the following requirements.
+
+\subsection{File Structure}
+
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{First row:} column headers, separated by commas.
+    \item \textbf{Subsequent rows:} numeric data, one observation per row.
+    \item \textbf{Missing values:} leave the cell empty or enter a non-numeric token;
+          the program will treat it as \texttt{null} and skip that observation for
+          any computation involving the missing column.
+    \item \textbf{Encoding:} UTF-8 plain text.
+    \item \textbf{Decimal separator:} period (\texttt{.}).
+\end{itemize}
+
+\subsection{Required Columns}
+
+The tool expects \textbf{exactly three numeric columns}.  Their roles (horizontal
+variable $X$, vertical variable $Y$, and third variable $Z$) are assigned interactively
+after loading, so the physical order in the file is arbitrary.
+
+\begin{center}
+\begin{tabular}{@{}llp{7cm}@{}}
+\toprule
+\textbf{Column} & \textbf{Role} & \textbf{Typical example (fatigue)} \\
+\midrule
+1\textsuperscript{st} & $X$ --- horizontal predictor & Stress amplitude $\sigma_a$ \\
+2\textsuperscript{nd} & $Y$ --- vertical response     & Fatigue life $N$ \\
+3\textsuperscript{rd} & $Z$ --- third predictor        & Stress ratio $R$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Automatic Logarithmic Transformation}
+
+At load time the program inspects each column.  If the ratio
+$\max / \min > 1000$ and all values are strictly positive, the entire column is
+replaced by $\log_{10}(\text{value})$ before any further computation.  The column
+header is then labelled \texttt{log(OriginalName)} throughout the interface.
+
+\begin{notebox}
+    The transformation is applied silently.  After loading, check the information
+    panel to confirm which columns have been log-transformed.
+\end{notebox}
+
+\subsection{Minimal Example}
+
+\begin{infobox}
+sigma\_a,N,R\\
+200,1.2e6,0.1\\
+250,4.5e5,0.1\\
+300,1.8e5,0.1\\
+200,9.8e5,-0.5\\
+250,3.7e5,-0.5
+\end{infobox}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Program Interface Overview}
+% ══════════════════════════════════════════════════════════════════════════════
+
+The interface is divided into six numbered sections that follow the natural analysis
+workflow.  They are presented sequentially from top to bottom on the page.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{}clp{8.5cm}@{}}
+\toprule
+\textbf{Part} & \textbf{Title} & \textbf{Purpose} \\
+\midrule
+I   & Data Reading and Variable Definition & Load the CSV file and choose which column plays each role. \\
+II  & Data Table & Inspect the data in original or $[0,1]$ scale; identify outliers visually. \\
+III & Three-dimensional Model Fitting & Fit the OLS model and inspect residuals. \\
+IV  & (internal)  & Outlier detection (executed as part of Part III). \\
+V   & Percentile Calculation & Display the seven residual quantiles. \\
+VI  & Hyperbolas for Different $Z$ Values & Generate and export the iso-percentile curves. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Step-by-Step Workflow}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Part I --- Data Loading and Variable Definition}
+
+\begin{stepbox}{1 --- Open the tool}
+Open \texttt{Fatigue3DModel.html} in your web browser by double-clicking the file
+(local mode) or by navigating to the hosted URL (GitHub Pages mode).  The page
+detects its environment automatically.
+\end{stepbox}
+
+\begin{stepbox}{2 --- Set the bandwidth parameter}
+The \textbf{var3bandwidth} input (default \texttt{0.10}) controls the neighbourhood
+size used when computing local statistics for a given $Z$ value.  A value of
+\texttt{0.10} means that data points within $\pm 10\%$ of the full $Z$-range around
+the target value are included.  Acceptable values are strictly between 0 and 1.
+
+Click \textbf{Apply var3bandwidth} to confirm the value.  A green confirmation
+message will appear.
+\end{stepbox}
+
+\begin{stepbox}{3 --- Load the CSV file (local mode)}
+Click \textbf{Choose File}, select your \texttt{.csv} file, then click
+\textbf{Load File}.  A success message confirms the number of rows and columns
+detected, together with a list of any log-transformed columns.
+\end{stepbox}
+
+\begin{notebox}
+    When the tool is served from GitHub Pages it automatically loads a file named
+    \texttt{DataFatigue.csv} located in the repository root.  In that case the
+    file-picker control is hidden.
+\end{notebox}
+
+\begin{stepbox}{4 --- Assign variables}
+Two drop-down menus appear after a successful load:
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Vertical Variable (Y):} the response to be plotted on the vertical axis.
+    \item \textbf{Horizontal Variable (X):} the predictor on the horizontal axis.
+\end{itemize}
+The remaining column is automatically designated as the \textbf{third variable} ($Z$).
+Click \textbf{Apply Selection}.  An interactive scatter plot of $Y$ vs.\ $X$ is
+displayed immediately below.
+\end{stepbox}
+
+\begin{warnbox}
+    You must select two \emph{different} columns for $X$ and $Y$.  The tool will
+    alert you if the same column is chosen for both.
+\end{warnbox}
+
+\subsection{Part II --- Data Table}
+
+The data table shows all observations.  Rows highlighted in red correspond to
+observations currently classified as outliers.
+
+The toggle button \textbf{Show Data in [0,1] Scale} / \textbf{Show Original Data}
+switches between the original (possibly log-transformed) values and the empirical
+CDF-based probability scale.  The $[0,1]$ scale is computed column-by-column using
+linear interpolation of the empirical CDF:
+\[
+    u_i = \frac{\text{rank}(x_i)}{n}, \qquad i = 1, \dots, n.
+\]
+
+\subsection{Part III --- Three-dimensional Model Fitting}
+
+Click \textbf{Fit Model and Analyze}.  The program executes the following sequence
+automatically:
+
+\subsubsection{Model Specification}
+
+The tool fits a seven-parameter ordinary least-squares model.  Define
+$x = X_i$, $y = Y_i$, $z = Z_i$ for the $i$-th observation.  The model is
+linearised by expanding the product $xyz$ and expressing the response as:
+
+\[
+    -\,x_i y_i z_i \;=\;
+    C_0
+    + C_1 x_i
+    + C_2 y_i
+    + C_3 z_i
+    + C_{12}\,x_i y_i
+    + C_{13}\,x_i z_i
+    + C_{23}\,y_i z_i
+    + \varepsilon_i
+\]
+
+This can be written compactly as $\mathbf{y} = \mathbf{X}\boldsymbol{\theta} + \boldsymbol{\varepsilon}$,
+where the design matrix $\mathbf{X}$ has columns
+$[1,\, x,\, y,\, z,\, xy,\, xz,\, yz]$ and the parameter vector is
+$\boldsymbol{\theta} = [C_0, C_1, C_2, C_3, C_{12}, C_{13}, C_{23}]^\top$.
+
+The OLS estimator $\hat{\boldsymbol{\theta}} = (\mathbf{X}^\top\mathbf{X})^{-1}\mathbf{X}^\top\mathbf{y}$
+is solved using Gaussian elimination with partial pivoting.
+
+\subsubsection{Goodness-of-Fit Statistics}
+
+After fitting, the following statistics are displayed:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Statistic} & \textbf{Definition} \\
+\midrule
+Mean of residuals  & $\bar{\varepsilon} = \frac{1}{n}\sum_i \varepsilon_i$ \\
+Std.\ deviation    & $s = \sqrt{\frac{1}{n-1}\sum_i (\varepsilon_i - \bar{\varepsilon})^2}$ \\
+Variance           & $s^2$ \\
+MSE                & $\frac{1}{n}\sum_i \varepsilon_i^2$ \\
+RMSE               & $\sqrt{\text{MSE}}$ \\
+MAE                & $\frac{1}{n}\sum_i |\varepsilon_i|$ \\
+$R^2$              & $1 - \text{SS}_\text{res}/\text{SS}_\text{tot}$ \\
+MAPE               & $\frac{100}{n}\sum_i |\varepsilon_i / y_i|$ (when $y_i \neq 0$) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection{Residual Empirical CDF Plot}
+
+A plot of the empirical cumulative distribution function of the residuals
+$F(\varepsilon)$ is generated.  The seven percentile values are overlaid as
+coloured markers.  The plot can be exported to PDF via the
+\textbf{Download Plot as PDF} button.
+
+\subsubsection{Automatic Outlier Detection}
+
+Outlier detection is carried out in one pass over five equally spaced $Z$ reference
+values spanning the observed range $[Z_\min, Z_\max]$.  For each reference value
+$z_k$ the fitted model defines a rectangular hyperbola with:
+\begin{itemize}[leftmargin=1.5em]
+    \item a \textbf{vertical asymptote} at $X = X_\text{asym}(z_k)$,
+    \item a \textbf{horizontal asymptote} at $Y = Y_\text{asym}(z_k)$.
+\end{itemize}
+Any observation within the bandwidth of $z_k$ that lies to the \emph{left} of the
+vertical asymptote or \emph{below} the horizontal asymptote is flagged as an outlier
+and removed from subsequent computations.  The scatter plot is refreshed and outlier
+rows are highlighted in the data table.
+
+\begin{warnbox}
+    At least \textbf{7 valid observations} must remain after outlier removal for the
+    analysis to continue.  The program will halt and display a warning if this
+    condition is not met.
+\end{warnbox}
+
+\subsection{Part V --- Percentile Calculation}
+
+Seven percentiles of the global residual distribution are computed and displayed:
+
+\begin{center}
+$P_0,\quad P_5,\quad P_{25},\quad P_{50},\quad P_{75},\quad P_{95},\quad P_{99}$
+\end{center}
+
+These are obtained by linear interpolation between the order statistics of the
+sorted residual vector.  The quantile at probability level $p$ is:
+
+\[
+    Q(p) = (1-w)\,\varepsilon_{(j)} + w\,\varepsilon_{(j+1)},
+    \qquad j = \lfloor p(n-1) \rfloor,\quad w = p(n-1) - j.
+\]
+
+\subsection{Part VI --- Hyperbola Plots}
+
+\subsubsection{Hyperbola Generation}
+
+For each of five reference values $z_k$ (equally spaced in $[Z_\min, Z_\max]$),
+the program computes seven iso-percentile hyperbolic curves.  Given a quantile
+$q$ and fixed $z_k$, the $Y$ value corresponding to a given $X$ is obtained
+by solving the model equation for $Y$:
+
+\[
+    Y(X;\, z_k,\, q) = \frac{q - C_0 - C_1 X - C_3 z_k - C_{13} X z_k}
+                            {C_2 + C_{12} X + C_{23} z_k}
+\]
+
+where $q$ replaces the residual $\varepsilon$ term.  Only points that lie in the
+physically valid region (beyond both asymptotes) are plotted.
+
+\subsubsection{Original-Scale Plots}
+
+For each reference $Z$ value a two-panel row is displayed:
+\begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Left panel:} the seven iso-percentile hyperbolas overlaid on the
+          scatter plot.  Data points whose $Z$ value falls within the bandwidth
+          are shown in orange; outliers in blue; remaining data in light grey.
+    \item \textbf{Right panel:} the empirical CDF of the local residuals (those
+          belonging to the bandwidth neighbourhood of $z_k$), with the seven
+          percentile markers.
+\end{itemize}
+
+A line of text below each row lists the local percentile values for that $Z$ slice.
+
+\subsubsection{Plots in \texorpdfstring{$[0,1]$}{[0,1]} Probability Scale}
+
+Click \textbf{Generate Plots in [0,1] Scale} to produce an additional set of plots
+where both axes are transformed to the uniform probability scale using the empirical
+CDF:
+
+\[
+    u_X = F_X(X), \qquad u_Y = F_Y(Y).
+\]
+
+In this representation the axes run from 0 to 1 and all variables are treated
+symmetrically, facilitating visual comparison across different datasets.
+
+\subsubsection{Colour Convention}
+
+All hyperbola plots use the following consistent colour scheme:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}clc@{}}
+\toprule
+\textbf{Percentile} & \textbf{Colour} & \textbf{Line style} \\
+\midrule
+$P_0$   & Red (\texttt{\#FF0000})      & Solid \\
+$P_5$   & Orange-red (\texttt{\#FF4500}) & Solid \\
+$P_{25}$ & Dark orange (\texttt{\#FF8C00}) & Solid \\
+$P_{50}$ & Orange (\texttt{\#FFA500})    & \textbf{Dashed} \\
+$P_{75}$ & Steel blue (\texttt{\#4682B4}) & Solid \\
+$P_{95}$ & Dodger blue (\texttt{\#1E90FF}) & Solid \\
+$P_{99}$ & Royal blue (\texttt{\#4169E1}) & Solid \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Exporting Results}
+% ══════════════════════════════════════════════════════════════════════════════
+
+Every plot generated by the tool can be exported individually as a PDF file.
+Clicking any \textbf{Download Plot as PDF} button (shown in red) performs the
+following sequence internally:
+
+\begin{enumerate}[leftmargin=1.5em]
+    \item The plot is temporarily resized to $1200 \times 900$ pixels with a white
+          background.
+    \item A PNG image is captured at $2\times$ pixel density ($2400 \times 1800$ px).
+    \item The image is embedded in a landscape A4 PDF page using the jsPDF library.
+    \item The PDF is downloaded through the browser under an automatically generated
+          filename (e.g.\ \texttt{Hyperbola\_0.250.pdf} or
+          \texttt{Hyperbola\_01\_0.250.pdf} for the $[0,1]$-scale version).
+    \item The plot is restored to its original display size.
+\end{enumerate}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Mathematical Background}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\subsection{The Three-Variable Hyperbolic Model}
+
+The fundamental relationship exploited by the tool is that, for fixed $z$, the
+implicit equation
+
+\[
+    C_0 + C_1 x + C_2 y + C_3 z + C_{12}\,xy + C_{13}\,xz + C_{23}\,yz
+    \;=\; -\,xyz
+\]
+
+defines a rectangular hyperbola in the $(x, y)$ plane.  Rearranging:
+
+\[
+    y\,(C_2 + C_{12}\,x + C_{23}\,z)
+    \;=\; -xyz - C_0 - C_1 x - C_3 z - C_{13}\,xz
+\]
+\[
+    y \;=\; \frac{-xyz - C_0 - C_1 x - C_3 z - C_{13}\,xz}
+                 {C_2 + C_{12}\,x + C_{23}\,z}.
+\]
+
+The \textbf{vertical asymptote} is the value of $x$ for which the denominator
+(or an equivalent grouping) becomes zero, and the \textbf{horizontal asymptote}
+follows symmetrically.
+
+\subsection{Iso-Percentile Curves}
+
+Adding a residual quantile $q$ to the right-hand side shifts the hyperbola
+vertically in the product space:
+
+\[
+    C_0 + C_1 x + C_2 y + C_3 z + C_{12}\,xy + C_{13}\,xz + C_{23}\,yz + q
+    \;=\; -\,xyz.
+\]
+
+Each value of $q$ (i.e.\ each of the seven percentile levels) produces a distinct
+hyperbola.  Together they form the \emph{iso-percentile fan} displayed in Part VI.
+
+\subsection{Empirical CDF and \texorpdfstring{$[0,1]$}{[0,1]} Scale}
+
+The empirical cumulative distribution function is estimated by the \textbf{Weibull
+plotting position}:
+
+\[
+    \hat{F}(x_{(i)}) = \frac{i}{n}, \qquad i = 1, \dots, n,
+\]
+
+where $x_{(1)} \le x_{(2)} \le \cdots \le x_{(n)}$ are the order statistics.
+Linear interpolation is used between adjacent pairs to map any value onto
+$[0,1]$ and, conversely, to invert from $[0,1]$ back to the original scale.
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Troubleshooting}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\renewcommand{\arraystretch}{1.4}
+\begin{longtable}{@{}p{5cm}p{9cm}@{}}
+\toprule
+\textbf{Symptom} & \textbf{Likely cause and remedy} \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+\textit{``Plotly has not loaded''} red banner on startup &
+    The browser could not reach the Plotly CDN.  Check your internet connection and
+    reload the page. \\
+\textit{``Please select a CSV file''} alert when clicking Load &
+    No file was selected in the file picker.  Click the picker first. \\
+File loads but columns are wrong / missing &
+    Verify that the CSV uses commas as delimiters, that the first row contains
+    column names, and that all data values use a period as the decimal separator. \\
+\textit{``Not enough valid data for fitting (minimum 7 points)''} &
+    The dataset has fewer than 7 rows with complete (non-null, finite) values in
+    all three columns.  Check for missing values or remove rows with \texttt{NaN}. \\
+\textit{``Singular matrix''} error during fitting &
+    Two or more columns (after log-transformation) are linearly dependent.  This
+    can happen if one variable is a constant or a perfect linear function of
+    another. \\
+Hyperbola curves appear truncated or absent &
+    The curves may fall entirely outside the visible axis range.  Try a different
+    variable assignment or verify that the bandwidth parameter captures enough
+    local data points. \\
+PDF download button is greyed out &
+    The corresponding plot has not been generated yet.  Complete the preceding
+    analysis step first. \\
+\textit{``No valid data for plot''} message in scatter area &
+    All rows contain at least one null or non-finite value in the selected
+    variables.  Inspect the raw CSV for formatting issues. \\
+\end{longtable}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Parameter Reference}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\begin{center}
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{@{}lp{4cm}p{7cm}@{}}
+\toprule
+\textbf{Parameter} & \textbf{Location} & \textbf{Description} \\
+\midrule
+\texttt{var3bandwidth} &
+    Part I control panel &
+    Fractional half-width of the $Z$-neighbourhood used for local statistics.
+    Range: $(0,1)$.  Default: \texttt{0.10}. \\
+$C_0,\dots,C_{23}$ &
+    Displayed in Part III after fitting &
+    Seven OLS regression coefficients of the linearised hyperbolic model. \\
+$P_0, P_5, P_{25}, P_{50}, P_{75}, P_{95}, P_{99}$ &
+    Displayed in Parts III, V, VI &
+    Empirical quantiles of the global residual distribution. \\
+\texttt{ecdfX}, \texttt{ecdfY} &
+    Internal (used in Part VI) &
+    Empirical CDF lookup tables for the $X$ and $Y$ columns, used for the
+    $[0,1]$-scale transformation. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Quick-Start Checklist}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\begin{enumerate}[leftmargin=1.5em, label=\textbf{\arabic*.}]
+    \item Open \texttt{Fatigue3DModel.html} in your browser.
+    \item Confirm the green \textit{``Plotly loaded successfully''} banner.
+    \item (Optional) Adjust \texttt{var3bandwidth} and click \textbf{Apply var3bandwidth}.
+    \item Select your CSV file and click \textbf{Load File}.
+    \item Verify the column list and log-transformation notice.
+    \item Select the \textbf{Vertical} and \textbf{Horizontal} variables; click
+          \textbf{Apply Selection}.
+    \item Inspect the scatter plot; use \textbf{Show Data in [0,1] Scale} if desired.
+    \item Click \textbf{Fit Model and Analyze}.
+    \item Read the parameter estimates and goodness-of-fit metrics in Part III.
+    \item Acknowledge the outlier-detection alert (lists removed points).
+    \item Inspect the residual CDF plot and the $P$-values in Part V.
+    \item Scroll to Part VI to view the iso-percentile hyperbola plots.
+    \item Click \textbf{Generate Plots in [0,1] Scale} for the normalised view.
+    \item Use the red \textbf{Download Plot as PDF} buttons to export any plot.
+\end{enumerate}
+
+% ══════════════════════════════════════════════════════════════════════════════
+\section{Glossary}
+% ══════════════════════════════════════════════════════════════════════════════
+
+\begin{description}[leftmargin=2em, style=nextline]
+    \item[Bandwidth (\texttt{var3bandwidth})]
+        The half-width of the sliding window in the $Z$-direction, expressed as
+        a fraction of the total $Z$-range.
+    \item[ECDF]
+        Empirical Cumulative Distribution Function.  A step function that estimates
+        the true CDF from the sample.
+    \item[Horizontal asymptote]
+        The value $Y_\text{asym}$ towards which the fitted hyperbola converges as
+        $X \to \infty$.
+    \item[Iso-percentile curve]
+        A hyperbola in the $(X, Y)$ plane along which the probability that a random
+        observation falls below the curve is constant.
+    \item[Log-transformation]
+        Replacement of raw values by their base-10 logarithm, applied automatically
+        to columns with a dynamic range exceeding three orders of magnitude.
+    \item[MAE]
+        Mean Absolute Error: $\frac{1}{n}\sum |\varepsilon_i|$.
+    \item[MAPE]
+        Mean Absolute Percentage Error: $\frac{100}{n}\sum |\varepsilon_i / y_i|$.
+    \item[MSE / RMSE]
+        Mean Squared Error / Root Mean Squared Error.
+    \item[OLS]
+        Ordinary Least Squares regression.
+    \item[Outlier]
+        A data point that lies on the wrong side of a fitted hyperbola's asymptote,
+        inconsistent with the physical model.
+    \item[Percentile $P_k$]
+        The value below which $k\%$ of the empirical residual distribution falls.
+    \item[Residual $\varepsilon_i$]
+        Difference between the model prediction and the observed response for
+        observation $i$ in the transformed product space.
+    \item[Third variable ($Z$)]
+        The conditioning variable whose value determines which hyperbola slice
+        is displayed.  Typical examples: stress ratio, temperature, frequency.
+    \item[Vertical asymptote]
+        The value $X_\text{asym}$ at which the fitted hyperbola becomes undefined
+        (denominator $\to 0$).
+\end{description}
+
+% ══════════════════════════════════════════════════════════════════════════════
+
+\vfill
+\begin{center}
+\color{gray}\small
+\rule{0.6\linewidth}{0.4pt}\\[4pt]
+Fatigue 3D Model --- User Manual\\
+Document prepared automatically from source code analysis.
+\end{center}
+
+\end{document}
