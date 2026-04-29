@@ -1042,9 +1042,9 @@ tbody tr:hover { background: rgba(0,0,0,0.03); }
   <button class="btn btn-ghost" onclick="doFitManual()" id="btnFitManual">
     ⚡ Fit (manual σ<sub>M<sub>0</sub></sub>, N<sub>0</sub>)
   </button>
-  <!-- NUEVO BOTÓN -->
+  <!-- NEW BUTTON -->
   <button class="btn btn-warn" id="resetAndLoadBtn">
-    ⚠️ Reiniciar y cargar fichero
+    ⚠️ Reset and load file
   </button>
 </div>
 
@@ -1086,7 +1086,7 @@ tbody tr:hover { background: rgba(0,0,0,0.03); }
 
 <div class="charts-scroll-outer">
 
-  <!-- Barra sticky con la deslizadera de opacidad -->
+  <!-- Sticky opacity slider bar above the scroll panel -->
   <div class="opacity-sticky-bar">
     <label class="field-label" for="opacitySlope">Opacity decay with distance in σ<sub>m</sub></label>
     <input
@@ -1101,7 +1101,7 @@ tbody tr:hover { background: rgba(0,0,0,0.03); }
     <span class="slider-val" id="opacitySlopeVal">0</span>
   </div>
 
-  <!-- Panel horizontal scrollable con las figuras -->
+  <!-- Horizontally scrollable panel with figures -->
   <div class="charts-scroll-panel" id="chartsContainer"></div>
 
 </div>
@@ -1229,8 +1229,8 @@ function updateAllCharts(){
     if (!chart) return;
     const ds = chart.data.datasets[dsIdx];
     if (!ds) return;
-    // Normalizar por la mediana: exp(-slope * d/dMedian)
-    // Así slope=max siempre hace que el 50% sea casi invisible, independiente del rango
+    // Normalise by the median: exp(-slope * d/dMedian)
+    // This way slope=max always makes the 50th percentile nearly invisible, regardless of range
     const scale = dMedian > 0 ? dMedian : 1;
     ds.backgroundColor = dists.map(d => {
       const a = Math.exp(-opacitySlope * d / scale);
@@ -2455,11 +2455,11 @@ const rawDist =
     state.charts.push(chart);
   });
 
-  // ── Calibrar el slider ──────────────────────────────────────────────────
-  // Con distancias normalizadas por dMedian, la fórmula es exp(-slope * d/dMedian).
-  // En el punto mediano (d = dMedian): exp(-slope * 1) = exp(-slope).
-  // Para que el 50% sea casi invisible: exp(-slopeMax) ≈ 0.01 → slopeMax = 4.6
-  // Valor fijo independiente de los datos.
+  // ── Calibrate the slider ────────────────────────────────────────────────
+  // With distances normalised by dMedian, the formula is exp(-slope * d/dMedian).
+  // At the median point (d = dMedian): exp(-slope * 1) = exp(-slope).
+  // For the 50th percentile to be nearly invisible: exp(-slopeMax) ≈ 0.01 → slopeMax = 4.6
+  // Fixed value, independent of the data.
   {
     const sliderMax = 4.6;
     const slider = document.getElementById('opacitySlope');
@@ -3320,33 +3320,33 @@ async function doFitManual() {
     }
   });
 })();
-// ─── Botón de reinicio completo con confirmación ─────────────────────────
+// ─── Full reset button with confirmation ─────────────────────────────────
 const resetBtn = document.getElementById('resetAndLoadBtn');
 if (resetBtn) {
   resetBtn.addEventListener('click', function() {
     const userConfirmed = confirm(
-      '⚠️ ATENCIÓN: Esto va a reiniciar completamente la aplicación.\n\n' +
-      'Se perderán:\n' +
-      '• Todos los datos cargados actualmente\n' +
-      '• Resultados de ajustes previos\n' +
-      '• Gráficos generados\n' +
-      '• Datos simulados\n' +
-      '• Configuraciones no guardadas\n\n' +
-      'Después del reinicio, se abrirá el diálogo para cargar un nuevo fichero CSV.\n\n' +
-      '¿Deseas continuar?'
+      '⚠️ WARNING: This will completely reset the application.\n\n' +
+      'The following will be lost:\n' +
+      '• All currently loaded data\n' +
+      '• Previous fitting results\n' +
+      '• Generated charts\n' +
+      '• Simulated data\n' +
+      '• Unsaved settings\n\n' +
+      'After the reset, the file dialog will open to load a new CSV file.\n\n' +
+      'Do you wish to continue?'
     );
 
     if (!userConfirmed) return;
 
-    sessionStorage.setItem('pendienteCarga', 'true');
+    sessionStorage.setItem('pendingLoad', 'true');
     location.reload();
   });
 }
 
-// Al cargar la página, si hay una carga pendiente, abrimos el selector de archivos
+// On page load, if there is a pending load, open the file selector
 window.addEventListener('load', function() {
-  if (sessionStorage.getItem('pendienteCarga') === 'true') {
-    sessionStorage.removeItem('pendienteCarga');
+  if (sessionStorage.getItem('pendingLoad') === 'true') {
+    sessionStorage.removeItem('pendingLoad');
     const fileInput = document.getElementById('csvFileInput');
     if (fileInput) {
       setTimeout(() => {
